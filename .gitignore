@@ -27,3 +27,12 @@ npm-debug.log*
 # Temp
 *.tmp
 *.temp
+
+# Claude Code
+.claude/
+
+# Backups
+*_backup_*.html
+
+# System-Anweisungen (lokal in .claude/)
+system-anweisung-*.md
