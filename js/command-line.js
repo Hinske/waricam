@@ -50,7 +50,7 @@ class CommandLine {
         });
 
         // Standardmäßig bereit-Prompt
-        this.setPrompt('Befehl eingeben (L C N A P M R S O T F E X J B | LE EX CH AR BO ...)');
+        this.setPrompt('Befehl (L C N A P | M CO RO MI SC E O X J B | REC PL ...)');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -77,7 +77,7 @@ class CommandLine {
         this.active = false;
         this.inputEl.value = '';
         this.containerEl?.classList.remove('active');
-        this.setPrompt('Befehl eingeben (L C N A P M R S O T F E X J B | LE EX CH AR BO ...)');
+        this.setPrompt('Befehl (L C N A P | M CO RO MI SC E O X J B | REC PL ...)');
     }
 
     /** Nachricht in die History schreiben */

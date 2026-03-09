@@ -4,30 +4,36 @@
  */
 
 const WARICAM_BUILD = {
-    version: '5.4.2',
-    build: '20260220-arabeske',
-    date: '2026-02-20',
-    time: '15:00 MEZ',
-    
+    version: '5.5.0',
+    build: '20260309-features',
+    date: '2026-03-09',
+    time: '21:00 MEZ',
+
     modules: {
-        'dxf-parser':      { version: '3.3', build: '20260215-2330' },
-        'geometry':        { version: '2.9', build: '20260128-0645' },
-        'pipeline':        { version: '3.1', build: '20260212-1400' },
-        'cam-contour':     { version: '4.6', build: '20260220-arcmeta' },
-        'canvas-renderer': { version: '3.7', build: '20260220-arclead' },
-        'undo-manager':    { version: '1.0', build: '20260212-2000' },
-        'sinumerik-pp':    { version: '1.2', build: '20260219-phaseB' },
-        'command-line':    { version: '1.0', build: '20260213-1200' },
-        'snap-manager':    { version: '1.0', build: '20260213-1200' },
-        'geometry-ops':    { version: '2.2', build: '20260220-arabeske' },
-        'drawing-tools':   { version: '2.1', build: '20260214-1600' },
-        'tool-manager':    { version: '2.1', build: '20260215-1500' },
-        'layer-manager':   { version: '1.0', build: '20260215-2200' },
-        'dxf-writer':      { version: '1.0', build: '20260215-2200' },
-        'app':             { version: '5.4.1', build: '20260220-ctx1' },
-        'cam-contour-int': { version: '5.3', build: '20260219-phaseB' },
-        'properties-panel':{ version: '1.1', build: '20260219-phaseB' },
-        'debug-monitor':   { version: '1.0', build: '20260219-dm10' }
+        'dxf-parser':         { version: '3.5', build: '20260309-text' },
+        'geometry':           { version: '2.9', build: '20260128-0645' },
+        'pipeline':           { version: '3.1', build: '20260212-1400' },
+        'cam-contour':        { version: '4.7', build: '20260309-multicol' },
+        'canvas-renderer':    { version: '3.12', build: '20260216' },
+        'undo-manager':       { version: '1.1', build: '20260309-wizard' },
+        'sinumerik-pp':       { version: '1.3', build: '20260309-multihead' },
+        'command-line':       { version: '1.0', build: '20260213-1200' },
+        'snap-manager':       { version: '1.2', build: '20260216-snap12' },
+        'geometry-ops':       { version: '2.2', build: '20260220-arabeske' },
+        'drawing-tools':      { version: '2.3', build: '20260309-autocad' },
+        'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
+        'tool-manager':       { version: '2.2', build: '20260216-0015' },
+        'layer-manager':      { version: '1.0', build: '20260215-2200' },
+        'dxf-writer':         { version: '1.0', build: '20260215-2200' },
+        'app':                { version: '5.5.0', build: '20260309-v55' },
+        'properties-panel':   { version: '1.1', build: '20260219-phaseB' },
+        'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
+        'nesting':            { version: '1.0', build: '20260309' },
+        'toolpath-simulator': { version: '1.0', build: '20260309' },
+        'cost-calculator':    { version: '1.0', build: '20260309' },
+        'machine-profiles':   { version: '1.0', build: '20260309' },
+        'bridge-cutting':     { version: '1.0', build: '20260309' },
+        'quality-zones':      { version: '1.0', build: '20260309' }
     },
     
     changes: [
@@ -105,7 +111,22 @@ const WARICAM_BUILD = {
         'V5.4.2: Arabeske-Tool (AB) — Parametrische Laternenfliese (8 Kreisbögen) in advanced-tools.js V1.2',
         'V5.4.2: GeometryOps V2.2 — _circumscribedCircle, _arcThrough3Points, createArabeske',
         'V5.4.2: Fugen-Offset für tessellierbare Fliesenverlegung (2mm Standard)',
-        'V5.4.2: Ribbon-Button "Arabeske" im CAD-Tab Zeichnen-Gruppe'
+        'V5.4.2: Ribbon-Button "Arabeske" im CAD-Tab Zeichnen-Gruppe',
+        'V5.5.0: Multi-Kontur Collision Detection — Lead vs. ALLE Konturen (cam-contour V4.7)',
+        'V5.5.0: DXF TEXT/MTEXT/HATCH Support (dxf-parser V3.5)',
+        'V5.5.0: Nesting Engine V1.0 — BLF-Algorithmus, Multi-Rotation, Multi-Sheet',
+        'V5.5.0: Toolpath Simulator V1.0 — Pfad-Verifikation, Animation, Kollisionsmatrix',
+        'V5.5.0: Cost Calculator V1.0 — Kosten-/Zeitkalkulation mit CeraJet-Integration',
+        'V5.5.0: Machine Profiles V1.0 — Maschinenpark-Verwaltung, PP-Profile, localStorage',
+        'V5.5.0: Bridge Cutting V1.0 — Haltestege zwischen Teilen (auto/manuell)',
+        'V5.5.0: Quality Zones V1.0 — Auto-Erkennung von Ecken/Radien für Speed-Reduktion',
+        'V5.5.0: Sinumerik PP V1.3 — Multi-Head Support, Machine-Profile Integration',
+        'V5.5.0: WizardStepUndo V1.1 — Verschachteltes Undo pro Wizard-Step',
+        'V5.5.0: Ribbon UI — Brücken, Q-Zonen, Kollision (CAM), Nesting/Sim/Kosten/Maschine (Export)',
+        'V5.5.0: AutoCAD Aliases — E=Erase, CO=Copy, RO=Rotate, MI=Mirror, SC=Scale, REC=Rectangle, PL=Polyline',
+        'V5.5.0: Continuous Mode — Modification Tools starten nach Abschluss automatisch neu',
+        'V5.5.0: Previous Selection (P) — Vorherige Auswahl in Modification-Tool Selektionsphase',
+        'V5.5.0: Dynamic Input HUD — Koordinaten/Distanz/Winkel am Cursor (DynamicInput V1.0)'
     ],
     
     print() {

@@ -722,6 +722,70 @@
             </div>
             <div class="ribbon-group-label">Micro-Joints</div>
         </div>
+
+        <!-- ═══ Brücken (V5.5 — Bridge Cutting) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Breite:</span>
+                        <input type="number" class="ribbon-input" id="bridge-width" value="1.0" step="0.1" min="0.3" max="5.0" style="width:50px">
+                        <span class="ribbon-field-unit">mm</span>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Anz.:</span>
+                        <input type="number" class="ribbon-input" id="bridge-count" value="3" step="1" min="1" max="20" style="width:40px">
+                    </div>
+                    <div class="ribbon-inline-row" style="gap:2px">
+                        <button class="ribbon-btn-mini" id="btn-auto-bridges" title="Brücken automatisch setzen">Auto</button>
+                        <button class="ribbon-btn-mini" id="btn-clear-bridges" title="Brücken entfernen">Löschen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Brücken</div>
+        </div>
+
+        <!-- ═══ Qualitäts-Zonen (V5.5 — Auto Speed Zones) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <input type="checkbox" id="auto-quality-zones">
+                        <label for="auto-quality-zones" class="ribbon-cb-label" style="color:#f0a030">Auto-Zonen</label>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Ecke:</span>
+                        <input type="number" class="ribbon-input" id="qz-corner-angle" value="120" step="5" min="60" max="170" style="width:45px" title="Eckenwinkel-Schwelle">
+                        <span class="ribbon-field-unit">°</span>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">V-Ecke:</span>
+                        <input type="number" class="ribbon-input" id="qz-corner-speed" value="33" step="5" min="10" max="80" style="width:40px" title="Ecken-Geschwindigkeit">
+                        <span class="ribbon-field-unit">%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Q-Zonen</div>
+        </div>
+
+        <!-- ═══ Multi-Collision (V5.5) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <button class="ribbon-btn-mini" id="btn-multi-collision" title="Lead-Kollision gegen alle Konturen prüfen" style="color:#ff6b6b">Kollision prüfen</button>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Abstand:</span>
+                        <input type="number" class="ribbon-input" id="collision-margin" value="0.5" step="0.1" min="0.1" max="5.0" style="width:45px">
+                        <span class="ribbon-field-unit">mm</span>
+                    </div>
+                    <div class="ribbon-inline-row" id="collision-result" style="font-size:9px;color:#888">
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Kollision</div>
+        </div>
     </div>
 
     <!-- ── Reihenfolge Panel ── -->
@@ -786,6 +850,102 @@
                 </div>
             </div>
             <div class="ribbon-group-label">G-Code</div>
+        </div>
+
+        <!-- ═══ Nesting (V5.5) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-btn-lg" id="btn-nesting" title="Teile automatisch auf Platte anordnen">
+                    <div class="icon"><svg viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" stroke="#22c55e" stroke-width="1.5" fill="none"/><rect x="4" y="4" width="10" height="8" stroke="#22c55e" stroke-width="1" fill="rgba(34,197,94,0.15)"/><rect x="16" y="4" width="12" height="6" stroke="#22c55e" stroke-width="1" fill="rgba(34,197,94,0.15)"/><rect x="4" y="14" width="7" height="14" stroke="#22c55e" stroke-width="1" fill="rgba(34,197,94,0.15)"/><rect x="13" y="12" width="15" height="8" stroke="#22c55e" stroke-width="1" fill="rgba(34,197,94,0.15)"/></svg></div>
+                    <span class="label">Nesting</span>
+                </div>
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Abst.:</span>
+                        <input type="number" class="ribbon-input" id="nesting-gap" value="3" step="0.5" min="0.5" max="20" style="width:45px">
+                        <span class="ribbon-field-unit">mm</span>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Rot.:</span>
+                        <select class="ribbon-select" id="nesting-rotation" style="width:80px">
+                            <option value="0">0°</option>
+                            <option value="90" selected>0°/90°</option>
+                            <option value="45">45°-Schritte</option>
+                            <option value="free">Frei (10°)</option>
+                        </select>
+                    </div>
+                    <div class="ribbon-inline-row" id="nesting-result" style="font-size:9px;color:#888">
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Nesting</div>
+        </div>
+
+        <!-- ═══ Toolpath-Simulation (V5.5) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-btn-lg" id="btn-simulate" title="Schneidpfad simulieren und verifizieren">
+                    <div class="icon"><svg viewBox="0 0 32 32" fill="none"><polygon points="10,6 26,16 10,26" fill="#22c55e" stroke="#22c55e" stroke-width="1.5"/></svg></div>
+                    <span class="label">Simulation</span>
+                </div>
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <button class="ribbon-btn-mini" id="btn-verify" title="Pfad verifizieren (ohne Animation)">Verifizieren</button>
+                    </div>
+                    <div class="ribbon-inline-row" id="sim-status" style="font-size:9px;color:#888">
+                    </div>
+                    <div class="ribbon-inline-row" id="sim-errors" style="font-size:9px;color:#ff6b6b">
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Simulation</div>
+        </div>
+
+        <!-- ═══ Kosten-Kalkulation (V5.5) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-btn-lg" id="btn-calc-cost" title="Kosten und Zeit kalkulieren">
+                    <div class="icon"><svg viewBox="0 0 32 32" fill="none"><rect x="6" y="4" width="20" height="24" rx="2" stroke="#e8a020" stroke-width="2" fill="none"/><text x="16" y="20" text-anchor="middle" fill="#e8a020" font-size="14" font-family="Consolas">€</text></svg></div>
+                    <span class="label">Kalkulation</span>
+                </div>
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row" id="cost-time" style="font-size:10px;color:#4fc3f7">
+                        Zeit: --
+                    </div>
+                    <div class="ribbon-inline-row" id="cost-total" style="font-size:10px;color:#e8a020">
+                        Kosten: --
+                    </div>
+                    <div class="ribbon-inline-row" id="cost-material" style="font-size:9px;color:#888">
+                        Material: --
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Kalkulation</div>
+        </div>
+
+        <!-- ═══ Maschinenpark (V5.5) ═══ -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Maschine:</span>
+                        <select class="ribbon-select" id="machine-profile-select" style="width:140px">
+                            <option value="cerasell-3020" selected>Cerasell WJ-3020</option>
+                        </select>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <span class="ribbon-field-label">Köpfe:</span>
+                        <input type="number" class="ribbon-input" id="head-count" value="1" min="1" max="4" style="width:35px">
+                        <span class="ribbon-field-label">Abst.:</span>
+                        <input type="number" class="ribbon-input" id="head-spacing" value="0" step="10" min="0" max="2000" style="width:55px">
+                        <span class="ribbon-field-unit">mm</span>
+                    </div>
+                    <div class="ribbon-inline-row">
+                        <button class="ribbon-btn-mini" id="btn-manage-machines" title="Maschinenpark verwalten">Verwalten...</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Maschine</div>
         </div>
     </div>
 
@@ -940,11 +1100,15 @@
             <div id="measure-result-panel" style="display:none;position:absolute;top:54px;right:12px;background:rgba(30,30,30,0.92);border:1px solid #555;border-radius:6px;padding:8px 12px;min-width:200px;z-index:500;font-size:12px;color:#ddd;box-shadow:0 4px 12px rgba(0,0,0,0.4);backdrop-filter:blur(6px);">
             </div>
 
-            <!-- Drop Zone -->
-            <div class="drop-zone empty-state" id="drop-zone">
+            <!-- Drop Zone (Drag-Overlay) -->
+            <div class="drop-zone" id="drop-zone">
                 <div class="drop-zone-icon">📂</div>
                 <h3>DXF-Datei laden</h3>
-                <p>Datei hierher ziehen oder klicken zum Öffnen</p>
+                <p>Datei hierher ziehen</p>
+            </div>
+            <!-- Start-Hinweis (verschwindet bei erster Aktion) -->
+            <div class="start-hint" id="start-hint">
+                DXF hierher ziehen &bull; Klicken zum Öffnen &bull; Oder direkt zeichnen (L/C/N/A/P)
             </div>
         </div>
 
@@ -1214,17 +1378,18 @@
 <script src="js/constants.js?v=20260215-2200"></script>
 <script src="js/geometry.js?v=20260215-2200"></script>
 <script src="js/arc-fitting.js?v=20260215-2200"></script>
-<script src="js/dxf-parser.js?v=20260216-1500"></script>
-<script src="js/cam-contour.js?v=20260220-arcmeta"></script>
+<script src="js/dxf-parser.js?v=20260309-v35"></script>
+<script src="js/cam-contour.js?v=20260309-v47"></script>
 <script src="js/cerajet-engine.js?v=20260217-tech10"></script>
 <script src="js/waricam-pipeline.js?v=20260215-2200"></script>
 <script src="js/canvas-renderer.js?v=20260220-arclead2"></script>
-<script src="js/undo-manager.js?v=20260215-2200"></script>
-<script src="js/sinumerik-postprocessor.js?v=20260217-tech10"></script>
+<script src="js/undo-manager.js?v=20260309-v11"></script>
+<script src="js/sinumerik-postprocessor.js?v=20260309-v13"></script>
 <script src="js/command-line.js?v=20260216-v4dbg"></script>
+<script src="js/dynamic-input.js?v=20260309-dynhud"></script>
 <script src="js/snap-manager.js?v=20260217-snap13"></script>
 <script src="js/geometry-ops.js?v=20260220-v22-arabeske"></script>
-<script src="js/drawing-tools.js?v=20260216-v4dbg"></script>
+<script src="js/drawing-tools.js?v=20260309-v23-autocad"></script>
 <script src="js/layer-manager.js?v=20260216-1500"></script>
 <script src="js/dxf-writer.js?v=20260215-2200"></script>
 <script src="js/tool-manager.js?v=20260216-0015"></script>
@@ -1239,7 +1404,13 @@
 <script src="js/cnc-reader.js?v=20260219-v13"></script>
 <script src="js/svg-parser.js?v=20260219-v10"></script>
 <script src="js/properties-panel.js?v=20260219-phaseB"></script>
-<script src="js/app.js?v=20260220-ctx1"></script>
+<script src="js/nesting.js?v=20260309"></script>
+<script src="js/toolpath-simulator.js?v=20260309"></script>
+<script src="js/cost-calculator.js?v=20260309"></script>
+<script src="js/machine-profiles.js?v=20260309"></script>
+<script src="js/bridge-cutting.js?v=20260309"></script>
+<script src="js/quality-zones.js?v=20260309"></script>
+<script src="js/app.js?v=20260309-v55"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1297,11 +1468,9 @@
             
             // Safe updateStepUI — no step-bar in new UI
             origApp.updateStepUI = function() {
-                const dropZone = document.getElementById('drop-zone');
-                if (this.fileLoaded && dropZone) {
-                    dropZone.classList.remove('empty-state', 'visible');
-                } else if (dropZone) {
-                    dropZone.classList.add('empty-state');
+                const startHint = document.getElementById('start-hint');
+                if (startHint && (this.fileLoaded || this.contours?.length)) {
+                    startHint.classList.add('hidden');
                 }
             };
             
@@ -1642,7 +1811,7 @@
                     origApp.renderer?.render();
                     origApp.updateContourPanel?.();
                     document.getElementById('current-filename').textContent = 'Keine Datei geladen';
-                    document.getElementById('drop-zone')?.classList.add('empty-state');
+                    document.getElementById('start-hint')?.classList.remove('hidden');
                     origApp.showToast('Neue Zeichnung', 'success');
                 }
             }
@@ -3428,6 +3597,137 @@
             console.log('%c[Phase B.6] Lead-Favoriten-UI aktiviert', 'color: #ffca28');
 
             console.log('%c═══ PHASE B KOMPLETT: B.1-B.6 alle UI-Handler aktiv ═══', 'color: #00e676; font-weight: bold');
+
+            // ═══ V5.5: Neue Feature-Handler ═══
+
+            // Multi-Collision
+            document.getElementById('btn-multi-collision')?.addEventListener('click', () => {
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                const margin = parseFloat(document.getElementById('collision-margin')?.value) || 0.5;
+                const modified = CamContour.checkAllCollisions(app.contours, margin);
+                const resultEl = document.getElementById('collision-result');
+                if (resultEl) resultEl.textContent = modified > 0 ? `${modified} Leads angepasst` : 'Keine Kollisionen';
+                app.renderer?.render();
+            });
+
+            // Auto Bridges
+            document.getElementById('btn-auto-bridges')?.addEventListener('click', () => {
+                const app = window.app;
+                if (!app?.contours?.length || typeof BridgeCutting === 'undefined') return;
+                const width = parseFloat(document.getElementById('bridge-width')?.value) || 1.0;
+                const count = parseInt(document.getElementById('bridge-count')?.value) || 3;
+                const selected = app.contours.filter(c => c.isSelected && !c.isReference);
+                const targets = selected.length > 0 ? selected : app.contours.filter(c => !c.isReference);
+                targets.forEach(c => BridgeCutting.autoBridges(c, count, width));
+                app.renderer?.render();
+                console.log(`[Bridge V1.0] ${targets.length} Konturen mit Brücken versehen`);
+            });
+            document.getElementById('btn-clear-bridges')?.addEventListener('click', () => {
+                const app = window.app;
+                if (!app?.contours?.length || typeof BridgeCutting === 'undefined') return;
+                app.contours.forEach(c => { if (c.bridges) c.bridges = []; });
+                app.renderer?.render();
+            });
+
+            // Quality Zones
+            document.getElementById('auto-quality-zones')?.addEventListener('change', (e) => {
+                if (typeof QualityZones === 'undefined') return;
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                if (e.target.checked) {
+                    const angle = parseFloat(document.getElementById('qz-corner-angle')?.value) || 120;
+                    const speed = (parseFloat(document.getElementById('qz-corner-speed')?.value) || 33) / 100;
+                    QualityZones.config.cornerAngle = angle;
+                    QualityZones.config.cornerSpeed = speed;
+                    app.contours.forEach(c => { if (!c.isReference) QualityZones.applyToContour(c); });
+                    console.log(`[QualityZones V1.0] Zonen berechnet für ${app.contours.length} Konturen`);
+                } else {
+                    app.contours.forEach(c => { delete c.qualityZones; });
+                }
+                app.renderer?.render();
+            });
+
+            // Nesting
+            document.getElementById('btn-nesting')?.addEventListener('click', () => {
+                if (typeof NestingEngine === 'undefined') return;
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                const gap = parseFloat(document.getElementById('nesting-gap')?.value) || 3;
+                const rotOption = document.getElementById('nesting-rotation')?.value || '90';
+                let rotations = [0];
+                if (rotOption === '90') rotations = [0, 90, 180, 270];
+                else if (rotOption === '45') rotations = [0, 45, 90, 135, 180, 225, 270, 315];
+                else if (rotOption === 'free') rotations = Array.from({length: 36}, (_, i) => i * 10);
+                const ref = app.contours.find(c => c.isReference);
+                const sheetW = ref ? Math.abs(ref.points.reduce((max, p) => Math.max(max, p.x), -Infinity) - ref.points.reduce((min, p) => Math.min(min, p.x), Infinity)) : 3000;
+                const sheetH = ref ? Math.abs(ref.points.reduce((max, p) => Math.max(max, p.y), -Infinity) - ref.points.reduce((min, p) => Math.min(min, p.y), Infinity)) : 2000;
+                const parts = app.contours.filter(c => !c.isReference);
+                const result = NestingEngine.nest(parts, { width: sheetW, height: sheetH, margin: gap, gap, rotations });
+                const resultEl = document.getElementById('nesting-result');
+                if (result && resultEl) {
+                    resultEl.textContent = `${result.placements?.length || 0} Teile, ${(result.utilization || 0).toFixed(1)}% Nutzung`;
+                    if (result.placements) NestingEngine.applyPlacements(parts, result.placements);
+                    app.renderer?.render();
+                }
+            });
+
+            // Toolpath Simulation
+            document.getElementById('btn-simulate')?.addEventListener('click', () => {
+                if (typeof ToolpathSimulator === 'undefined') return;
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                const canvas = document.getElementById('main-canvas');
+                ToolpathSimulator.startAnimation(canvas, app.contours, app.cutOrder, 5);
+            });
+            document.getElementById('btn-verify')?.addEventListener('click', () => {
+                if (typeof ToolpathSimulator === 'undefined') return;
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                const result = ToolpathSimulator.verify(app.contours, app.cutOrder);
+                const statusEl = document.getElementById('sim-status');
+                const errEl = document.getElementById('sim-errors');
+                if (statusEl) statusEl.textContent = `L: ${(result.stats?.cuttingLength/1000).toFixed(1)}m, T: ${CostCalculator?.formatTime?.(result.stats?.estimatedTime) || '--'}`;
+                if (errEl) errEl.textContent = result.errors?.length ? `${result.errors.length} Fehler` : (result.warnings?.length ? `${result.warnings.length} Warnungen` : 'OK');
+            });
+
+            // Kosten-Kalkulation
+            document.getElementById('btn-calc-cost')?.addEventListener('click', () => {
+                if (typeof CostCalculator === 'undefined') return;
+                const app = window.app;
+                if (!app?.contours?.length) return;
+                const thickness = parseFloat(document.getElementById('material-thickness')?.value) || 10;
+                const result = CostCalculator.calculate(app.contours, app.cutOrder, {
+                    thickness,
+                    sheetWidth: 3000,
+                    sheetHeight: 2000
+                });
+                document.getElementById('cost-time').textContent = `Zeit: ${CostCalculator.formatTime(result.totalTime || 0)}`;
+                document.getElementById('cost-total').textContent = `Kosten: ${CostCalculator.formatCurrency(result.totalCost || 0)}`;
+                document.getElementById('cost-material').textContent = `Material: ${(result.utilization || 0).toFixed(1)}%`;
+            });
+
+            // Maschinenpark
+            document.getElementById('machine-profile-select')?.addEventListener('change', (e) => {
+                if (typeof MachineProfiles === 'undefined') return;
+                MachineProfiles.setActiveProfile(e.target.value);
+            });
+            // Maschinenpark-Dropdown füllen
+            if (typeof MachineProfiles !== 'undefined') {
+                const sel = document.getElementById('machine-profile-select');
+                if (sel) {
+                    sel.innerHTML = '';
+                    const profiles = MachineProfiles.listProfiles();
+                    profiles.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.name;
+                        sel.appendChild(opt);
+                    });
+                }
+            }
+
+            console.log('%c[CeraCAM V5.5] Neue Features aktiviert: Nesting, Simulation, Kosten, Maschinen, Q-Zonen, Bridges, Multi-Collision', 'color: #22c55e; font-weight: bold');
 
             // ═══ V5.1: Generische Tool-Flyouts (Abrunden, Stutzen, Struktur, CAM-Geo) ═══
             document.querySelectorAll('.tool-flyout').forEach(flyout => {

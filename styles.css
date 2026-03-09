@@ -712,10 +712,30 @@ html, body {
 }
 
 .drop-zone.visible { opacity: 1; pointer-events: auto; border-color: var(--accent-blue); }
-.drop-zone.empty-state { opacity: 1; pointer-events: auto; }
 .drop-zone-icon { font-size: 40px; }
 .drop-zone h3 { font-size: 16px; color: var(--panel-text); }
 .drop-zone p { color: var(--panel-text-muted); font-size: 12px; }
+
+/* Start-Hinweis (dezenter Balken unten) */
+.start-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 30, 30, 0.85);
+    border: 1px solid var(--drop-border);
+    border-radius: 8px;
+    padding: 10px 24px;
+    color: var(--panel-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: opacity 0.3s;
+    z-index: 10;
+    white-space: nowrap;
+}
+.start-hint:hover { color: var(--panel-text); border-color: var(--accent-blue); }
+.start-hint.hidden { opacity: 0; pointer-events: none; }
 
 /* ═══════════════════════════════════════════════════════════════
    PROPERTIES PANEL (RIGHT)

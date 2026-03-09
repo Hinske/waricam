@@ -340,7 +340,7 @@ class CanvasRenderer {
             const snapPoint = this.findSnapPoint(worldPos.x, worldPos.y);
 
             if (this.onMouseMove) {
-                this.onMouseMove(worldPos.x, worldPos.y, snapPoint);
+                this.onMouseMove(worldPos.x, worldPos.y, snapPoint, e.clientX, e.clientY);
             }
 
             if (isPanning) {
@@ -445,6 +445,8 @@ class CanvasRenderer {
             if (toolMgr?.windowSelection) {
                 toolMgr.windowSelection = null;
             }
+            // V2.3: Dynamic Input HUD verstecken
+            if (typeof DynamicInput !== 'undefined') DynamicInput.hide();
             this.render();
         });
 

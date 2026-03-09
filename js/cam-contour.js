@@ -6,7 +6,8 @@
  * Kerf-Flip, Auto-Shorten bei Kontur-Schnitt
  * V4.5: Außen/Innen-Lead Differenzierung, clone(), IGEMS 4-Slot Fallback-Kette
  * V4.6: Alternativ-Lead Property-Rename (altLeadInLength/Angle/OutLength/Overcut)
- * Last Modified: 2026-02-17 UTC
+ * V4.7: Multi-Kontur Collision Detection — Lead vs. ALLE Konturen
+ * Last Modified: 2026-03-09 UTC
  */
 
 class CamContour {
@@ -1064,6 +1065,173 @@ class CamContour {
             };
         }
         return null;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // MULTI-KONTUR COLLISION DETECTION (V4.7)
+    // Lead-In/Out gegen ALLE Nachbar-Konturen prüfen
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Prüft Lead-In/Out gegen ALLE anderen Konturen (nicht nur eigene).
+     * Kürzt Leads bei Kollision mit Nachbar-Konturen.
+     * @param {CamContour[]} allContours - Alle Konturen im Arbeitsbereich
+     * @param {number} [safetyMargin=0.5] - Mindestabstand zu Nachbar-Konturen (mm)
+     */
+    checkMultiContourCollision(allContours, safetyMargin = 0.5) {
+        if (!allContours || allContours.length < 2) return;
+
+        const leadIn = this.getLeadInPath();
+        const leadOut = this.getLeadOutPath();
+
+        let modified = false;
+
+        for (const other of allContours) {
+            if (other === this) continue;
+            if (other.isReference) continue;
+
+            // Bounding-Box Quick-Reject
+            const otherBB = this._getBBox(other.points);
+            if (!otherBB) continue;
+
+            // Lead-In vs. andere Kontur
+            if (leadIn?.points?.length >= 2) {
+                const leadBB = this._getBBox(leadIn.points);
+                if (leadBB && this._bboxOverlap(leadBB, otherBB, safetyMargin)) {
+                    const otherPts = other.getKerfOffsetPolyline()?.points || other.points;
+                    if (this._shortenLeadAgainstContour(leadIn, otherPts, 'in', safetyMargin)) {
+                        modified = true;
+                    }
+                }
+            }
+
+            // Lead-Out vs. andere Kontur
+            if (leadOut?.points?.length >= 2) {
+                const leadBB = this._getBBox(leadOut.points);
+                if (leadBB && this._bboxOverlap(leadBB, otherBB, safetyMargin)) {
+                    const otherPts = other.getKerfOffsetPolyline()?.points || other.points;
+                    if (this._shortenLeadAgainstContour(leadOut, otherPts, 'out', safetyMargin)) {
+                        modified = true;
+                    }
+                }
+            }
+        }
+
+        if (modified) {
+            console.log(`[CamContour V4.7] Multi-Collision: Lead gekürzt für ${this.name}`);
+        }
+        return modified;
+    }
+
+    /**
+     * Kürzt einen Lead-Pfad bei Schnitt mit einer Nachbar-Kontur.
+     */
+    _shortenLeadAgainstContour(leadPath, contourPts, direction, margin) {
+        if (!leadPath?.points || leadPath.points.length < 2) return false;
+        if (!contourPts || contourPts.length < 3) return false;
+
+        const lPts = leadPath.points;
+        let bestHit = null;
+        const isOut = (direction === 'out');
+
+        for (let li = 0; li < lPts.length - 1; li++) {
+            const la = lPts[li], lb = lPts[li + 1];
+
+            for (let ci = 0; ci < contourPts.length - 1; ci++) {
+                const ca = contourPts[ci], cb = contourPts[ci + 1];
+                const hit = this._segmentIntersect(la, lb, ca, cb);
+                if (hit) {
+                    const isBetter = isOut
+                        ? (!bestHit || li > bestHit.li || (li === bestHit.li && hit.t > bestHit.t))
+                        : (!bestHit || li < bestHit.li || (li === bestHit.li && hit.t < bestHit.t));
+                    if (isBetter) {
+                        bestHit = { li, t: hit.t, point: hit };
+                    }
+                }
+            }
+        }
+
+        if (!bestHit) {
+            // Proximity Check: Lead-Punkt zu nah an Kontur?
+            for (let i = 0; i < lPts.length; i++) {
+                const p = lPts[i];
+                for (let ci = 0; ci < contourPts.length - 1; ci++) {
+                    const dist = this._pointToSegDist(p, contourPts[ci], contourPts[ci + 1]);
+                    if (dist < margin) {
+                        // Behandeln wie Kollision am nächsten Punkt
+                        bestHit = { li: Math.max(0, i - 1), t: 0.5, point: { x: p.x, y: p.y } };
+                        break;
+                    }
+                }
+                if (bestHit) break;
+            }
+        }
+
+        if (bestHit) {
+            if (isOut) {
+                const newPts = [];
+                for (let i = 0; i <= bestHit.li; i++) newPts.push(lPts[i]);
+                newPts.push(bestHit.point);
+                leadPath.points = newPts;
+                leadPath.endPoint = bestHit.point;
+            } else {
+                const newPts = [bestHit.point];
+                for (let i = bestHit.li + 1; i < lPts.length; i++) newPts.push(lPts[i]);
+                leadPath.points = newPts;
+                leadPath.piercingPoint = bestHit.point;
+            }
+            leadPath.shortened = true;
+            leadPath.multiContourCollision = true;
+            return true;
+        }
+        return false;
+    }
+
+    /** Punkt-zu-Segment Distanz */
+    _pointToSegDist(p, a, b) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq < 1e-10) return Math.hypot(p.x - a.x, p.y - a.y);
+        let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+    }
+
+    /** Bounding-Box eines Punkt-Arrays */
+    _getBBox(pts) {
+        if (!pts || pts.length === 0) return null;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const p of pts) {
+            if (p.x < minX) minX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+        }
+        return { minX, minY, maxX, maxY };
+    }
+
+    /** BBox-Overlap mit Margin */
+    _bboxOverlap(a, b, margin = 0) {
+        return !(a.maxX + margin < b.minX || a.minX - margin > b.maxX ||
+                 a.maxY + margin < b.minY || a.minY - margin > b.maxY);
+    }
+
+    /**
+     * Statische Methode: Multi-Collision für ALLE Konturen auf einmal.
+     * Aufrufen in Pipeline/App nach Kerf-Offset + Lead-Berechnung.
+     */
+    static checkAllCollisions(contours, safetyMargin = 0.5) {
+        let totalModified = 0;
+        for (const c of contours) {
+            if (c.isReference) continue;
+            if (c.checkMultiContourCollision(contours, safetyMargin)) {
+                totalModified++;
+            }
+        }
+        if (totalModified > 0) {
+            console.log(`[CamContour V4.7] Multi-Collision: ${totalModified}/${contours.length} Leads angepasst`);
+        }
+        return totalModified;
     }
 
     // ════════════════════════════════════════════════════════════════

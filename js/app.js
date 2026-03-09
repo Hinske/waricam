@@ -207,7 +207,7 @@ class WaricamApp {
         this.renderer.app = this;
         
         // Mouse move callback
-        this.renderer.onMouseMove = (worldX, worldY, snapPoint) => {
+        this.renderer.onMouseMove = (worldX, worldY, snapPoint, screenX, screenY) => {
             document.getElementById('coord-x').textContent = worldX.toFixed(3);
             document.getElementById('coord-y').textContent = worldY.toFixed(3);
             
@@ -256,6 +256,12 @@ class WaricamApp {
             if (this.measureMode && this.measureStart) {
                 const endPoint = this.currentSnapPoint || { x: worldX, y: worldY };
                 this.updateMeasureInfo(this.measureStart, endPoint);
+            }
+
+            // V2.3: Dynamic Input HUD — Koordinaten am Cursor
+            if (typeof DynamicInput !== 'undefined' && screenX != null) {
+                const basePoint = this.toolManager?.activeTool?.getLastPoint?.() || null;
+                DynamicInput.update(screenX, screenY, worldX, worldY, basePoint);
             }
         };
         
@@ -632,8 +638,9 @@ class WaricamApp {
             console.log('[App V3.5] fileLoaded=true (via Drawing)');
         }
         
-        // Drop-Zone ausblenden + Canvas-Fit (Fix: empty-state bleibt sonst sichtbar)
-        document.getElementById('drop-zone')?.classList.remove('empty-state', 'visible');
+        // Start-Hint + Drop-Zone ausblenden
+        document.getElementById('start-hint')?.classList.add('hidden');
+        document.getElementById('drop-zone')?.classList.remove('visible');
         this.updateStepUI();
         this.renderer?.fitToContent();
         
@@ -2246,7 +2253,8 @@ class WaricamApp {
     canGoToStep(step) {
         if (step < this.currentStep) return true;
         if (step === 1) return true;
-        if (step > 1 && !this.fileLoaded) return false;
+        // Steps 2-3 immer erreichbar, ab Step 4 braucht man Konturen
+        if (step >= 4 && !this.contours.length) return false;
         return step <= this.currentStep + 1;
     }
     
@@ -2258,8 +2266,8 @@ class WaricamApp {
     }
     
     nextStep() {
-        if (this.currentStep === 1 && !this.fileLoaded) {
-            this.showToast('Bitte laden Sie zuerst eine DXF-Datei', 'warning');
+        if (this.currentStep >= 4 && !this.contours.length) {
+            this.showToast('Bitte laden oder zeichnen Sie zuerst Konturen', 'warning');
             return;
         }
         if (this.currentStep < this.totalSteps) {
@@ -2299,11 +2307,10 @@ class WaricamApp {
         document.getElementById('btn-prev').disabled = this.currentStep === 1;
         document.getElementById('btn-next').textContent = this.currentStep === this.totalSteps ? '✓ Fertig' : 'Weiter →';
         
-        const dropZone = document.getElementById('drop-zone');
-        if (this.fileLoaded) {
-            dropZone.classList.remove('empty-state', 'visible');
-        } else if (this.currentStep === 1) {
-            dropZone.classList.add('empty-state');
+        // Start-Hint ausblenden sobald Konturen existieren oder Datei geladen
+        const startHint = document.getElementById('start-hint');
+        if (startHint && (this.fileLoaded || this.contours.length)) {
+            startHint.classList.add('hidden');
         }
     }
     
@@ -2361,6 +2368,7 @@ class WaricamApp {
         
         uploadArea.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('click', () => fileInput.click());
+        document.getElementById('start-hint')?.addEventListener('click', () => fileInput.click());
         
         fileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) this.loadFile(e.target.files[0]);
@@ -2369,12 +2377,10 @@ class WaricamApp {
         canvasArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('visible');
-            dropZone.classList.remove('empty-state');
         });
         
         canvasArea.addEventListener('dragleave', (e) => {
             if (!canvasArea.contains(e.relatedTarget)) {
-                if (!this.fileLoaded) dropZone.classList.add('empty-state');
                 dropZone.classList.remove('visible');
             }
         });
@@ -2642,7 +2648,8 @@ class WaricamApp {
         if (!this.renderer) return;
         this.renderer.setContours(this.contours);
         this.renderer.fitToContent();
-        document.getElementById('drop-zone').classList.remove('empty-state', 'visible');
+        document.getElementById('drop-zone')?.classList.remove('visible');
+        document.getElementById('start-hint')?.classList.add('hidden');
     }
     
     updateStats(result) {

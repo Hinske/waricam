@@ -3,7 +3,7 @@
  *  WARICAM / CeraCAM – Undo/Redo Manager (Command Pattern) + Clipboard
  * =========================================================================
  *  Datei:    undo-manager.js
- *  Version:  V1.0
+ *  Version:  V1.1
  *  Erstellt: 2026-02-12
  *  Build:    20260212-1800 MEZ
  *
@@ -563,6 +563,98 @@ class UndoManager {
 
 
 // =========================================================================
+//  SECTION 3b: WizardStepUndo — Verschachteltes Undo pro Wizard-Step (V1.1)
+// =========================================================================
+
+/**
+ * Verwaltet Undo-Stacks pro Wizard-Step.
+ * Jeder Step hat seinen eigenen Undo-Stack, so dass beim Zurückgehen
+ * im Wizard alle Änderungen des aktuellen Steps rückgängig gemacht werden.
+ *
+ * Integration:
+ *   app.wizardUndo = new WizardStepUndo(app.undoManager);
+ *   // Beim Step-Wechsel:
+ *   app.wizardUndo.enterStep(stepNumber);
+ *   // Beim Zurückgehen:
+ *   app.wizardUndo.undoStep(stepNumber);  // macht alle Änderungen des Steps rückgängig
+ */
+class WizardStepUndo {
+    constructor(undoManager) {
+        this.undoManager = undoManager;
+        this._stepMarkers = {};   // step → undoStack-Index beim Betreten
+        this._currentStep = null;
+        console.log('[WizardStepUndo V1.1] Initialisiert');
+    }
+
+    /**
+     * Markiert den Beginn eines Wizard-Steps.
+     * Speichert den aktuellen Undo-Stack-Index als Marker.
+     */
+    enterStep(stepNumber) {
+        this._stepMarkers[stepNumber] = this.undoManager.undoStack.length;
+        this._currentStep = stepNumber;
+        console.log(`[WizardStepUndo V1.1] Step ${stepNumber} betreten (Marker bei Index ${this._stepMarkers[stepNumber]})`);
+    }
+
+    /**
+     * Macht alle Änderungen des angegebenen Steps rückgängig.
+     * Führt Undo aus bis der Stack auf den Marker-Index zurückgesetzt ist.
+     * @returns {number} Anzahl rückgängig gemachter Aktionen
+     */
+    undoStep(stepNumber) {
+        const marker = this._stepMarkers[stepNumber];
+        if (marker === undefined) {
+            console.warn(`[WizardStepUndo V1.1] Kein Marker für Step ${stepNumber}`);
+            return 0;
+        }
+
+        let undoneCount = 0;
+        while (this.undoManager.undoStack.length > marker && this.undoManager.canUndo()) {
+            this.undoManager.undo();
+            undoneCount++;
+        }
+
+        // Marker entfernen
+        delete this._stepMarkers[stepNumber];
+
+        if (undoneCount > 0) {
+            console.log(`[WizardStepUndo V1.1] Step ${stepNumber}: ${undoneCount} Aktionen rückgängig gemacht`);
+        }
+        return undoneCount;
+    }
+
+    /**
+     * Prüft ob der aktuelle Step Änderungen hat.
+     */
+    hasChanges(stepNumber) {
+        const marker = this._stepMarkers[stepNumber];
+        if (marker === undefined) return false;
+        return this.undoManager.undoStack.length > marker;
+    }
+
+    /**
+     * Anzahl Änderungen im aktuellen Step.
+     */
+    getChangeCount(stepNumber) {
+        const marker = this._stepMarkers[stepNumber];
+        if (marker === undefined) return 0;
+        return Math.max(0, this.undoManager.undoStack.length - marker);
+    }
+
+    /**
+     * Alle Marker zurücksetzen (z.B. beim Neuladen).
+     */
+    reset() {
+        this._stepMarkers = {};
+        this._currentStep = null;
+        console.log('[WizardStepUndo V1.1] Reset');
+    }
+
+    get currentStep() { return this._currentStep; }
+}
+
+
+// =========================================================================
 //  SECTION 4: ClipboardManager (Copy / Cut / Paste)
 // =========================================================================
 
@@ -782,6 +874,7 @@ class ClipboardManager {
 if (typeof window !== 'undefined') {
     window.UndoManager = UndoManager;
     window.ClipboardManager = ClipboardManager;
+    window.WizardStepUndo = WizardStepUndo;
 
     window.Commands = {
         BaseCommand,

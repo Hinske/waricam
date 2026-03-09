@@ -13,14 +13,15 @@
  * Koordinaten = Teile-Geometrie (nicht offset)
  *
  * V1.1: Dynamische R-Parameter via CeraJetEngine.toRParameters()
+ * V1.3: Multi-Head Support, Machine-Profile Integration
  *
- * Last Modified: 2026-02-17
- * Build: 20260217-tech10
+ * Last Modified: 2026-03-09
+ * Build: 20260309-multihead
  */
 
 class SinumerikPostprocessor {
 
-    static VERSION = '1.2';
+    static VERSION = '1.3';
 
     constructor(options = {}) {
         // ═══ Formatierung ═══
@@ -35,6 +36,14 @@ class SinumerikPostprocessor {
         // ═══ Arc-Fitting ═══
         this.useArcFitting = options.useArcFitting ?? true;
         this.arcTolerance = options.arcTolerance ?? 0.01;   // mm
+
+        // ═══ Multi-Head (V1.3) ═══
+        this.headCount = options.headCount ?? 1;           // Anzahl Schneidköpfe
+        this.headSpacing = options.headSpacing ?? 0;       // Abstand zwischen Köpfen (mm)
+        this.headAxis = options.headAxis ?? 'Y';           // Achse für Kopfabstand (X oder Y)
+
+        // ═══ Machine Profile (V1.3) ═══
+        this.machineProfile = options.machineProfile ?? null;  // MachineProfiles Objekt
 
         // ═══ Interner State ═══
         this._lineNum = 0;
@@ -732,6 +741,148 @@ class SinumerikPostprocessor {
 
     _ff(value) {
         return value.toFixed(this.feedDecimals);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // MULTI-HEAD SUPPORT (V1.3)
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Multi-Head: Generiert Code für mehrere Schneidköpfe.
+     * Teilt Konturen gleichmäßig auf Köpfe auf, berücksichtigt Kopfabstand.
+     * @param {CamContour[]} contours
+     * @param {number[]} cutOrder
+     * @param {Object} settings
+     * @returns {{ code: string, warnings: string[], stats: Object }}
+     */
+    generateMultiHead(contours, cutOrder, settings = {}) {
+        if (this.headCount <= 1) {
+            return this.generate(contours, cutOrder, settings);
+        }
+
+        console.log(`[PP V${SinumerikPostprocessor.VERSION}] Multi-Head: ${this.headCount} Köpfe, Abstand ${this.headSpacing}mm`);
+
+        const cuttable = cutOrder
+            .map(idx => contours[idx])
+            .filter(c => c && !c.isReference);
+
+        if (cuttable.length === 0) {
+            return { code: '', warnings: ['Keine schneidbaren Konturen'], stats: {} };
+        }
+
+        // Konturen auf Köpfe verteilen (Round-Robin oder Zonen)
+        const headGroups = this._distributeToHeads(cuttable);
+
+        // Einzelnen Code für jeden Kopf generieren, dann zusammenführen
+        this._lineNum = 0;
+        this._warnings = [];
+
+        const planName = (settings.planName || 'UNNAMED').toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+        const material = settings.material || 'AALLGEMEIN';
+        const tafelName = settings.tafelName || planName;
+        const dicke = settings.dicke || 8.0;
+        const rp = settings.technologyParams || {};
+        const plate = this._getPlateSize(contours);
+
+        let code = '';
+        code += this._generateMPFHeader(planName, material, tafelName, plate, dicke);
+        code += `KOPF_ANZAHL=${this.headCount}\n`;
+        code += `KOPF_ABSTAND=${this.headSpacing.toFixed(2)}\n`;
+        code += ' \n';
+        code += this._generateParameterSPF(planName, rp);
+        code += ' \n';
+
+        // Für jeden Kopf ein PART-Subprogramm
+        for (let h = 0; h < this.headCount; h++) {
+            const headContours = headGroups[h];
+            if (headContours.length === 0) continue;
+
+            const offset = h * this.headSpacing;
+            const offsetAxis = this.headAxis === 'X' ? 'X' : 'Y';
+
+            code += `%_N_PART${h + 1}_SPF\n`;
+            code += `;$PATH=/_N_WKS_DIR/_N_${planName}_WPD\n`;
+            code += `;KOPF ${h + 1} — ${headContours.length} Konturen, Offset ${offsetAxis}=${offset.toFixed(2)}mm\n`;
+
+            if (offset > 0) {
+                code += `; Kopf-Offset\n`;
+                code += `TRANS ${offsetAxis}=${offset.toFixed(2)}\n`;
+            }
+
+            // Konturen dieses Kopfes
+            this._lineNum = 1;
+            for (let i = 0; i < headContours.length; i++) {
+                const contourLines = this._generateContourBlock(headContours[i], i + 1);
+                code += contourLines.join('\n') + '\n';
+            }
+
+            if (offset > 0) {
+                code += `TRANS\n`; // Reset
+            }
+            code += `N${this._lineNum++} RET\n`;
+            code += ' \n';
+        }
+
+        const stats = {
+            contours: cuttable.length,
+            heads: this.headCount,
+            planName,
+            fileSize: code.length,
+            contoursPerHead: headGroups.map(g => g.length)
+        };
+
+        console.log(`[PP V${SinumerikPostprocessor.VERSION}] Multi-Head: ${this.headCount} Köpfe, ${stats.contoursPerHead.join('/')} Konturen`);
+        return { code, warnings: [...this._warnings], stats };
+    }
+
+    /**
+     * Verteilt Konturen auf Köpfe basierend auf Y-Position (Zonen).
+     */
+    _distributeToHeads(contours) {
+        const groups = Array.from({ length: this.headCount }, () => []);
+
+        if (this.headSpacing <= 0) {
+            // Ohne Abstand: Round-Robin
+            contours.forEach((c, i) => groups[i % this.headCount].push(c));
+        } else {
+            // Mit Abstand: Zonen-basiert auf Achse
+            const isX = this.headAxis === 'X';
+            const sorted = [...contours].sort((a, b) => {
+                const ca = this._contourCenter(a);
+                const cb = this._contourCenter(b);
+                return isX ? ca.x - cb.x : ca.y - cb.y;
+            });
+
+            const perHead = Math.ceil(sorted.length / this.headCount);
+            sorted.forEach((c, i) => {
+                const headIdx = Math.min(Math.floor(i / perHead), this.headCount - 1);
+                groups[headIdx].push(c);
+            });
+        }
+
+        return groups;
+    }
+
+    _contourCenter(contour) {
+        if (!contour.points || contour.points.length === 0) return { x: 0, y: 0 };
+        let sx = 0, sy = 0;
+        for (const p of contour.points) { sx += p.x; sy += p.y; }
+        return { x: sx / contour.points.length, y: sy / contour.points.length };
+    }
+
+    /**
+     * Wendet Machine-Profile-Einstellungen an (V1.3).
+     */
+    applyMachineProfile(profile) {
+        if (!profile) return;
+        this.machineProfile = profile;
+        if (profile.coordDecimals !== undefined) this.coordDecimals = profile.coordDecimals;
+        if (profile.feedDecimals !== undefined) this.feedDecimals = profile.feedDecimals;
+        if (profile.speedFactorNormal !== undefined) this.speedFactorNormal = profile.speedFactorNormal;
+        if (profile.speedFactorSmallHole !== undefined) this.speedFactorSmallHole = profile.speedFactorSmallHole;
+        if (profile.headCount !== undefined) this.headCount = profile.headCount;
+        if (profile.headSpacing !== undefined) this.headSpacing = profile.headSpacing;
+        console.log(`[PP V${SinumerikPostprocessor.VERSION}] Machine-Profile angewendet: ${profile.name || 'unnamed'}`);
     }
 }
 

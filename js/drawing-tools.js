@@ -12,13 +12,14 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
+ * V2.3: AutoCAD Compliance — Aliases (E/REC/CO/RO/MI/SC/TR/PL/F/CH/EX), Continuous Mode, Previous Selection
  * V2.2: FIX _entityToDxfFormat — points+isClosed statt startX/closed (Linien waren nicht selektierbar)
  * V2.0: Tier 2 Modification Tools, Always-Active ToolManager
  * V1.1: handleRawInput für Linie/Rechteck/Polylinie
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
- * Last Modified: 2026-02-15 MEZ
- * Build: 20260215
+ * Last Modified: 2026-03-09 MEZ
+ * Build: 20260309-autocad
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -36,6 +37,12 @@ class DrawingToolManager {
         // Aktives Tool
         this.activeTool = null;
 
+        // V2.3: Continuous Mode — Tool-Name merken für Auto-Restart
+        this._lastToolKey = null;
+
+        // V2.3: Previous Selection — letzte Selektion merken
+        this._previousSelection = [];
+
         // Gezeichnete Entities (werden bei "Apply" zu Konturen)
         this.entities = [];
 
@@ -51,25 +58,38 @@ class DrawingToolManager {
         // Modus (Backward-Kompatibilität: drawMode für Zeichnen-Tab)
         this.drawMode = false;
 
-        // Tool-Registry: Tier 1 (Zeichnen) + Tier 2 (Modifikation)
+        // Tool-Registry: Tier 1 (Zeichnen) + Tier 2 (Modifikation) + AutoCAD Aliases
         this.tools = {
             // Tier 1: Zeichnen
             'L':      () => new LineTool(this),
+            'LINE':   () => new LineTool(this),
             'C':      () => new CircleTool(this),
+            'CIRCLE': () => new CircleTool(this),
             'N':      () => new RectangleTool(this),
+            'REC':    () => new RectangleTool(this),       // AutoCAD: REC
+            'RECT':   () => new RectangleTool(this),       // AutoCAD: RECT
+            'RECTANGLE': () => new RectangleTool(this),
             'A':      () => new ArcTool(this),
+            'ARC':    () => new ArcTool(this),
             'P':      () => new PolylineTool(this),
+            'PL':     () => new PolylineTool(this),        // AutoCAD: PL
+            'PLINE':  () => new PolylineTool(this),        // AutoCAD: PLINE
             // Tier 2: Modifikation
             'M':      () => new MoveTool(this),
             'MOVE':   () => new MoveTool(this),
+            'CO':     () => new CopyTool(this),            // AutoCAD: CO
             'COPY':   () => new CopyTool(this),
             'R':      () => new RotateTool(this),
+            'RO':     () => new RotateTool(this),          // AutoCAD: RO
             'ROTATE': () => new RotateTool(this),
+            'MI':     () => new MirrorTool(this),           // AutoCAD: MI
             'MIRROR': () => new MirrorTool(this),
             'S':      () => new ScaleTool(this),
+            'SC':     () => new ScaleTool(this),            // AutoCAD: SC
             'SCALE':  () => new ScaleTool(this),
             'O':      () => new OffsetTool(this),
             'OFFSET': () => new OffsetTool(this),
+            'E':      () => new EraseTool(this),            // AutoCAD: E
             'ERASE':  () => new EraseTool(this),
             'DELETE':  () => new EraseTool(this),
             // Tier 3: Geometrie-Operationen
@@ -151,8 +171,12 @@ class DrawingToolManager {
         this.windowSelection = null;
 
         this.activeTool = factory();
+        this.activeTool._toolKey = key;  // V2.3: Tool-Key für Continuous Mode
         this.commandLine?.activate();
         this.activeTool.start();
+
+        // V2.3: Letzte Tool-Key merken für Continuous Mode
+        this._lastToolKey = key;
 
         // V5.2: Letzte Funktion merken für Kontextmenü "Wiederholen"
         if (this.app) this.app.lastToolShortcut = key;
@@ -163,6 +187,40 @@ class DrawingToolManager {
         }
 
         return true;
+    }
+
+    // V2.3: Continuous Mode — Tool nach Abschluss automatisch neu starten
+    restartTool() {
+        if (this._lastToolKey) {
+            this.startTool(this._lastToolKey);
+        }
+    }
+
+    // V2.3: Previous Selection speichern (vor Deselect)
+    savePreviousSelection() {
+        const sel = this.getSelectedContours();
+        if (sel.length > 0) {
+            this._previousSelection = [...sel];
+        }
+    }
+
+    // V2.3: Previous Selection wiederherstellen
+    restorePreviousSelection() {
+        if (this._previousSelection.length === 0) {
+            this.commandLine?.log('Keine vorherige Auswahl vorhanden', 'error');
+            return;
+        }
+        // Nur noch existierende Konturen selektieren
+        const valid = this._previousSelection.filter(c => this.app?.contours?.includes(c));
+        if (valid.length === 0) {
+            this.commandLine?.log('Vorherige Konturen nicht mehr vorhanden', 'error');
+            return;
+        }
+        this.app.contours.forEach(c => { c.isSelected = false; });
+        for (const c of valid) { c.isSelected = true; }
+        this.renderer?.render();
+        this.app?.updateContourPanel?.();
+        this.commandLine?.log(`${valid.length} Kontur(en) aus vorheriger Auswahl wiederhergestellt`, 'info');
     }
 
     /** Aktives Tool abbrechen */
@@ -252,6 +310,7 @@ class DrawingToolManager {
     /** Alle Konturen deselektieren */
     deselectAll() {
         if (!this.app?.contours) return;
+        this.savePreviousSelection();  // V2.3: Previous Selection merken
         this.app.contours.forEach(c => { c.isSelected = false; });
         this.renderer?.render();
         this.app?.updateContourPanel?.();
@@ -730,7 +789,7 @@ class DrawingToolManager {
 
     /** Standard-Prompt anzeigen */
     _setDefaultPrompt() {
-        this.commandLine?.setPrompt('Befehl eingeben (L C N A P M R S O T F E X J B | LE EX CH AR BO ...)');
+        this.commandLine?.setPrompt('Befehl (L C N A P | M CO RO MI SC E O X J B | REC PL ...)');
     }
 
     _handleInput(value) {
@@ -919,7 +978,25 @@ class ModificationTool extends BaseTool {
         } else {
             // Verb-Noun: Auswahl-Phase starten
             this.state = 'select';
-            this.cmd?.setPrompt(`${this.getToolName()} — Objekte wählen (Klick/Fenster, Enter = fertig):`);
+            this.cmd?.setPrompt(`${this.getToolName()} — Objekte wählen (Klick/Fenster, P=Vorherige, Enter = fertig):`);
+        }
+    }
+
+    // V2.3: "P" = Previous Selection in der Auswahl-Phase
+    acceptsOption(opt) {
+        return opt === 'P' && this.state === 'select';
+    }
+
+    handleOption(option) {
+        if (option === 'P' && this.state === 'select') {
+            this.manager.restorePreviousSelection();
+            const selected = this.manager.getSelectedContours();
+            if (selected.length > 0) {
+                this.selectedContours = [...selected];
+                this.selectionLocked = true;
+                this._onSelectionComplete(this.selectedContours);
+            }
+            return;
         }
     }
 
@@ -1218,9 +1295,10 @@ class MoveTool extends ModificationTool {
         this.manager.ghostContours = null;
         this.manager.rubberBand = null;
         this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
         this.manager.renderer?.render();
         this.manager.app?.updateContourPanel?.();
+        // V2.3: Continuous Mode — Tool automatisch neu starten
+        this.manager.restartTool();
     }
 
     finish() {
@@ -1466,9 +1544,10 @@ class CopyTool extends ModificationTool {
         this.manager.ghostContours = null;
         this.manager.rubberBand = null;
         this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
         this.manager.renderer?.render();
         this.manager.app?.updateContourPanel?.();
+        // V2.3: Continuous Mode
+        this.manager.restartTool();
     }
 
     finish() {
@@ -1486,7 +1565,6 @@ class CopyTool extends ModificationTool {
             return;
         }
         super.cancel();
-        this._finishTool();
     }
 
     getLastPoint() { return this.basePoint; }
@@ -1631,9 +1709,10 @@ class RotateTool extends ModificationTool {
         this.manager.ghostContours = null;
         this.manager.rubberBand = null;
         this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
         this.manager.renderer?.render();
         this.manager.app?.updateContourPanel?.();
+        // V2.3: Continuous Mode
+        this.manager.restartTool();
     }
 
     finish() {
@@ -1812,9 +1891,10 @@ class MirrorTool extends ModificationTool {
         this.manager.rubberBand = null;
         this.mirroredClones = null;
         this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
         this.manager.renderer?.render();
         this.manager.app?.updateContourPanel?.();
+        // V2.3: Continuous Mode
+        this.manager.restartTool();
     }
 
     getLastPoint() { return this.lineP1; }
@@ -1940,9 +2020,10 @@ class ScaleTool extends ModificationTool {
         this.manager.ghostContours = null;
         this.manager.rubberBand = null;
         this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
         this.manager.renderer?.render();
         this.manager.app?.updateContourPanel?.();
+        // V2.3: Continuous Mode
+        this.manager.restartTool();
     }
 
     finish() {

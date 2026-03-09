@@ -1,7 +1,11 @@
 /**
- * WARICAM DXF Parser V3.4
- * Last Modified: 2026-02-15 MEZ
- * Build: 20260215
+ * WARICAM DXF Parser V3.5
+ * Last Modified: 2026-03-09 MEZ
+ * Build: 20260309
+ *
+ * V3.5 Änderungen:
+ *   - TEXT/MTEXT Support: Bounding-Box oder Glyph-Konvertierung (via TextTool)
+ *   - HATCH Support: Boundary-Pfad Extraktion
  *
  * V3.3 FIXES:
  *   - CRITICAL: _parseLWPolyline 1000-Zeilen-Limit entfernt (schnitt große Polylinien ab!)
@@ -60,14 +64,14 @@ const DXFParser = {
     ARC_SEGMENTS: 16,
     
     // Bekannte Entity-Typen die wir parsen können
-    SUPPORTED_ENTITIES: ['LINE', 'LWPOLYLINE', 'POLYLINE', 'CIRCLE', 'ARC', 'SPLINE', 'ELLIPSE', 'INSERT'],
+    SUPPORTED_ENTITIES: ['LINE', 'LWPOLYLINE', 'POLYLINE', 'CIRCLE', 'ARC', 'SPLINE', 'ELLIPSE', 'INSERT', 'TEXT', 'MTEXT'],
     
     _blockDefinitions: {},
     _ignoredEntities: [],
     _entityStats: {},
 
     parse(dxfContent, options = {}) {
-        console.log('[DXF Parser V3.4] Starting parse...');
+        console.log('[DXF Parser V3.5] Starting parse...');
         const startTime = performance.now();
         
         try {
@@ -91,7 +95,7 @@ const DXFParser = {
             const normResult = this._autoNormalizeEntities(entities);
             if (normResult.normalized) {
                 entities = normResult.entities;
-                console.log(`[DXF V3.4] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
+                console.log(`[DXF V3.5] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
             }
 
             // Layer: Entity-Layer + TABLES-Layer zusammenführen
@@ -110,11 +114,11 @@ const DXFParser = {
             
             // V3.3: Detaillierte Entity-Typ-Statistik
             const typeBreakdown = Object.entries(this._entityStats).map(([t,c]) => `${c}\u00d7${t}`).join(', ');
-            console.log(`[DXF V3.4] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
+            console.log(`[DXF V3.5] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
             
             // V3.3: Kontur-Details loggen
             contours.forEach((c, i) => {
-                console.log(`[DXF V3.4]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
+                console.log(`[DXF V3.5]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
             });
 
             // Ignorierte Entities loggen
@@ -151,7 +155,7 @@ const DXFParser = {
                 warnings: this._generateWarnings(contours, entities)
             };
         } catch (error) {
-            console.error('[DXF Parser V3.4] Error:', error);
+            console.error('[DXF Parser V3.5] Error:', error);
             return { 
                 success: false, 
                 error: error.message, 
@@ -321,7 +325,7 @@ const DXFParser = {
         }
 
         if (layerDefs.names.length > 0) {
-            console.log(`[DXF V3.4] TABLES: ${layerDefs.names.length} Layer gefunden:`,
+            console.log(`[DXF V3.5] TABLES: ${layerDefs.names.length} Layer gefunden:`,
                 layerDefs.names.map(n => `${n}(ACI ${layerDefs.colors[n]})`).join(', '));
         }
         return layerDefs;
@@ -382,6 +386,13 @@ const DXFParser = {
                             this._trackEntity('INSERT', insertEntities.length);
                         }
                         entityType = null; // Schon getracked
+                        break;
+                    case 'TEXT':
+                    case 'MTEXT':
+                        entity = this._parseText(lines, i);
+                        break;
+                    case 'HATCH':
+                        entity = this._parseHatch(lines, i);
                         break;
                     default:
                         // Unbekannte Entity tracken
@@ -485,8 +496,15 @@ const DXFParser = {
                     case 'SPLINE': entity = this._parseSpline(lines, i); break;
                     case 'ELLIPSE': entity = this._parseEllipse(lines, i); break;
                     case 'INSERT':
-                        const insertEntities = this._parseInsert(lines, i, currentLayer);
-                        if (insertEntities) entities.push(...insertEntities);
+                        const insertEntities2 = this._parseInsert(lines, i, currentLayer);
+                        if (insertEntities2) entities.push(...insertEntities2);
+                        break;
+                    case 'TEXT':
+                    case 'MTEXT':
+                        entity = this._parseText(lines, i);
+                        break;
+                    case 'HATCH':
+                        entity = this._parseHatch(lines, i);
                         break;
                     default:
                         if (value && !['ENDSEC', 'SEQEND', 'SECTION', 'EOF'].includes(value)) {
@@ -567,7 +585,7 @@ const DXFParser = {
 
         // V3.3: Warnung wenn Vertices nicht der erwarteten Anzahl entsprechen
         if (expectedCount > 0 && vertices.length !== expectedCount) {
-            console.warn(`[DXF V3.4] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
+            console.warn(`[DXF V3.5] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
         }
 
         const isClosed = (flags & 1) === 1;
@@ -946,7 +964,7 @@ const DXFParser = {
         // V3.3: Diagnostik — unverkettete Segmente warnen
         const unusedSegs = segments.filter(s => !s.used);
         if (unusedSegs.length > 0) {
-            console.warn(`[DXF V3.4] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
+            console.warn(`[DXF V3.5] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
         }
 
         return result;
@@ -1131,6 +1149,139 @@ const DXFParser = {
             ...entity, points: entity.points ? entity.points.map(p => ({ x: this._snap(p.x - offsetX), y: this._snap(p.y - offsetY) })) : entity.points
         }));
         return { entities: normalizedEntities, normalized: true, offsetX, offsetY };
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // TEXT / MTEXT PARSER (V3.5)
+    // Konvertiert Text-Entities zu Polylinien-Rechtecken (Bounding-Box)
+    // Volle Glyph-Konvertierung über TextTool wenn opentype.js verfügbar
+    // ════════════════════════════════════════════════════════════════
+
+    _parseText(lines, startIndex) {
+        let x = 0, y = 0, height = 10, rotation = 0, text = '', layer = null;
+        let endIndex = startIndex;
+
+        for (let i = startIndex + 2; i < Math.min(startIndex + 100, lines.length); i += 2) {
+            const code = lines[i]?.trim();
+            const value = lines[i + 1]?.trim();
+            if (code === '0' && i > startIndex + 2) { endIndex = i; break; }
+            endIndex = i + 2;
+            switch (code) {
+                case '8': layer = value; break;
+                case '10': x = parseFloat(value) || 0; break;
+                case '20': y = parseFloat(value) || 0; break;
+                case '40': height = parseFloat(value) || 10; break;
+                case '50': rotation = parseFloat(value) || 0; break;
+                case '1': text = value || ''; break;
+            }
+        }
+
+        if (!text) return null;
+
+        // Versuche opentype.js Glyph-Konvertierung wenn TextTool verfügbar
+        if (typeof TextTool !== 'undefined' && TextTool.textToContours) {
+            try {
+                const contourData = TextTool.textToContours(text, x, y, height);
+                if (contourData && contourData.points && contourData.points.length >= 2) {
+                    contourData._layer = layer;
+                    contourData._endIndex = endIndex;
+                    contourData.sourceText = text;
+                    return contourData;
+                }
+            } catch (e) {
+                // Fallback zu Bounding-Box
+            }
+        }
+
+        // Fallback: Bounding-Box Rechteck
+        const approxWidth = text.length * height * 0.6;
+        const rotRad = rotation * Math.PI / 180;
+        const cos = Math.cos(rotRad), sin = Math.sin(rotRad);
+
+        const corners = [
+            { dx: 0, dy: 0 },
+            { dx: approxWidth, dy: 0 },
+            { dx: approxWidth, dy: height },
+            { dx: 0, dy: height }
+        ];
+
+        const points = corners.map(c => ({
+            x: this._snap(x + c.dx * cos - c.dy * sin),
+            y: this._snap(y + c.dx * sin + c.dy * cos)
+        }));
+        points.push({ ...points[0] }); // Schließen
+
+        console.log(`[DXF Parser V3.5] TEXT: "${text}" at (${x.toFixed(1)}, ${y.toFixed(1)}) h=${height}`);
+
+        return {
+            type: 'TEXT',
+            points,
+            isClosed: true,
+            _layer: layer,
+            _endIndex: endIndex,
+            sourceText: text
+        };
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // HATCH PARSER (V3.5)
+    // Extrahiert Boundary-Pfade aus HATCH-Entities
+    // ════════════════════════════════════════════════════════════════
+
+    _parseHatch(lines, startIndex) {
+        let layer = null;
+        let endIndex = startIndex;
+        const boundaryPoints = [];
+        let inBoundary = false;
+        let pathType = 0;
+
+        for (let i = startIndex + 2; i < Math.min(startIndex + 2000, lines.length); i += 2) {
+            const code = lines[i]?.trim();
+            const value = lines[i + 1]?.trim();
+            if (code === '0') { endIndex = i; break; }
+            endIndex = i + 2;
+
+            switch (code) {
+                case '8': layer = value; break;
+                case '91': // Anzahl Boundary-Pfade
+                    inBoundary = true;
+                    break;
+                case '92': // Boundary-Typ
+                    pathType = parseInt(value) || 0;
+                    break;
+                case '10':
+                    if (inBoundary) {
+                        const px = parseFloat(value) || 0;
+                        // Nächste Zeile sollte Code 20 sein
+                        const nextCode = lines[i + 2]?.trim();
+                        const nextVal = lines[i + 3]?.trim();
+                        if (nextCode === '20') {
+                            const py = parseFloat(nextVal) || 0;
+                            boundaryPoints.push({ x: this._snap(px), y: this._snap(py) });
+                        }
+                    }
+                    break;
+            }
+        }
+
+        if (boundaryPoints.length < 3) return null;
+
+        // Schließen
+        const first = boundaryPoints[0];
+        const last = boundaryPoints[boundaryPoints.length - 1];
+        if (Math.hypot(first.x - last.x, first.y - last.y) > 0.01) {
+            boundaryPoints.push({ ...first });
+        }
+
+        console.log(`[DXF Parser V3.5] HATCH: ${boundaryPoints.length} boundary points`);
+
+        return {
+            type: 'HATCH',
+            points: boundaryPoints,
+            isClosed: true,
+            _layer: layer,
+            _endIndex: endIndex
+        };
     },
 
     _calculateBounds(contours) {

@@ -3,12 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-09
-> **Version:** V5.4.2
-> **Build:** 20260220-arabeske
+> **Version:** V5.5.0
+> **Build:** 20260309-features
 
 ---
 
-## 🚀 Schnell-Befehle
+## Schnell-Befehle
 
 ```bash
 # Development-Server starten (Port 3000)
@@ -29,7 +29,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ---
 
-## 📁 Pfade
+## Pfade
 
 | Beschreibung | Pfad |
 |--------------|------|
@@ -39,40 +39,41 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ---
 
-## 🎯 Projekt
+## Projekt
 
 | Feld | Wert |
 |------|------|
 | Name | WARICAM / CeraCAM |
-| Version | **V5.4.2** |
+| Version | **V5.5.0** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
 
 ---
 
-## 🛠️ Module & Versionen (Stand 2026-03-09)
+## Module & Versionen (Stand 2026-03-09)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.4.1** | Wizard, Kontextmenü, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection |
+| **App** | `app.js` | **V5.5.0** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle |
-| **DXF-Parser** | `dxf-parser.js` | V3.3 | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware |
-| **CAMContour** | `cam-contour.js` | V4.6 | Lead-In/Out, Overcut, Collision, Slit, Kerf-Flip, Arc-Metadaten |
+| **DXF-Parser** | `dxf-parser.js` | **V3.5** | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware, TEXT/MTEXT/HATCH |
+| **CAMContour** | `cam-contour.js` | **V4.7** | Lead-In/Out, Overcut, Multi-Contour-Collision, Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | V3.7 | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Window-Selection-Rect |
-| **Postprozessor** | `sinumerik-postprocessor.js` | V1.2 | Sinumerik 840D MPF, 3-in-1 Dateistruktur, G41/G42, Piercing-Types |
-| **UndoManager** | `undo-manager.js` | V1.0 | Command Pattern, Undo/Redo, Clipboard (Copy/Cut/Paste) |
-| **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bögen (für PP-Ausgabe) |
+| **Renderer** | `canvas-renderer.js` | V3.12 | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect |
+| **Postprozessor** | `sinumerik-postprocessor.js` | **V1.3** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
+| **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
+| **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
-| **Drawing Tools** | `drawing-tools.js` | V2.1 | Tier 1: CAD-Tools (L/C/N/A/P) + Tier 2: Modification-Tools |
+| **Drawing Tools** | `drawing-tools.js` | **V2.3** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, Previous Selection |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | — | Tier 3: Explode, Join, Break |
 | **Advanced Tools** | `advanced-tools.js` | V1.2 | Arabeske-Tool, Aufteilen (CL2D/CLND/CLDCL) |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
-| **Tool Manager** | `tool-manager.js` | V2.1 | Tool-Routing, Always-Active, Shortcut-Dispatch |
+| **Tool Manager** | `tool-manager.js` | V2.2 | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
 | **Command Line** | `command-line.js` | V1.0 | AutoCAD-style Prompt, Koordinaten-Parser, History |
-| **Snap Manager** | `snap-manager.js` | V1.0 | 5 Snap-Typen + Ortho (F8), Snap-Indikatoren |
+| **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
+| **Snap Manager** | `snap-manager.js` | V1.2 | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
 | **Layer Manager** | `layer-manager.js` | V1.0 | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
 | **DXF Writer** | `dxf-writer.js` | V1.0 | DXF R12 (AC1009) Export |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
@@ -80,22 +81,28 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Properties Panel** | `properties-panel.js` | V1.1 | Kontur-Eigenschaften, Piercing, Lead-In, Area-Class |
 | **Text Tool** | `text-tool.js` | — | Text-Entities (opentype.js) |
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
-| **Dimension Tool** | `dimension-tool.js` | — | Bemaßung |
+| **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
 | **Debug Monitor** | `debug-monitor.js` | V1.0 | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
-| **Build-Info** | `build-info.js` | **V5.4.2** | Versions-Banner, Modul-Versionen, Changelog |
-| **Konstanten** | `constants.js` | V2.7 ⚠️ | Toleranzen, Farben, Defaults (veraltet) |
+| **Nesting** | `nesting.js` | **V1.0** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
+| **Toolpath Simulator** | `toolpath-simulator.js` | **V1.0** | Pfad-Verifikation, Animation, Kollisionsmatrix |
+| **Cost Calculator** | `cost-calculator.js` | **V1.0** | Kosten-/Zeitkalkulation mit CeraJet-Integration |
+| **Machine Profiles** | `machine-profiles.js` | **V1.0** | Maschinenpark-Verwaltung, PP-Profile, localStorage |
+| **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
+| **Quality Zones** | `quality-zones.js` | **V1.0** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
+| **Build-Info** | `build-info.js` | **V5.5.0** | Versions-Banner, Modul-Versionen, Changelog |
+| **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
 
-## 🏗️ High-Level Architektur
+## High-Level Architektur
 
 ### Daten-Pipeline (6-Step Wizard)
 
 ```
 1. Datei       → DXFParser.parse() → Entities → chainContours() → CamContour[]
                  ODER: Zeichnen → DrawingTools → addEntity() → applyEntities() → Pipeline
-2. Referenz    → Pipeline._detectReference() → größte rechteckige Kontur
+2. Referenz    → Pipeline._detectReference() → groesste rechteckige Kontur
 3. Nullpunkt   → Benutzer setzt Nullpunkt (Material-Ecke)
 4. Schneiden   → Lead-In/Out, Kerf-Offset, Overcut, Slit-Modus, MicroJoints
 5. Reihenfolge → TSP (Hinten-Rechts → Vorne-Links), Inside-Out, Drag&Drop
@@ -110,26 +117,27 @@ waterjet_v2/
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.4.2
-│   ├── constants.js                   ← Toleranzen, Farben, Defaults (⚠️ V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.4.1
-│   ├── dxf-parser.js                  ← DXF Parser V3.3
+│   ├── build-info.js                  ← Versions-Banner V5.5.0
+│   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
+│   ├── app.js                         ← Hauptanwendung V5.5.0
+│   ├── dxf-parser.js                  ← DXF Parser V3.5 (TEXT/MTEXT/HATCH)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
-│   ├── cam-contour.js                 ← Kontur-Klasse V4.6
+│   ├── cam-contour.js                 ← Kontur-Klasse V4.7 (Multi-Collision)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.7
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.12 (Grip-Editing)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.0
-│   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.0
-│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.2
+│   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
+│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.3 (Multi-Head)
 │   ├── command-line.js                ← Command-Line UI V1.0
-│   ├── snap-manager.js               ← Snap-System V1.0
-│   ├── drawing-tools.js              ← CAD-Tools V2.1 (Tier 1 + Tier 2)
+│   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
+│   ├── snap-manager.js               ← Snap-System V1.2
+│   ├── drawing-tools.js              ← CAD-Tools V2.3 (AutoCAD-Aliases, Continuous)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
 │   ├── advanced-tools.js              ← Arabeske, Aufteilen
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
-│   ├── tool-manager.js               ← Tool-Routing V2.1
+│   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.0
 │   ├── dxf-writer.js                 ← DXF R12 Export V1.0
 │   ├── svg-parser.js                  ← SVG-Import
@@ -137,32 +145,38 @@ waterjet_v2/
 │   ├── properties-panel.js            ← Eigenschaften-Panel V1.1
 │   ├── text-tool.js                   ← Text-Entities (opentype.js)
 │   ├── image-underlay.js             ← Hintergrund-Bilder
-│   ├── dimension-tool.js             ← Bemaßung
+│   ├── dimension-tool.js             ← Bemassung
 │   ├── measure-tool.js               ← Messmodus
 │   ├── debug-monitor.js              ← Debug-Overlay (Strg+Shift+D)
+│   ├── nesting.js                    ← Nesting Engine V1.0
+│   ├── toolpath-simulator.js         ← Toolpath Simulator V1.0
+│   ├── cost-calculator.js            ← Kalkulation V1.0
+│   ├── machine-profiles.js           ← Maschinenpark V1.0
+│   ├── bridge-cutting.js             ← Haltestege V1.0
+│   ├── quality-zones.js              ← Qualitaetszonen V1.0
 │   ├── opentype.min.js               ← Font-Rendering Library
 │   └── package.json                   ← Node.js Metadaten
 ├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
 ├── CHECKLIST.md                       ← Implementierungs-Checkliste
 ├── CLAUDE.md                          ← Diese Datei
-└── README.md                          ← Projekt-Übersicht
+└── README.md                          ← Projekt-Uebersicht
 ```
 
 ---
 
-## 🔥 Design-Patterns
+## Design-Patterns
 
 ### Command Pattern (Undo/Redo)
 ```javascript
-// Jede Datenmutation über UndoManager:
+// Jede Datenmutation ueber UndoManager:
 app.undoManager.execute(new PropertyChangeCommand(contour, 'quality', newValue, () => {
     app.renderer?.render();
     app.updateContourPanel();
 }));
 
 // Batch-Operationen:
-app.undoManager.beginGroup('Batch-Änderung');
+app.undoManager.beginGroup('Batch-Aenderung');
 // ... mehrere Commands ...
 app.undoManager.endGroup();
 
@@ -171,11 +185,11 @@ app._captureSnapshot();   // beim ersten input-Event
 app._commitChanges();     // beim change-Event
 ```
 
-### Modification-Tool Undo-Pattern (NEU V3.5)
+### Modification-Tool Undo-Pattern
 ```javascript
 // Move/Rotate/Mirror/Scale: FunctionCommand mit Deep-Copy Snapshots
 const snapshots = contours.map(c => ({ contour: c, oldPoints: deepCopy(c.points) }));
-// ... Transformation ausführen ...
+// ... Transformation ausfuehren ...
 const newSnapshots = contours.map((c, i) => ({ ...snapshots[i], newPoints: deepCopy(c.points) }));
 
 const cmd = new FunctionCommand(
@@ -183,72 +197,89 @@ const cmd = new FunctionCommand(
     () => { /* Redo: newPoints setzen + ModificationTool.invalidateCache() */ },
     () => { /* Undo: oldPoints setzen + ModificationTool.invalidateCache() */ }
 );
-app.undoManager.undoStack.push(cmd);  // Direkt pushen, Aktion bereits ausgeführt
-
-// CopyTool → AddContoursCommand
-// EraseTool → DeleteContoursCommand
+app.undoManager.undoStack.push(cmd);  // Direkt pushen, Aktion bereits ausgefuehrt
 ```
 
-### Cache-Invalidation (NEU V3.5)
+### Cache-Invalidation
 ```javascript
-// CamContour hat KEINE invalidate()-Methode — manuelle Cache-Löschung:
+// CamContour — manuelle Cache-Loeschung nach Punkt-Aenderungen:
 ModificationTool.invalidateCache(contour);
-// Löscht: _cachedKerfPolyline, _cacheKey, _cachedLeadInPath, _cachedLeadOutPath, _cachedOvercutPath
+// Loescht: _cachedKerfPolyline, _cacheKey, _cachedLeadInPath, _cachedLeadOutPath, _cachedOvercutPath
 ```
 
-### Click-Routing (NEU V3.5)
+### Click-Routing
 ```
-Canvas-Click → 
+Canvas-Click →
   1. ToolManager hat aktives Tool?     → tool.onClick(worldPos)
   2. Startpunkt-Modus?                 → handleStartpointClick()
   3. Messmodus?                        → handleMeasureClick()
-  4. Kontextmenü offen?                → schließen
+  4. Kontextmenu offen?                → schliessen
   5. Kontur unter Cursor (Hit-Test)?   → toggleSelection()
-  6. Leere Fläche?                     → deselectAll()
+  6. Leere Flaeche?                    → deselectAll()
 ```
 
-### Keyboard-Shortcuts (V3.5)
+### Keyboard-Shortcuts
 | Shortcut | Aktion |
 |----------|--------|
-| L/C/N/A/P | Drawing Tools (Line/Circle/Rectangle/Arc/Polyline) |
-| M | MoveTool (oder Messmodus wenn kein Tool-Kontext) |
-| R | RotateTool |
-| S | ScaleTool |
-| Shift+C | CopyTool |
-| Shift+M | MirrorTool |
-| DEL | EraseTool |
+| L | LineTool |
+| C | CircleTool |
+| N / REC | RectangleTool |
+| A | ArcTool |
+| P / PL | PolylineTool |
+| M | MoveTool |
+| CO | CopyTool |
+| R / RO | RotateTool |
+| MI | MirrorTool |
+| S / SC | ScaleTool |
+| E | EraseTool |
+| DEL | EraseTool (direkt) |
 | O | OffsetTool (Platzhalter) |
+| X | ExplodeTool |
+| J | JoinTool |
+| B | BreakTool |
 | F8 | Ortho Toggle |
+| F3 | Messmodus |
 | ESC | Escape-Kaskade: Tool → Measure → Startpoint → Selection |
 | STRG+Z | Undo |
 | STRG+Y / STRG+Shift+Z | Redo |
 | STRG+C/X/V | Copy/Cut/Paste (Clipboard) |
 | STRG+A | Alle selektieren |
+| STRG+S | DXF Speichern |
+| STRG+Shift+S | DXF Speichern unter |
+| STRG+Shift+D | Debug Monitor |
+| Rechtsklick | Enter/Bestaetigen (aktives Tool) oder Kontextmenu |
+
+### AutoCAD-Compliance (V2.3)
+- **Continuous Mode:** Modification Tools starten nach Abschluss automatisch neu (ESC = Abbrechen)
+- **Previous Selection:** `P` in Selektionsphase → letzte Auswahl wiederherstellen
+- **Dynamic Input HUD:** Koordinaten/Distanz/Winkel am Cursor
+- **Command Aliases:** Alle Standard-AutoCAD-Kuerzel (CO, RO, MI, SC, E, REC, PL, etc.)
+- **Noun-Verb:** Selektieren → Tool-Shortcut → Tool arbeitet mit Selektion
+- **Verb-Noun:** Tool-Shortcut → Selektieren → Enter/Space → Tool startet
+- **Window-Selection:** L→R = nur innerhalb, R→L = beruehrt oder innerhalb
+- **Ghost-Preview:** halbtransparente Vorschau bei Transformationen
+- **Rechtsklick = Enter:** Bei aktivem Tool = Bestaetigen
 
 ### Debug-Logs mit Prefix
 ```javascript
-console.log('[DXF Parser V3.2] Starting parse...');
+console.log('[DXF Parser V3.5] Starting parse...');
 console.log('[Pipeline V3.1] Topology: 5 discs, 2 holes');
-console.log('[PP V1.0] Generiert: KERNKREIS.CNC — 12 Konturen');
-console.log('[UndoManager V1.0] Ausgeführt: "Quality → 3"');
-console.log('[DrawingTools V2.0] MoveTool: 3 contours moved');
+console.log('[PP V1.3] Generiert: KERNKREIS.CNC — 12 Konturen');
+console.log('[UndoManager V1.1] Ausgefuehrt: "Quality → 3"');
+console.log('[DrawingTools V2.3] MoveTool: 3 contours moved');
 ```
 
 ### Weitere Patterns
 - **Optional Chaining:** `this.renderer?.render()`
 - **Wizard-Step:** Jeder Step hat UI-Element, Handler, Validation, render()
 - **Corner-Lead:** `_isAtCorner()` → Linear statt Arc, Overcut=0
-- **Collision Detection:** `_shortenLeadIfCollision()` → Lead am Schnittpunkt kürzen
-- **Noun-Verb:** Selektieren → Tool-Shortcut → Tool arbeitet mit Selektion
-- **Verb-Noun:** Tool-Shortcut → Selektieren → Enter/Space → Tool startet
-- **Window-Selection:** L→R = nur innerhalb, R→L = berührt oder innerhalb
-- **Ghost-Preview:** `toolManager.drawOverlay(ctx)` — halbtransparente Vorschau
+- **Collision Detection:** Multi-Kontur: `CamContour.checkAllCollisions(contours, margin)`
 
 ---
 
-## 🔧 Postprozessor (Sinumerik 840D)
+## Postprozessor (Sinumerik 840D)
 
-Seit V1.0 (2026-02-13) funktional:
+Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 ```
 %_N_{PLANNAME}_MPF       — Hauptprogramm (Header, Plattendaten)
@@ -257,20 +288,22 @@ Seit V1.0 (2026-02-13) funktional:
 ```
 
 - Kerf: Controller-seitig (Koordinaten = Teile-Geometrie, nicht offset)
-- Arc-Fitting: Polylinie → echte G02/G03 Bögen
+- Arc-Fitting: Polylinie → echte G02/G03 Boegen
 - Speed-Ramping: Small Holes 20%, Normal 69%
 - Slit: G91 G40 (inkrementell, ohne Kerf)
+- Multi-Head: Konturen-Verteilung auf N Schneidkoepfe (V1.3)
+- Machine Profiles: Maschinenpark-Integration (V1.3)
 
 **Noch offen:** M03/M05 Pumpe, Z-Achse, Abrasiv-Steuerung
 
 ---
 
-## 📋 Konventionen
+## Konventionen
 
-**Versions-Pflege bei jeder Code-Änderung:**
+**Versions-Pflege bei jeder Code-Aenderung:**
 1. `build-info.js` → Modul-Version + Build-Timestamp (YYYYMMDD-HHMM MEZ)
 2. Datei-Header → Version, Last Modified, Build
-3. `index.html` → `?v=` Cache-Busting hochzählen
+3. `index.html` → `?v=` Cache-Busting hochzaehlen
 4. Console-Logs → Versions-Prefix aktualisieren
 5. `CLAUDE.md` → Modul-Tabelle aktualisieren bei Versions-Bumps
 6. System-Anweisungen liegen in `.claude/` (nicht in Git)
@@ -281,65 +314,56 @@ Seit V1.0 (2026-02-13) funktional:
 
 ---
 
-## ⚠️ Bekannte Einschränkungen
+## Bekannte Einschraenkungen
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🔴 | TEXT/DTEXT/HATCH nicht unterstützt |
-| DXF-Parser | 🔴 | O(n³) Chaining bei >5000 Entities |
-| Collision | 🟡 | Nur eigene Kontur, nicht Nachbar-Konturen |
+| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH jetzt unterstuetzt (V3.5) |
+| DXF-Parser | 🔴 | O(n^3) Chaining bei >5000 Entities |
+| Collision | 🟢 | Multi-Kontur Collision Detection (V4.7) |
 | Lead-Routing | 🟡 | Kein Routing um Hindernisse |
 | Postprozessor | 🟡 | M03/M05, Z-Achse, Abrasiv fehlen |
-| Modification Tools | 🟡 | Offset nur Platzhalter (V2.1 geplant) |
-| Modification Tools | 🟡 | CamContour hat keine clone()-Methode |
-| Koordinatensystem | 🟡 | 90°-Drehung Software vs. Maschine (offen) |
-| constants.js | 🟢 | Zeigt V2.7, App ist V3.5 |
+| Modification Tools | 🟡 | Offset nur Platzhalter |
+| Koordinatensystem | 🟡 | 90-Grad-Drehung Software vs. Maschine (offen) |
 
 ---
 
-## 📝 Nächste Prioritäten
+## Naechste Prioritaeten
 
 1. **PP Praxistest** — CNC-Datei auf echter Sinumerik 840D validieren
-2. **Tier 3 CAD-Tools** — Trim, Fillet, Chamfer, Extend, Break, Join, Explode, Offset
-3. **PP vervollständigen** — M03/M05, Z-Achse, Abrasiv
-4. **WARICAM 16-Varianten Sortierung** — 4 Ecken × 4 Formen
-5. **Multi-Kontur Collision** — Lead vs. ALLE Konturen
+2. **PP vervollstaendigen** — M03/M05, Z-Achse, Abrasiv
+3. **Tier 3 CAD-Tools erweitern** — Trim, Fillet, Chamfer, Extend, Offset
+4. **Nesting Praxistest** — BLF-Algorithmus mit realen Teilen validieren
+5. **Kalkulation Praxistest** — Kostenmodell mit realen CeraJet-Daten abgleichen
 
 ---
 
-## 🔄 Sync-Prüfung
+## Sync-Pruefung
 
 Console-Ausgabe beim Laden:
 ```
-╔══════════════════════════════════════════════════════════╗
-║  WARICAM/CeraCAM V5.4.2 - Build 20260220-arabeske      ║
-║  Last Modified: 2026-02-20 15:00 MEZ                    ║
-╚══════════════════════════════════════════════════════════╝
+WARICAM/CeraCAM V5.5.0 - Build 20260309-features
 [BUILD] Modules:
-  dxf-parser: V3.3 (20260215-2330)
-  geometry: V2.9 (20260128-0645)
-  pipeline: V3.1 (20260212-1400)
-  cam-contour: V4.6 (20260220-arcmeta)
-  canvas-renderer: V3.7 (20260220-arclead)
-  undo-manager: V1.0 (20260212-2000)
-  sinumerik-pp: V1.2 (20260219-phaseB)
-  command-line: V1.0 (20260213-1200)
-  snap-manager: V1.0 (20260213-1200)
-  geometry-ops: V2.2 (20260220-arabeske)
-  drawing-tools: V2.1 (20260214-1600)
-  tool-manager: V2.1 (20260215-1500)
-  layer-manager: V1.0 (20260215-2200)
-  dxf-writer: V1.0 (20260215-2200)
-  app: V5.4.1 (20260220-ctx1)
-  properties-panel: V1.1 (20260219-phaseB)
-  debug-monitor: V1.0 (20260219-dm10)
+  dxf-parser: V3.5 (20260309-text)
+  cam-contour: V4.7 (20260309-multicol)
+  undo-manager: V1.1 (20260309-wizard)
+  sinumerik-pp: V1.3 (20260309-multihead)
+  drawing-tools: V2.3 (20260309-autocad)
+  dynamic-input: V1.0 (20260309-dynhud)
+  nesting: V1.0 (20260309)
+  toolpath-simulator: V1.0 (20260309)
+  cost-calculator: V1.0 (20260309)
+  machine-profiles: V1.0 (20260309)
+  bridge-cutting: V1.0 (20260309)
+  quality-zones: V1.0 (20260309)
+  ...
 ```
 
 **Fehlt diese Ausgabe?** → Syncthing hat nicht synchronisiert!
 
 ---
 
-## 👤 Kontext
+## Kontext
 
 - **Entwickler:** Markus (Cerasell GmbH)
 - **System-Anweisung:** `.claude/system-anweisung-v15.md` (verbindlich, nicht in Git)
