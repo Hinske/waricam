@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-02-14
-> **Version:** V3.5
-> **Build:** 20260214-1400 MEZ
+> **Letzte Aktualisierung:** 2026-03-09
+> **Version:** V5.4.2
+> **Build:** 20260220-arabeske
 
 ---
 
@@ -44,30 +44,46 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | Feld | Wert |
 |------|------|
 | Name | WARICAM / CeraCAM |
-| Version | **V3.5** |
+| Version | **V5.4.2** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
 
 ---
 
-## 🛠️ Module & Versionen (Stand 2026-02-14)
+## 🛠️ Module & Versionen (Stand 2026-03-09)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V3.5** | 6-Step Wizard, Kontextmenü, Export-Modal, Undo-Integration, Always-Active ToolManager, Click-Routing, Window-Selection |
+| **App** | `app.js` | **V5.4.1** | Wizard, Kontextmenü, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
-| **DXF-Parser** | `dxf-parser.js` | V3.2 | DXF → Entities, SPLINE-Tessellation, Grid-Chaining |
-| **CAMContour** | `cam-contour.js` | V4.4 | Lead-In/Out, Overcut, Collision, Slit, Kerf-Flip |
-| **Renderer** | `canvas-renderer.js` | **V3.5** | Canvas-Rendering, Hit-Testing, Startpunkt-Drag, DPR-Fix, Drawing-Overlay, Snap-Crosshair, Window-Selection-Rect |
-| **Postprozessor** | `sinumerik-postprocessor.js` | V1.0 | Sinumerik 840D MPF, 3-in-1 Dateistruktur, G41/G42, Arc-Fitting |
+| **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle |
+| **DXF-Parser** | `dxf-parser.js` | V3.3 | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware |
+| **CAMContour** | `cam-contour.js` | V4.6 | Lead-In/Out, Overcut, Collision, Slit, Kerf-Flip, Arc-Metadaten |
+| **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
+| **Renderer** | `canvas-renderer.js` | V3.7 | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Window-Selection-Rect |
+| **Postprozessor** | `sinumerik-postprocessor.js` | V1.2 | Sinumerik 840D MPF, 3-in-1 Dateistruktur, G41/G42, Piercing-Types |
 | **UndoManager** | `undo-manager.js` | V1.0 | Command Pattern, Undo/Redo, Clipboard (Copy/Cut/Paste) |
 | **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bögen (für PP-Ausgabe) |
 | **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
-| **Drawing Tools** | `drawing-tools.js` | **V2.0** | Tier 1: 5 CAD-Tools (L/C/N/A/P) + Tier 2: 6 Modification-Tools (Move/Copy/Rotate/Mirror/Scale/Erase), Ghost-Preview, Cache-Invalidation |
+| **Drawing Tools** | `drawing-tools.js` | V2.1 | Tier 1: CAD-Tools (L/C/N/A/P) + Tier 2: Modification-Tools |
+| **Drawing Tools Ext** | `drawing-tools-ext.js` | — | Tier 3: Explode, Join, Break |
+| **Advanced Tools** | `advanced-tools.js` | V1.2 | Arabeske-Tool, Aufteilen (CL2D/CLND/CLDCL) |
+| **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
+| **Tool Manager** | `tool-manager.js` | V2.1 | Tool-Routing, Always-Active, Shortcut-Dispatch |
 | **Command Line** | `command-line.js` | V1.0 | AutoCAD-style Prompt, Koordinaten-Parser, History |
 | **Snap Manager** | `snap-manager.js` | V1.0 | 5 Snap-Typen + Ortho (F8), Snap-Indikatoren |
-| **Build-Info** | `build-info.js` | **V3.5** | Versions-Banner in Console, Modul-Versionen, Changelog |
+| **Layer Manager** | `layer-manager.js` | V1.0 | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
+| **DXF Writer** | `dxf-writer.js` | V1.0 | DXF R12 (AC1009) Export |
+| **SVG Parser** | `svg-parser.js` | — | SVG-Import |
+| **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
+| **Properties Panel** | `properties-panel.js` | V1.1 | Kontur-Eigenschaften, Piercing, Lead-In, Area-Class |
+| **Text Tool** | `text-tool.js` | — | Text-Entities (opentype.js) |
+| **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
+| **Dimension Tool** | `dimension-tool.js` | — | Bemaßung |
+| **Measure Tool** | `measure-tool.js` | — | Messmodus |
+| **Debug Monitor** | `debug-monitor.js` | V1.0 | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
+| **Build-Info** | `build-info.js` | **V5.4.2** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 ⚠️ | Toleranzen, Farben, Defaults (veraltet) |
 
 ---
@@ -90,31 +106,46 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ```
 waterjet_v2/
-├── index.html                         ← UI (6-Step Wizard, Export-Modal, Draw-Toolbar, Command-Line)
+├── index.html                         ← UI (Wizard, Export-Modal, Ribbon, Command-Line)
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
+├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V3.5
+│   ├── build-info.js                  ← Versions-Banner V5.4.2
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (⚠️ V2.7)
-│   ├── app.js                         ← Hauptanwendung V3.5
-│   ├── dxf-parser.js                  ← DXF Parser V3.2
+│   ├── app.js                         ← Hauptanwendung V5.4.1
+│   ├── dxf-parser.js                  ← DXF Parser V3.3
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
+│   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
-│   ├── cam-contour.js                 ← Kontur-Klasse V4.4
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.5
+│   ├── cam-contour.js                 ← Kontur-Klasse V4.6
+│   ├── cerajet-engine.js              ← Technologie-Engine
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.7
 │   ├── arc-fitting.js                 ← Arc Fitting V3.0
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.0
-│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.0
+│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.2
 │   ├── command-line.js                ← Command-Line UI V1.0
 │   ├── snap-manager.js               ← Snap-System V1.0
-│   ├── drawing-tools.js              ← CAD-Tools V2.0 (Tier 1 + Tier 2)
+│   ├── drawing-tools.js              ← CAD-Tools V2.1 (Tier 1 + Tier 2)
+│   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
+│   ├── advanced-tools.js              ← Arabeske, Aufteilen
+│   ├── cam-tools.js                   ← CAM-Werkzeuge
+│   ├── tool-manager.js               ← Tool-Routing V2.1
+│   ├── layer-manager.js              ← Layer-System V1.0
+│   ├── dxf-writer.js                 ← DXF R12 Export V1.0
+│   ├── svg-parser.js                  ← SVG-Import
+│   ├── cnc-reader.js                  ← CNC-Import
+│   ├── properties-panel.js            ← Eigenschaften-Panel V1.1
+│   ├── text-tool.js                   ← Text-Entities (opentype.js)
+│   ├── image-underlay.js             ← Hintergrund-Bilder
+│   ├── dimension-tool.js             ← Bemaßung
+│   ├── measure-tool.js               ← Messmodus
+│   ├── debug-monitor.js              ← Debug-Overlay (Strg+Shift+D)
+│   ├── opentype.min.js               ← Font-Rendering Library
 │   └── package.json                   ← Node.js Metadaten
+├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
-├── changes/                           ← Änderungs-Dokumentation
-├── system-anweisung-v7.md             ← System-Anweisung V7.0 (verbindlich)
 ├── CHECKLIST.md                       ← Implementierungs-Checkliste
 ├── CLAUDE.md                          ← Diese Datei
-├── TODO.md                            ← Feature-Backlog (⚠️ teilweise veraltet)
-├── ROADMAP.md                         ← Roadmap (⚠️ teilweise veraltet)
 └── README.md                          ← Projekt-Übersicht
 ```
 
@@ -242,7 +273,7 @@ Seit V1.0 (2026-02-13) funktional:
 3. `index.html` → `?v=` Cache-Busting hochzählen
 4. Console-Logs → Versions-Prefix aktualisieren
 5. `CLAUDE.md` → Modul-Tabelle aktualisieren bei Versions-Bumps
-6. `system-anweisung-v7.md` → bei signifikanten Feature-Änderungen
+6. System-Anweisungen liegen in `.claude/` (nicht in Git)
 
 **Code-Stil:** Deutsch (Kommentare, Doku), Optional Chaining, kategorisierte Logs
 
@@ -281,21 +312,27 @@ Seit V1.0 (2026-02-13) funktional:
 Console-Ausgabe beim Laden:
 ```
 ╔══════════════════════════════════════════════════════════╗
-║  WARICAM/CeraCAM V3.5 - Build 20260214-1400            ║
-║  Last Modified: 2026-02-14 14:00 MEZ                    ║
+║  WARICAM/CeraCAM V5.4.2 - Build 20260220-arabeske      ║
+║  Last Modified: 2026-02-20 15:00 MEZ                    ║
 ╚══════════════════════════════════════════════════════════╝
 [BUILD] Modules:
-  dxf-parser: V3.2 (20260212-1400)
+  dxf-parser: V3.3 (20260215-2330)
   geometry: V2.9 (20260128-0645)
   pipeline: V3.1 (20260212-1400)
-  cam-contour: V4.4 (20260211-1800)
-  canvas-renderer: V3.5 (20260214-1400)
+  cam-contour: V4.6 (20260220-arcmeta)
+  canvas-renderer: V3.7 (20260220-arclead)
   undo-manager: V1.0 (20260212-2000)
-  sinumerik-pp: V1.0 (20260213-1000)
+  sinumerik-pp: V1.2 (20260219-phaseB)
   command-line: V1.0 (20260213-1200)
   snap-manager: V1.0 (20260213-1200)
-  drawing-tools: V2.0 (20260214-1400)
-  app: V3.5 (20260214-1400)
+  geometry-ops: V2.2 (20260220-arabeske)
+  drawing-tools: V2.1 (20260214-1600)
+  tool-manager: V2.1 (20260215-1500)
+  layer-manager: V1.0 (20260215-2200)
+  dxf-writer: V1.0 (20260215-2200)
+  app: V5.4.1 (20260220-ctx1)
+  properties-panel: V1.1 (20260219-phaseB)
+  debug-monitor: V1.0 (20260219-dm10)
 ```
 
 **Fehlt diese Ausgabe?** → Syncthing hat nicht synchronisiert!
@@ -305,5 +342,5 @@ Console-Ausgabe beim Laden:
 ## 👤 Kontext
 
 - **Entwickler:** Markus (Cerasell GmbH)
-- **System-Anweisung:** `system-anweisung-v7.md` (verbindlich)
+- **System-Anweisung:** `.claude/system-anweisung-v15.md` (verbindlich, nicht in Git)
 - **Sprache:** Deutsch bevorzugt
