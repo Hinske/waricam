@@ -1,0 +1,20 @@
+{
+  "name": "ceracam",
+  "version": "2.7.0",
+  "description": "CAM Software für CNC-Wasserstrahlschneiden",
+  "main": "index.html",
+  "scripts": {
+    "serve": "npx serve .",
+    "dev": "npx serve . -p 3000"
+  },
+  "keywords": [
+    "cam",
+    "cnc",
+    "waterjet",
+    "dxf",
+    "waricam"
+  ],
+  "author": "Cerasell GmbH",
+  "license": "UNLICENSED",
+  "private": true
+}
