@@ -112,6 +112,7 @@ class WaricamApp {
         this.layerManager.onChange = () => this._updateLayerUI();
         this.dxfWriter = new DXFWriter();
         this.loadedFileName = '';  // Geladener Dateiname (für "Speichern")
+        this._lastDirHandle = null; // Letzter Ordner (für "Speichern unter")
         
         // V3.11: Image Underlay Manager
         this.imageUnderlayManager = new ImageUnderlayManager(this);
@@ -2338,6 +2339,7 @@ class WaricamApp {
                 break;
             case 4:
                 if (this.renderer) this.renderer.currentMode = 'anschuss';
+                this._applyLeadValues();
                 this.updateContourPanel();
                 break;
             case 5:
@@ -2366,10 +2368,29 @@ class WaricamApp {
         const dropZone = document.getElementById('drop-zone');
         const canvasArea = document.getElementById('canvas-area');
         
-        uploadArea.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('click', () => fileInput.click());
-        document.getElementById('start-hint')?.addEventListener('click', () => fileInput.click());
-        
+        // File-Open: showOpenFilePicker (für DirHandle) oder Fallback auf <input>
+        const openFile = async () => {
+            if (window.showOpenFilePicker) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{ description: 'DXF-Datei', accept: { 'application/dxf': ['.dxf'] } }],
+                        startIn: this._lastDirHandle || 'documents'
+                    });
+                    this._lastDirHandle = fileHandle; // Ordner merken
+                    const file = await fileHandle.getFile();
+                    this.loadFile(file);
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                    console.warn('[App] showOpenFilePicker fehlgeschlagen, Fallback:', err);
+                }
+            }
+            fileInput.click();
+        };
+        uploadArea.addEventListener('click', openFile);
+        dropZone.addEventListener('click', openFile);
+        document.getElementById('start-hint')?.addEventListener('click', openFile);
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) this.loadFile(e.target.files[0]);
         });
@@ -3872,9 +3893,50 @@ class WaricamApp {
         this._doSaveDXF(filename);
     }
 
-    /** Speichern unter... (neuer Dateiname) */
-    saveDXFAs() {
+    /** Speichern unter... (neuer Dateiname) — öffnet immer Ordnerauswahl */
+    async saveDXFAs() {
         const defaultName = this.loadedFileName || 'zeichnung.dxf';
+
+        // File System Access API (Chrome, Edge, Opera)
+        if (window.showSaveFilePicker) {
+            try {
+                const opts = {
+                    suggestedName: defaultName,
+                    types: [{ description: 'DXF-Datei', accept: { 'application/dxf': ['.dxf'] } }]
+                };
+                // Letzten Ordner wiederverwenden
+                if (this._lastDirHandle) {
+                    opts.startIn = this._lastDirHandle;
+                }
+                const fileHandle = await window.showSaveFilePicker(opts);
+                // Ordner merken für nächstes Mal
+                this._lastDirHandle = fileHandle;
+                const filename = fileHandle.name;
+                this.loadedFileName = filename;
+
+                if (!this.contours || this.contours.length === 0) {
+                    this.showToast('Keine Konturen zum Speichern', 'warning');
+                    return;
+                }
+                const result = this.dxfWriter.generate(this.contours, this.layerManager, { filename });
+                const writable = await fileHandle.createWritable();
+                await writable.write(result.content);
+                await writable.close();
+
+                this.showToast(
+                    `✅ ${filename} gespeichert (${result.stats.entities} Entities, ${(result.stats.fileSize / 1024).toFixed(1)} KB)`,
+                    'success'
+                );
+                console.log('[DXF-Writer] Export (SaveAs):', result.stats);
+                document.getElementById('current-filename').textContent = `📄 ${filename}`;
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return; // Benutzer hat abgebrochen
+                console.warn('[DXF-Writer] File System API fehlgeschlagen, Fallback:', err);
+            }
+        }
+
+        // Fallback: prompt + Download
         const filename = prompt('Dateiname:', defaultName);
         if (!filename) return;
         const safeName = filename.endsWith('.dxf') ? filename : filename + '.dxf';

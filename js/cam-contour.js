@@ -386,10 +386,10 @@ class CamContour {
             this.leadInLength = dynLen;  // temporär setzen — wird nach getLeadInPath() nicht gecacht
         }
 
-        // CORNER DETECTION: An Ecken immer Linear, kein Arc
+        // CORNER DETECTION: An scharfen Ecken (>90°) Arc zu Linear degradieren
         const cornerAngle = this._isAtCorner(pts);
         let effectiveType = this.leadInType;
-        if (cornerAngle > 0 && effectiveType === 'arc') {
+        if (cornerAngle > 90 && effectiveType === 'arc') {
             effectiveType = 'linear';
         }
 
@@ -710,9 +710,7 @@ class CamContour {
         // SMALL HOLE: Kein Overcut bei kleinen Bohrungen
         if (this._isSmallHole(checkPts)) return null;
 
-        const atCorner = this._isAtCorner(checkPts) > 0;
-
-        const overcutLen = atCorner ? 0 : this.overcutLength;
+        const overcutLen = this.overcutLength;
         if (overcutLen === 0) return null;
 
         const pts = checkPts;
@@ -801,10 +799,10 @@ class CamContour {
         // 2. Normale zur Verschnittseite
         const normal = this._getWasteSideNormal(exitPoint, exitTangent);
 
-        // 3. CORNER DETECTION: An Ecken Linear erzwingen
+        // 3. CORNER DETECTION: An scharfen Ecken (>90°) Linear erzwingen
         const cornerAngle = this._isAtCorner(pts);
         let effectiveType = this.leadOutType;
-        if (cornerAngle > 0 && effectiveType === 'arc') {
+        if (cornerAngle > 90 && effectiveType === 'arc') {
             effectiveType = 'linear';
         }
 

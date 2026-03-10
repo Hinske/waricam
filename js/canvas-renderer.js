@@ -941,6 +941,7 @@ class CanvasRenderer {
         // "On geometry" -> kein sichtbarer Lead
         if (leadPath.type === 'on_geometry') {
             this.drawPierceSymbol(ctx, leadPath.piercingPoint, this.colors.leadIn, 'on_geometry');
+            this._drawLeadTypeLabel(ctx, leadPath.piercingPoint, 'OG', this.colors.leadIn);
             return;
         }
 
@@ -948,31 +949,32 @@ class CanvasRenderer {
         if (pts.length < 2) return;
 
         const pierce = pts[0];
-        const entry = pts[pts.length - 1];
         const color = this.colors.leadIn;
         const lw = CanvasRenderer.LINE_WIDTH.LEAD / this.scale;
+        const dash = this._getLeadDash(leadPath.type, lw);
 
-        // V5.4.1 Debug: Lead-Typ und Metadaten loggen
-        console.log(`[drawLeadIn V5.4.1] type=${leadPath.type}, hasArcCenter=${!!leadPath.arcCenter}, hasArcRadius=${!!leadPath.arcRadius}, shortened=${!!leadPath.shortened}, pts=${pts.length}`);
-
-        // V5.4.1: Echte ctx.arc() Darstellung für Arc-Leads
+        ctx.save();
+        ctx.setLineDash(dash);
         if (leadPath.type === 'arc' && leadPath.arcCenter && leadPath.arcRadius) {
             this._drawArcLead(ctx, leadPath, color, lw);
         } else if (pts.length > 2) {
-            // Polyline-Fallback (linear mit vielen Punkten oder arc ohne Metadaten)
             this._drawLeadPath(ctx, pts, color, lw);
         } else {
-            // Linear/Tangent: Einfache Linie Pierce → Entry
             ctx.beginPath();
             ctx.moveTo(pierce.x, pierce.y);
-            ctx.lineTo(entry.x, entry.y);
+            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
             ctx.strokeStyle = color;
             ctx.lineWidth = lw;
             ctx.stroke();
         }
+        ctx.restore();
 
-        // Pierce-Punkt (⊕-Symbol)
+        // Pierce-Punkt
         this.drawPierceSymbol(ctx, pierce, color, 'pierce');
+
+        // Typ-Label am Pierce-Punkt
+        const label = this._getLeadTypeLabel(leadPath.type);
+        this._drawLeadTypeLabel(ctx, pierce, label, color);
 
         // Richtungspfeil auf ~60% des Pfades
         const arrowIdx = Math.min(Math.floor(pts.length * 0.6), pts.length - 1);
@@ -995,74 +997,35 @@ class CanvasRenderer {
     }
 
     /**
-     * V5.4.1: Echte ctx.arc() Darstellung für Arc-Leads
-     * Zeichnet: optionale Gerade + Canvas-Bogen
-     * Unterstützt gekürzte Arcs: berechnet Winkel aus tatsächlichen Punkten
+     * V5.6: Echte ctx.arc() Darstellung für Arc-Leads
+     * Nutzt arcStartAngle/arcEndAngle direkt aus leadPath-Metadaten
+     * Zeichnet: optionale Gerade (Pierce → Bogenstart) + Canvas-Bogen
      */
     _drawArcLead(ctx, leadPath, color, lineWidth) {
-        const { arcCenter, arcRadius, arcSweepCCW, points, shortened } = leadPath;
+        const { arcCenter, arcRadius, arcSweepCCW, arcStartAngle, arcEndAngle, points, hasLinePortion } = leadPath;
         if (!arcCenter || !arcRadius || !points || points.length < 2) return;
 
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
 
-        // Finde den ersten und letzten Punkt auf dem Bogen
-        // (unterscheide gerade Portion vom Bogen anhand der Distanz zum Zentrum)
-        const tolerance = arcRadius * 0.15;  // 15% Toleranz für "auf dem Bogen"
-        let arcFirstIdx = 0;
-        let arcLastIdx = points.length - 1;
-
-        // Finde ersten Punkt der tatsächlich auf dem Bogen liegt
-        for (let i = 0; i < points.length; i++) {
-            const dist = Math.hypot(points[i].x - arcCenter.x, points[i].y - arcCenter.y);
-            if (Math.abs(dist - arcRadius) < tolerance) {
-                arcFirstIdx = i;
-                break;
-            }
-        }
-
-        // Finde letzten Punkt auf dem Bogen
-        for (let i = points.length - 1; i >= arcFirstIdx; i--) {
-            const dist = Math.hypot(points[i].x - arcCenter.x, points[i].y - arcCenter.y);
-            if (Math.abs(dist - arcRadius) < tolerance) {
-                arcLastIdx = i;
-                break;
-            }
-        }
-
-        // Gerade Portion(en) zeichnen: vor dem Bogen
-        if (arcFirstIdx > 0) {
+        // Gerade Portion: Pierce-Punkt → Bogenstart (wenn Lead länger als Bogenlänge)
+        if (hasLinePortion && points.length > 2) {
+            const arcStartPt = { x: arcCenter.x + arcRadius * Math.cos(arcStartAngle), y: arcCenter.y + arcRadius * Math.sin(arcStartAngle) };
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i <= arcFirstIdx; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
+            ctx.lineTo(arcStartPt.x, arcStartPt.y);
             ctx.stroke();
         }
 
-        // Gerade Portion(en) zeichnen: nach dem Bogen
-        if (arcLastIdx < points.length - 1) {
-            ctx.beginPath();
-            ctx.moveTo(points[arcLastIdx].x, points[arcLastIdx].y);
-            for (let i = arcLastIdx + 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
-            ctx.stroke();
-        }
+        // Bogen mit echtem ctx.arc()
+        const sAngle = (arcStartAngle !== undefined) ? arcStartAngle
+            : Math.atan2(points[0].y - arcCenter.y, points[0].x - arcCenter.x);
+        const eAngle = (arcEndAngle !== undefined) ? arcEndAngle
+            : Math.atan2(points[points.length - 1].y - arcCenter.y, points[points.length - 1].x - arcCenter.x);
 
-        // Bogen-Winkel aus tatsächlichen Punkten berechnen
-        const pFirst = points[arcFirstIdx];
-        const pLast = points[arcLastIdx];
-        const startAngle = Math.atan2(pFirst.y - arcCenter.y, pFirst.x - arcCenter.x);
-        const endAngle = Math.atan2(pLast.y - arcCenter.y, pLast.x - arcCenter.x);
-
-        // Bogen: ctx.arc(cx, cy, r, startAngle, endAngle, counterclockwise)
-        // Canvas hat ctx.scale(s, -s) → Y-Flip → CCW wird CW und umgekehrt
         ctx.beginPath();
-        ctx.arc(arcCenter.x, arcCenter.y, arcRadius, startAngle, endAngle, arcSweepCCW);
+        ctx.arc(arcCenter.x, arcCenter.y, arcRadius, sAngle, eAngle, arcSweepCCW);
         ctx.stroke();
-
-        console.log(`[CanvasRenderer V5.4.1] _drawArcLead: center=(${arcCenter.x.toFixed(2)},${arcCenter.y.toFixed(2)}), r=${arcRadius.toFixed(2)}, angles=${(startAngle*180/Math.PI).toFixed(1)}°→${(endAngle*180/Math.PI).toFixed(1)}°, ccw=${arcSweepCCW}, shortened=${!!shortened}, pts=${points.length}, arcIdx=${arcFirstIdx}-${arcLastIdx}`);
     }
 
     /** V5.2: Pierce-Symbol — ⊕ (Kreis + Kreuz) statt einfachem Punkt */
@@ -1091,6 +1054,43 @@ class CanvasRenderer {
         ctx.stroke();
     }
 
+    /** Dash-Pattern je Lead-Typ (skaliert auf Linewidth) */
+    _getLeadDash(type, lw) {
+        const s = Math.max(lw * 3, 2 / this.scale);
+        switch (type) {
+            case 'arc':      return [];                        // durchgezogen
+            case 'linear':   return [s * 2, s];                // gestrichelt ▬ ▬ ▬
+            case 'tangent':  return [s * 2, s * 0.6, s * 0.5, s * 0.6]; // strichpunkt ▬·▬·
+            default:         return [];
+        }
+    }
+
+    /** Kurzlabel pro Lead-Typ */
+    _getLeadTypeLabel(type) {
+        switch (type) {
+            case 'arc':     return 'A';
+            case 'linear':  return 'L';
+            case 'tangent': return 'T';
+            default:        return '';
+        }
+    }
+
+    /** Typ-Label neben dem Pierce-Punkt zeichnen */
+    _drawLeadTypeLabel(ctx, point, label, color) {
+        if (!label || !point) return;
+        const fontSize = Math.max(10, 12 / this.scale);
+        ctx.save();
+        // Canvas hat Y-Flip → temporär zurückdrehen für Text
+        ctx.translate(point.x, point.y);
+        ctx.scale(1, -1);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(label, fontSize * 0.8, -fontSize * 0.3);
+        ctx.restore();
+    }
+
     // ════════════════════════════════════════════════════════════════
     // LEAD-OUT (IGEMS-Stil: Einfache Linie Exit → End)
     // ════════════════════════════════════════════════════════════════
@@ -1103,23 +1103,23 @@ class CanvasRenderer {
         const pts = leadPath.points;
         const color = this.colors.leadOut;
         const lw = CanvasRenderer.LINE_WIDTH.LEAD / this.scale;
+        const dash = this._getLeadDash(leadPath.type, lw);
 
-        // V5.4.1: Echte ctx.arc() Darstellung für Arc-Leads
+        ctx.save();
+        ctx.setLineDash(dash);
         if (leadPath.type === 'arc' && leadPath.arcCenter && leadPath.arcRadius) {
             this._drawArcLead(ctx, leadPath, color, lw);
         } else if (pts.length > 2) {
-            // Polyline-Fallback
             this._drawLeadPath(ctx, pts, color, lw);
         } else {
-            const exit = pts[0];
-            const end = pts[pts.length - 1];
             ctx.beginPath();
-            ctx.moveTo(exit.x, exit.y);
-            ctx.lineTo(end.x, end.y);
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
             ctx.strokeStyle = color;
             ctx.lineWidth = lw;
             ctx.stroke();
         }
+        ctx.restore();
 
         // End-Punkt
         this.drawPierceSymbol(ctx, pts[pts.length - 1], color, 'exit');

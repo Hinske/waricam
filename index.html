@@ -1509,6 +1509,7 @@
                         case 'cam':
                             window.app.renderer.currentMode = 'anschuss';
                             window.app.currentStep = 4;
+                            window.app._applyLeadValues?.();
                             break;
                         case 'order':
                             window.app.renderer.currentMode = 'reihenfolge';

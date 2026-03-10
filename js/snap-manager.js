@@ -296,7 +296,10 @@ class SnapManager {
         candidates.sort((a, b) => {
             const prioA = a.typeDef.priority || 99;
             const prioB = b.typeDef.priority || 99;
-            if (prioA !== prioB) return prioA - prioB;
+            // Bei sehr ähnlicher Distanz (<30% Unterschied): Priorität entscheidet
+            // Sonst: näherer Snap gewinnt (Distanz-basiert)
+            const distRatio = Math.min(a.distance, b.distance) / (Math.max(a.distance, b.distance) || 1);
+            if (distRatio > 0.7) return prioA - prioB;
             return a.distance - b.distance;
         });
 
@@ -677,7 +680,7 @@ class SnapManager {
 
         // V5.0 Performance: Bei sehr vielen Segmenten (Splines) Suche begrenzen
         const MAX_NEARBY = 40;
-        const searchDist = tolerance * 5;
+        const searchDist = tolerance * 10;
         const nearby = [];
 
         for (let i = 0; i < allSegments.length; i++) {

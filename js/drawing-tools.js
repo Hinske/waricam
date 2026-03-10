@@ -366,11 +366,9 @@ class DrawingToolManager {
                 );
                 if (allInside) { c.isSelected = true; count++; }
             } else {
-                // Crossing: Mindestens EIN Punkt im Rechteck
-                const anyInside = c.points.some(p =>
-                    p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY
-                );
-                if (anyInside) { c.isSelected = true; count++; }
+                // Crossing: Punkt im Rechteck ODER Segment schneidet Rechteck
+                const touches = this._contourTouchesRect(c.points, minX, minY, maxX, maxY);
+                if (touches) { c.isSelected = true; count++; }
             }
         });
 
@@ -389,6 +387,40 @@ class DrawingToolManager {
                 this.activeTool._onSelectionComplete(selected);
             }
         }
+    }
+
+    /** Crossing-Test: berührt oder schneidet die Kontur das Rechteck? */
+    _contourTouchesRect(points, minX, minY, maxX, maxY) {
+        if (!points || points.length < 1) return false;
+        // Punkt im Rechteck?
+        for (const p of points) {
+            if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) return true;
+        }
+        // Segment schneidet Rechteck-Kante?
+        const rectEdges = [
+            { x1: minX, y1: minY, x2: maxX, y2: minY }, // unten
+            { x1: maxX, y1: minY, x2: maxX, y2: maxY }, // rechts
+            { x1: maxX, y1: maxY, x2: minX, y2: maxY }, // oben
+            { x1: minX, y1: maxY, x2: minX, y2: minY }  // links
+        ];
+        for (let i = 0; i < points.length - 1; i++) {
+            const a = points[i], b = points[i + 1];
+            for (const re of rectEdges) {
+                if (this._segmentsIntersect(a.x, a.y, b.x, b.y, re.x1, re.y1, re.x2, re.y2)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Segment-Segment Schnitt-Test */
+    _segmentsIntersect(ax, ay, bx, by, cx, cy, dx, dy) {
+        const denom = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+        if (Math.abs(denom) < 1e-12) return false;
+        const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / denom;
+        const u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / denom;
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1;
     }
 
     // ════════════════════════════════════════════════════════════════
