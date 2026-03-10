@@ -707,9 +707,6 @@ class CamContour {
         const checkPts = (offsetResult?.points?.length > 2 && !this.compensationSkipped)
             ? offsetResult.points : this.points;
 
-        // SMALL HOLE: Kein Overcut bei kleinen Bohrungen
-        if (this._isSmallHole(checkPts)) return null;
-
         const overcutLen = this.overcutLength;
         if (overcutLen === 0) return null;
 

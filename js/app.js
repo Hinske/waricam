@@ -113,6 +113,7 @@ class WaricamApp {
         this.dxfWriter = new DXFWriter();
         this.loadedFileName = '';  // Geladener Dateiname (für "Speichern")
         this._lastDirHandle = null; // Letzter Ordner (für "Speichern unter")
+        this._lastFileHandle = null; // Letzter FileHandle (für "Speichern" direkt)
         
         // V3.11: Image Underlay Manager
         this.imageUnderlayManager = new ImageUnderlayManager(this);
@@ -2373,10 +2374,11 @@ class WaricamApp {
             if (window.showOpenFilePicker) {
                 try {
                     const [fileHandle] = await window.showOpenFilePicker({
-                        types: [{ description: 'DXF-Datei', accept: { 'application/dxf': ['.dxf'] } }],
+                        id: 'waricam-dxf',
                         startIn: this._lastDirHandle || 'documents'
                     });
                     this._lastDirHandle = fileHandle; // Ordner merken
+                    this._lastFileHandle = null; // Reset — geöffnete Datei ist DXF-Import, kein DXF-Save-Handle
                     const file = await fileHandle.getFile();
                     this.loadFile(file);
                     return;
@@ -3887,10 +3889,34 @@ class WaricamApp {
     // V3.8: DXF SPEICHERN
     // ════════════════════════════════════════════════════════════════
 
-    /** Speichern (gleicher Dateiname) */
-    saveDXF() {
-        const filename = this.loadedFileName || 'zeichnung.dxf';
-        this._doSaveDXF(filename);
+    /** Speichern (gleicher Dateiname) — nutzt letzten FileHandle wenn vorhanden */
+    async saveDXF() {
+        // Kein FileHandle → "Speichern unter" öffnen
+        if (!this._lastFileHandle) {
+            return this.saveDXFAs();
+        }
+
+        if (!this.contours || this.contours.length === 0) {
+            this.showToast('Keine Konturen zum Speichern', 'warning');
+            return;
+        }
+
+        try {
+            const filename = this._lastFileHandle.name;
+            const result = this.dxfWriter.generate(this.contours, this.layerManager, { filename });
+            const writable = await this._lastFileHandle.createWritable();
+            await writable.write(result.content);
+            await writable.close();
+
+            this.showToast(
+                `✅ ${filename} gespeichert (${result.stats.entities} Entities, ${(result.stats.fileSize / 1024).toFixed(1)} KB)`,
+                'success'
+            );
+            console.log('[DXF-Writer] Export (Save):', result.stats);
+        } catch (err) {
+            console.warn('[DXF-Writer] Direktes Speichern fehlgeschlagen, Fallback auf Speichern-unter:', err);
+            return this.saveDXFAs();
+        }
     }
 
     /** Speichern unter... (neuer Dateiname) — öffnet immer Ordnerauswahl */
@@ -3901,15 +3927,16 @@ class WaricamApp {
         if (window.showSaveFilePicker) {
             try {
                 const opts = {
-                    suggestedName: defaultName,
-                    types: [{ description: 'DXF-Datei', accept: { 'application/dxf': ['.dxf'] } }]
+                    id: 'waricam-dxf',
+                    suggestedName: defaultName
                 };
                 // Letzten Ordner wiederverwenden
                 if (this._lastDirHandle) {
                     opts.startIn = this._lastDirHandle;
                 }
                 const fileHandle = await window.showSaveFilePicker(opts);
-                // Ordner merken für nächstes Mal
+                // Handle merken für "Speichern" und Ordner
+                this._lastFileHandle = fileHandle;
                 this._lastDirHandle = fileHandle;
                 const filename = fileHandle.name;
                 this.loadedFileName = filename;

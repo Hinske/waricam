@@ -1813,7 +1813,7 @@
                 document.getElementById('qa-open')?.addEventListener('click', async () => {
                     try {
                         const [handle] = await window.showOpenFilePicker({
-                            types: [{ description: 'DXF-Dateien', accept: { 'application/dxf': ['.dxf'] } }],
+                            id: 'waricam-dxf',
                             multiple: false
                         });
                         origApp._dxfFileHandle = handle;
@@ -1833,7 +1833,7 @@
                     uploadClone.addEventListener('click', async () => {
                         try {
                             const [handle] = await window.showOpenFilePicker({
-                                types: [{ description: 'DXF-Dateien', accept: { 'application/dxf': ['.dxf'] } }],
+                                id: 'waricam-dxf',
                                 multiple: false
                             });
                             origApp._dxfFileHandle = handle;
@@ -1869,7 +1869,7 @@
                 return result;
             }
 
-            // Speichern (Strg+S) — direkt in gleichen Ordner wenn möglich
+            // Speichern (Strg+S) — direkt in gleiche Datei, sonst Speichern-unter
             async function saveDXFAction() {
                 if (hasFSAPI && origApp._dxfFileHandle) {
                     // Direkt in die gleiche Datei schreiben (kein Dialog!)
@@ -1890,8 +1890,8 @@
                         origApp.showToast('Speichern fehlgeschlagen: ' + err.message, 'error');
                     }
                 } else {
-                    // Fallback: normaler Download
-                    _origSaveDXF();
+                    // Kein Handle → Speichern-unter Dialog öffnen
+                    saveDXFAsAction();
                 }
             }
 
@@ -1901,8 +1901,8 @@
                     try {
                         const defaultName = origApp.loadedFileName || 'zeichnung.dxf';
                         const handle = await window.showSaveFilePicker({
-                            suggestedName: defaultName,
-                            types: [{ description: 'DXF-Dateien', accept: { 'application/dxf': ['.dxf'] } }]
+                            id: 'waricam-dxf',
+                            suggestedName: defaultName
                         });
                         origApp._dxfFileHandle = handle; // Neuen Handle merken
                         origApp.loadedFileName = handle.name;

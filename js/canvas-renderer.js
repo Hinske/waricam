@@ -275,8 +275,12 @@ class CanvasRenderer {
 
             // V3.10: Grip-Drag aktiv
             if (isDraggingGrip && dragGrip && dragContourRef) {
-                // Snap anwenden
-                const snapPt = this.app?.snapManager?.currentSnap?.point || worldPos;
+                // Snap live berechnen (nicht stale currentSnap verwenden!)
+                let snapPt = worldPos;
+                if (this.app?.snapManager) {
+                    const snap = this.app.snapManager.findSnap(worldPos.x, worldPos.y, this.scale);
+                    if (snap) snapPt = snap.point;
+                }
                 this._applyGripDrag(dragGrip, snapPt, dragContourRef);
                 // Grips NICHT neu berechnen während Drag (Performance!)
                 this.render();
