@@ -897,7 +897,8 @@ const DXFParser = {
         if (!entities || entities.length === 0) return [];
         const segments = entities.map((e, idx) => ({
             points: e.points || [], used: false, layer: e.layer || '', isClosed: e.isClosed || false, type: e.type, originalIndex: idx,
-            _splineData: e._splineData || null
+            _splineData: e._splineData || null,
+            _center: e.center || null, _radius: e.radius || null
         })).filter(s => s.points.length >= 2);
         const result = [];
         const cellSize = tolerance;
@@ -906,7 +907,7 @@ const DXFParser = {
         for (let i = 0; i < segments.length; i++) {
             if (segments[i].isClosed) {
                 segments[i].used = true;
-                result.push(this._createContour(segments[i].points, segments[i].layer, true, segments[i].type, segments[i]._splineData));
+                result.push(this._createContour(segments[i].points, segments[i].layer, true, segments[i].type, segments[i]._splineData, segments[i]._center, segments[i]._radius));
             }
         }
 
@@ -970,16 +971,20 @@ const DXFParser = {
         return result;
     },
 
-    _createContour(points, layer, isClosed, sourceType, splineData) {
+    _createContour(points, layer, isClosed, sourceType, splineData, center, radius) {
         const name = `Contour_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
         if (typeof CamContour !== 'undefined') {
             const contour = new CamContour(points, { name, layer, isClosed });
             contour.sourceType = sourceType;
             if (splineData) contour._splineData = splineData;
+            if (center) contour._center = center;
+            if (radius) contour._radius = radius;
             return contour;
         }
         const result = { points, layer, isClosed, name, sourceType };
         if (splineData) result._splineData = splineData;
+        if (center) result._center = center;
+        if (radius) result._radius = radius;
         return result;
     },
 

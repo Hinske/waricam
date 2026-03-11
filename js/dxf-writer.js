@@ -57,7 +57,7 @@ class DXFWriter {
             // Entity-Typ bestimmen
             const sourceType = (contour.sourceType || '').toUpperCase();
             
-            if (sourceType === 'CIRCLE' && contour.isClosed && contour._radius) {
+            if (sourceType === 'CIRCLE' && contour.isClosed) {
                 this._writeCircle(contour, stats);
             } else if (contour.points.length === 2 && !contour.isClosed) {
                 this._writeLine(contour.points[0], contour.points[1], layerName, stats);
@@ -101,7 +101,7 @@ class DXFWriter {
     generateDownload(contours, layerManager, options = {}) {
         const result = this.generate(contours, layerManager, options);
         
-        const blob = new Blob([result.content], { type: 'application/dxf' });
+        const blob = new Blob([result.content], { type: 'application/dxf; charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -122,6 +122,10 @@ class DXFWriter {
         // AutoCAD Version: R12
         this._write(9, '$ACADVER');
         this._write(1, 'AC1009');
+
+        // Codepage: UTF-8 für Umlaute in Layer-Namen
+        this._write(9, '$DWGCODEPAGE');
+        this._write(3, 'UTF-8');
 
         // Einfügepunkt
         this._write(9, '$INSBASE');
@@ -277,15 +281,28 @@ class DXFWriter {
 
     _writeCircle(contour, stats) {
         const layer = contour.layer || '0';
-        
-        // Mittelpunkt berechnen (Centroid der Punkte)
-        let cx = 0, cy = 0;
-        for (const p of contour.points) { cx += p.x; cy += p.y; }
-        cx /= contour.points.length;
-        cy /= contour.points.length;
+        let cx, cy, radius;
 
-        // Radius (Abstand vom Centroid zum ersten Punkt)
-        const radius = contour._radius || Math.hypot(contour.points[0].x - cx, contour.points[0].y - cy);
+        if (contour._center && contour._radius) {
+            // Originale Geometrie vom Parser — exakt
+            cx = contour._center.x;
+            cy = contour._center.y;
+            radius = contour._radius;
+        } else {
+            // Fallback: Kreis aus 3 Punkten berechnen (circumscribed circle)
+            const pts = contour.points;
+            const fit = this._fitCircle(pts);
+            if (fit) {
+                cx = fit.cx;
+                cy = fit.cy;
+                radius = fit.radius;
+            } else {
+                // Letzter Fallback: als Polyline exportieren
+                console.warn('[DXF-Writer] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
+                this._writePolyline(contour, stats);
+                return;
+            }
+        }
 
         this._write(0, 'CIRCLE');
         this._write(8, layer);
@@ -296,6 +313,44 @@ class DXFWriter {
 
         stats.circles++;
         stats.entities++;
+    }
+
+    /**
+     * Kreis aus Punktliste fitten — nimmt 3 gleichverteilte Punkte
+     * und berechnet den Umkreis. Validiert dann alle Punkte gegen den Radius.
+     * @returns {{ cx, cy, radius }} oder null bei Fehler
+     */
+    _fitCircle(points) {
+        if (!points || points.length < 3) return null;
+
+        // 3 gleichverteilte Punkte wählen (nicht benachbart)
+        const n = points.length;
+        const i0 = 0;
+        const i1 = Math.floor(n / 3);
+        const i2 = Math.floor(2 * n / 3);
+        const p1 = points[i0], p2 = points[i1], p3 = points[i2];
+
+        // Umkreis aus 3 Punkten (analytisch)
+        const ax = p1.x, ay = p1.y;
+        const bx = p2.x, by = p2.y;
+        const cx = p3.x, cy = p3.y;
+        const D = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+        if (Math.abs(D) < 1e-10) return null; // Kollinear
+
+        const ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / D;
+        const uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / D;
+        const r = Math.hypot(p1.x - ux, p1.y - uy);
+
+        if (r < 1e-10) return null;
+
+        // Validierung: alle Punkte müssen innerhalb 1% Toleranz auf dem Kreis liegen
+        const tol = r * 0.01;
+        for (const p of points) {
+            const dist = Math.hypot(p.x - ux, p.y - uy);
+            if (Math.abs(dist - r) > tol) return null;
+        }
+
+        return { cx: ux, cy: uy, radius: r };
     }
 
     // ═══ HELFER ═══

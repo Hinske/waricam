@@ -28,6 +28,9 @@
             <button id="qa-save" title="DXF Speichern (Strg+S)">
                 <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="5" y="2" width="6" height="4" stroke="currentColor" stroke-width="0.8" fill="none"/><rect x="4" y="9" width="8" height="4" stroke="currentColor" stroke-width="0.8" fill="none"/></svg>
             </button>
+            <button id="qa-print" title="Drucken (Strg+P)">
+                <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="9" width="10" height="5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M3 11H1V6h14v5h-2" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M3 6V2h10v4" stroke="currentColor" stroke-width="1.0" fill="none"/><line x1="5" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="0.8"/><line x1="5" y1="12.5" x2="11" y2="12.5" stroke="currentColor" stroke-width="0.8"/></svg>
+            </button>
             <button id="btn-undo" title="Rückgängig (Strg+Z)" disabled>
                 <svg viewBox="0 0 16 16" fill="none"><path d="M4 7l-2-2 2-2" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M2 5h8a3 3 0 0 1 0 6H8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
             </button>
@@ -1353,6 +1356,16 @@
     <button id="btn-clear-drawing"></button>
 </div>
 
+<!-- Print-Container (nur beim Drucken sichtbar) -->
+<div id="print-container">
+    <canvas id="print-canvas"></canvas>
+    <div id="print-footer">
+        <span class="print-filename"></span>
+        <span class="print-date"></span>
+        <span class="print-app">CeraCAM</span>
+    </div>
+</div>
+
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260219-dm10"></script>
@@ -1435,11 +1448,6 @@
         });
     });
 
-    // ── Quick Access: Open file ──
-    document.getElementById('qa-open')?.addEventListener('click', () => {
-        document.getElementById('file-input')?.click();
-    });
-    
     // ── App.js Backward Compatibility Shim ──
     // Must run AFTER DOMContentLoaded (app.js creates WaricamApp there)
     // Using setTimeout(0) to run after all DOMContentLoaded handlers
@@ -1801,141 +1809,9 @@
             document.getElementById('qa-new')?.addEventListener('click', newFileAction);
             document.getElementById('btn-new-file')?.addEventListener('click', newFileAction);
 
-            // ═══ File System Access API — DXF Öffnen/Speichern ═══
-            // Prüfe ob der Browser die API unterstützt (Chrome/Edge)
+
+            // File System Access API verfügbar? (Chrome/Edge)
             const hasFSAPI = ('showOpenFilePicker' in window);
-            console.log(`[CeraCAM Shim] File System Access API: ${hasFSAPI ? '✅ verfügbar' : '❌ nicht verfügbar (Fallback: Download)'}`);
-
-            // DXF öffnen via File System Access API (speichert FileHandle)
-            if (hasFSAPI) {
-                // qa-open Override: nutze showOpenFilePicker statt <input type="file">
-                document.getElementById('qa-open')?.replaceWith(document.getElementById('qa-open')?.cloneNode(true));
-                document.getElementById('qa-open')?.addEventListener('click', async () => {
-                    try {
-                        const [handle] = await window.showOpenFilePicker({
-                            id: 'waricam-dxf',
-                            multiple: false
-                        });
-                        origApp._dxfFileHandle = handle;
-                        const file = await handle.getFile();
-                        origApp.loadFile(file);
-                        console.log('[CeraCAM FSAPI] DXF geöffnet via File Picker, Handle gespeichert');
-                    } catch (err) {
-                        if (err.name !== 'AbortError') console.error('[CeraCAM FSAPI] Öffnen fehlgeschlagen:', err);
-                    }
-                });
-
-                // upload-area Override: gleiche Logik
-                const uploadArea = document.getElementById('upload-area');
-                if (uploadArea) {
-                    const uploadClone = uploadArea.cloneNode(true);
-                    uploadArea.replaceWith(uploadClone);
-                    uploadClone.addEventListener('click', async () => {
-                        try {
-                            const [handle] = await window.showOpenFilePicker({
-                                id: 'waricam-dxf',
-                                multiple: false
-                            });
-                            origApp._dxfFileHandle = handle;
-                            const file = await handle.getFile();
-                            origApp.loadFile(file);
-                            console.log('[CeraCAM FSAPI] DXF geöffnet via Upload-Area, Handle gespeichert');
-                        } catch (err) {
-                            if (err.name !== 'AbortError') console.error('[CeraCAM FSAPI] Öffnen fehlgeschlagen:', err);
-                        }
-                    });
-                }
-            }
-
-            // ═══ DXF Speichern — File System Access API oder Fallback ═══
-            // Originale Methoden sichern (vor Override)
-            const _origSaveDXF = origApp.saveDXF.bind(origApp);
-            const _origSaveDXFAs = origApp.saveDXFAs.bind(origApp);
-
-            // Hilfsfunktion: DXF-Inhalt generieren
-            function generateDXFContent() {
-                if (!origApp.contours || origApp.contours.length === 0) {
-                    origApp.showToast('Keine Konturen zum Speichern', 'warning');
-                    return null;
-                }
-                const result = origApp.dxfWriter.generate(
-                    origApp.contours,
-                    origApp.layerManager,
-                    {
-                        filename: origApp.loadedFileName || 'zeichnung.dxf',
-                        imageUnderlayManager: origApp.imageUnderlayManager  // V3.11: Bilder mit exportieren
-                    }
-                );
-                return result;
-            }
-
-            // Speichern (Strg+S) — direkt in gleiche Datei, sonst Speichern-unter
-            async function saveDXFAction() {
-                if (hasFSAPI && origApp._dxfFileHandle) {
-                    // Direkt in die gleiche Datei schreiben (kein Dialog!)
-                    try {
-                        const result = generateDXFContent();
-                        if (!result) return;
-                        const writable = await origApp._dxfFileHandle.createWritable();
-                        await writable.write(result.content);
-                        await writable.close();
-                        const stats = result.stats || {};
-                        origApp.showToast(
-                            `✅ ${origApp._dxfFileHandle.name} gespeichert (${stats.entities || '?'} Entities)`,
-                            'success'
-                        );
-                        console.log('[CeraCAM FSAPI] DXF direkt gespeichert:', origApp._dxfFileHandle.name);
-                    } catch (err) {
-                        console.error('[CeraCAM FSAPI] Speichern fehlgeschlagen:', err);
-                        origApp.showToast('Speichern fehlgeschlagen: ' + err.message, 'error');
-                    }
-                } else {
-                    // Kein Handle → Speichern-unter Dialog öffnen
-                    saveDXFAsAction();
-                }
-            }
-
-            // Speichern unter... — immer Dialog
-            async function saveDXFAsAction() {
-                if (hasFSAPI) {
-                    try {
-                        const defaultName = origApp.loadedFileName || 'zeichnung.dxf';
-                        const handle = await window.showSaveFilePicker({
-                            id: 'waricam-dxf',
-                            suggestedName: defaultName
-                        });
-                        origApp._dxfFileHandle = handle; // Neuen Handle merken
-                        origApp.loadedFileName = handle.name;
-                        const result = generateDXFContent();
-                        if (!result) return;
-                        const writable = await handle.createWritable();
-                        await writable.write(result.content);
-                        await writable.close();
-                        document.getElementById('current-filename').textContent = `📄 ${handle.name}`;
-                        const stats = result.stats || {};
-                        origApp.showToast(
-                            `✅ ${handle.name} gespeichert (${stats.entities || '?'} Entities)`,
-                            'success'
-                        );
-                        console.log('[CeraCAM FSAPI] DXF gespeichert unter:', handle.name);
-                    } catch (err) {
-                        if (err.name !== 'AbortError') {
-                            console.error('[CeraCAM FSAPI] Speichern-unter fehlgeschlagen:', err);
-                            origApp.showToast('Speichern fehlgeschlagen: ' + err.message, 'error');
-                        }
-                    }
-                } else {
-                    _origSaveDXFAs();
-                }
-            }
-
-            // Override Strg+S / Speichern in app.js
-            origApp.saveDXF = saveDXFAction;
-            origApp.saveDXFAs = saveDXFAsAction;
-
-            document.getElementById('btn-save-dxf')?.addEventListener('click', saveDXFAction);
-            document.getElementById('btn-save-dxf-as')?.addEventListener('click', saveDXFAsAction);
-            document.getElementById('qa-save')?.addEventListener('click', saveDXFAction);
 
             // ═══ CNC Export — in konfigurierten Ordner ═══
             let cncDirHandle = null;
@@ -3017,7 +2893,7 @@
 
             console.log('%c[CeraCAM] Import: CNC-Reader + SVG-Parser verdrahtet', 'color:#e8a020; font-weight:bold');
 
-            console.log('%c[CeraCAM Shim] App-Methoden gepatcht (Step=4, Layer, DXF-Save, FSAPI, CNC)', 'color: #22c55e');
+            console.log('%c[CeraCAM Shim] App-Methoden gepatcht (Step=4, Layer, CNC)', 'color: #22c55e');
 
             // ═══ V3.11: Kreis-Flyout-Menü ═══
             const circleBtn = document.querySelector('.draw-tool-btn[data-tool="C"]');

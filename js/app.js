@@ -113,7 +113,7 @@ class WaricamApp {
         this.dxfWriter = new DXFWriter();
         this.loadedFileName = '';  // Geladener Dateiname (für "Speichern")
         this._lastDirHandle = null; // Letzter Ordner (für "Speichern unter")
-        this._lastFileHandle = null; // Letzter FileHandle (für "Speichern" direkt)
+        this._dxfFileHandle = null; // FileHandle für "Speichern" direkt (FSAPI)
         
         // V3.11: Image Underlay Manager
         this.imageUnderlayManager = new ImageUnderlayManager(this);
@@ -2138,6 +2138,15 @@ class WaricamApp {
                         }
                     }
                     break;
+
+                // Drucken
+                case 'p':
+                case 'P':
+                    if (ctrl) {
+                        e.preventDefault();
+                        this.printCanvas();
+                    }
+                    break;
             }
         });
     }
@@ -2369,7 +2378,7 @@ class WaricamApp {
         const dropZone = document.getElementById('drop-zone');
         const canvasArea = document.getElementById('canvas-area');
         
-        // File-Open: showOpenFilePicker (für DirHandle) oder Fallback auf <input>
+        // File-Open: showOpenFilePicker (für DirHandle + FileHandle) oder Fallback auf <input>
         const openFile = async () => {
             if (window.showOpenFilePicker) {
                 try {
@@ -2378,9 +2387,10 @@ class WaricamApp {
                         startIn: this._lastDirHandle || 'documents'
                     });
                     this._lastDirHandle = fileHandle; // Ordner merken
-                    this._lastFileHandle = null; // Reset — geöffnete Datei ist DXF-Import, kein DXF-Save-Handle
+                    this._dxfFileHandle = fileHandle;  // Handle merken für Strg+S
                     const file = await fileHandle.getFile();
                     this.loadFile(file);
+                    console.log('[App] DXF geöffnet via File Picker, Handle gespeichert');
                     return;
                 } catch (err) {
                     if (err.name === 'AbortError') return;
@@ -2392,22 +2402,23 @@ class WaricamApp {
         uploadArea.addEventListener('click', openFile);
         dropZone.addEventListener('click', openFile);
         document.getElementById('start-hint')?.addEventListener('click', openFile);
+        document.getElementById('qa-open')?.addEventListener('click', openFile);
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files[0]) this.loadFile(e.target.files[0]);
         });
-        
+
         canvasArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('visible');
         });
-        
+
         canvasArea.addEventListener('dragleave', (e) => {
             if (!canvasArea.contains(e.relatedTarget)) {
                 dropZone.classList.remove('visible');
             }
         });
-        
+
         canvasArea.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('visible');
@@ -2415,10 +2426,18 @@ class WaricamApp {
                 this.loadFile(e.dataTransfer.files[0]);
             }
         });
-        
+
         document.getElementById('btn-apply-layers')?.addEventListener('click', () => {
             this.applyLayerSelection();
         });
+
+        // Save-Buttons
+        document.getElementById('btn-save-dxf')?.addEventListener('click', () => this.saveDXF());
+        document.getElementById('btn-save-dxf-as')?.addEventListener('click', () => this.saveDXFAs());
+        document.getElementById('qa-save')?.addEventListener('click', () => this.saveDXF());
+
+        // Print-Button
+        document.getElementById('qa-print')?.addEventListener('click', () => this.printCanvas());
     }
     
     loadFile(file) {
@@ -3886,13 +3905,121 @@ class WaricamApp {
     }
 
     // ════════════════════════════════════════════════════════════════
+    // DRUCKEN
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Canvas-Inhalt drucken — rendert auf ein temporäres Canvas mit weißem
+     * Hintergrund und schwarzen Konturen, skaliert auf A4 Landscape.
+     */
+    printCanvas() {
+        if (!this.contours || this.contours.length === 0) {
+            this.showToast('Keine Konturen zum Drucken', 'warning');
+            return;
+        }
+
+        const renderer = this.renderer;
+        if (!renderer) return;
+
+        // Bounding-Box aller sichtbaren Konturen berechnen
+        const lm = this.layerManager;
+        const visible = lm
+            ? this.contours.filter(c => lm.isVisible(c.layer))
+            : this.contours;
+
+        if (visible.length === 0) {
+            this.showToast('Keine sichtbaren Konturen zum Drucken', 'warning');
+            return;
+        }
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const c of visible) {
+            for (const p of c.points) {
+                if (p.x < minX) minX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y > maxY) maxY = p.y;
+            }
+        }
+
+        const geoW = maxX - minX;
+        const geoH = maxY - minY;
+        if (geoW < 0.001 || geoH < 0.001) return;
+
+        // A4 Landscape bei 150 DPI — gute Qualität für Druck
+        const DPI = 150;
+        const pageW = Math.round(277 / 25.4 * DPI); // 277mm bedruckbar (A4L - 2×10mm)
+        const pageH = Math.round(190 / 25.4 * DPI); // 190mm bedruckbar (A4L - 2×10mm)
+
+        // Skalierung: Geometrie in Seite einpassen mit 5% Rand
+        const margin = 0.05;
+        const usableW = pageW * (1 - 2 * margin);
+        const usableH = pageH * (1 - 2 * margin);
+        const scale = Math.min(usableW / geoW, usableH / geoH);
+
+        // Print-Canvas vorbereiten
+        const printCanvas = document.getElementById('print-canvas');
+        printCanvas.width = pageW;
+        printCanvas.height = pageH;
+        const ctx = printCanvas.getContext('2d');
+
+        // Weißer Hintergrund
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageW, pageH);
+
+        // Transformation: Geometrie zentriert auf Seite
+        const drawW = geoW * scale;
+        const drawH = geoH * scale;
+        const offsetX = (pageW - drawW) / 2;
+        const offsetY = (pageH - drawH) / 2;
+
+        ctx.save();
+        ctx.translate(offsetX, offsetY + drawH); // +drawH weil Y invertiert
+        ctx.scale(scale, -scale);
+        ctx.translate(-minX, -minY);
+
+        // Alle sichtbaren Konturen in Schwarz zeichnen
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5 / scale;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        for (const contour of visible) {
+            const pts = contour.points;
+            if (!pts || pts.length < 2) continue;
+
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            if (contour.isClosed) ctx.closePath();
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // Metadaten im Footer
+        const footer = document.getElementById('print-footer');
+        const fnEl = footer.querySelector('.print-filename');
+        const dtEl = footer.querySelector('.print-date');
+        fnEl.textContent = this.loadedFileName || 'Unbenannt';
+        const now = new Date();
+        dtEl.textContent = now.toLocaleDateString('de-DE') + ' ' + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+        // System-Druckdialog
+        console.log('[App] Drucken gestartet:', this.loadedFileName || 'Unbenannt');
+        window.print();
+    }
+
+    // ════════════════════════════════════════════════════════════════
     // V3.8: DXF SPEICHERN
     // ════════════════════════════════════════════════════════════════
 
     /** Speichern (gleicher Dateiname) — nutzt letzten FileHandle wenn vorhanden */
     async saveDXF() {
         // Kein FileHandle → "Speichern unter" öffnen
-        if (!this._lastFileHandle) {
+        if (!this._dxfFileHandle) {
             return this.saveDXFAs();
         }
 
@@ -3902,9 +4029,12 @@ class WaricamApp {
         }
 
         try {
-            const filename = this._lastFileHandle.name;
-            const result = this.dxfWriter.generate(this.contours, this.layerManager, { filename });
-            const writable = await this._lastFileHandle.createWritable();
+            const filename = this._dxfFileHandle.name;
+            const result = this.dxfWriter.generate(this.contours, this.layerManager, {
+                filename,
+                imageUnderlayManager: this.imageUnderlayManager
+            });
+            const writable = await this._dxfFileHandle.createWritable();
             await writable.write(result.content);
             await writable.close();
 
@@ -3936,7 +4066,7 @@ class WaricamApp {
                 }
                 const fileHandle = await window.showSaveFilePicker(opts);
                 // Handle merken für "Speichern" und Ordner
-                this._lastFileHandle = fileHandle;
+                this._dxfFileHandle = fileHandle;
                 this._lastDirHandle = fileHandle;
                 const filename = fileHandle.name;
                 this.loadedFileName = filename;
@@ -3945,7 +4075,10 @@ class WaricamApp {
                     this.showToast('Keine Konturen zum Speichern', 'warning');
                     return;
                 }
-                const result = this.dxfWriter.generate(this.contours, this.layerManager, { filename });
+                const result = this.dxfWriter.generate(this.contours, this.layerManager, {
+                    filename,
+                    imageUnderlayManager: this.imageUnderlayManager
+                });
                 const writable = await fileHandle.createWritable();
                 await writable.write(result.content);
                 await writable.close();
