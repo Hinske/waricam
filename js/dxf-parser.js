@@ -1,7 +1,17 @@
 /**
- * WARICAM DXF Parser V3.5
- * Last Modified: 2026-03-09 MEZ
- * Build: 20260309
+ * WARICAM DXF Parser V3.7
+ * Last Modified: 2026-03-11 MEZ
+ * Build: 20260311-deque
+ *
+ * V3.7 Änderungen:
+ *   - Chaining-Optimierung: Deque-Pattern statt Array-Prepend (O(1) amortisiert)
+ *   - Adaptive Grid-Zellgröße: BBox-basiert statt fix tolerance
+ *   - Fortschritts-Logging bei >1000 Entities
+ *   - Pre-allocated Array in _concatDeque für weniger GC-Druck
+ *   - Performance-Timer in chainContours()
+ *
+ * V3.6 Änderungen:
+ *   - Center/Radius-Passthrough für Kreise
  *
  * V3.5 Änderungen:
  *   - TEXT/MTEXT Support: Bounding-Box oder Glyph-Konvertierung (via TextTool)
@@ -71,7 +81,7 @@ const DXFParser = {
     _entityStats: {},
 
     parse(dxfContent, options = {}) {
-        console.log('[DXF Parser V3.5] Starting parse...');
+        console.log('[DXF Parser V3.7] Starting parse...');
         const startTime = performance.now();
         
         try {
@@ -95,7 +105,7 @@ const DXFParser = {
             const normResult = this._autoNormalizeEntities(entities);
             if (normResult.normalized) {
                 entities = normResult.entities;
-                console.log(`[DXF V3.5] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
+                console.log(`[DXF V3.7] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
             }
 
             // Layer: Entity-Layer + TABLES-Layer zusammenführen
@@ -114,11 +124,11 @@ const DXFParser = {
             
             // V3.3: Detaillierte Entity-Typ-Statistik
             const typeBreakdown = Object.entries(this._entityStats).map(([t,c]) => `${c}\u00d7${t}`).join(', ');
-            console.log(`[DXF V3.5] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
+            console.log(`[DXF V3.7] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
             
             // V3.3: Kontur-Details loggen
             contours.forEach((c, i) => {
-                console.log(`[DXF V3.5]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
+                console.log(`[DXF V3.7]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
             });
 
             // Ignorierte Entities loggen
@@ -155,7 +165,7 @@ const DXFParser = {
                 warnings: this._generateWarnings(contours, entities)
             };
         } catch (error) {
-            console.error('[DXF Parser V3.5] Error:', error);
+            console.error('[DXF Parser V3.7] Error:', error);
             return { 
                 success: false, 
                 error: error.message, 
@@ -325,7 +335,7 @@ const DXFParser = {
         }
 
         if (layerDefs.names.length > 0) {
-            console.log(`[DXF V3.5] TABLES: ${layerDefs.names.length} Layer gefunden:`,
+            console.log(`[DXF V3.7] TABLES: ${layerDefs.names.length} Layer gefunden:`,
                 layerDefs.names.map(n => `${n}(ACI ${layerDefs.colors[n]})`).join(', '));
         }
         return layerDefs;
@@ -585,7 +595,7 @@ const DXFParser = {
 
         // V3.3: Warnung wenn Vertices nicht der erwarteten Anzahl entsprechen
         if (expectedCount > 0 && vertices.length !== expectedCount) {
-            console.warn(`[DXF V3.5] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
+            console.warn(`[DXF V3.7] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
         }
 
         const isClosed = (flags & 1) === 1;
@@ -893,33 +903,58 @@ const DXFParser = {
         return result;
     },
 
+    /**
+     * V3.7: Optimiertes Chaining mit Deque-Pattern und adaptivem Grid.
+     * - Deque statt Array-Prepend: O(1) amortisiert für Front-Einfügung
+     * - Adaptive Grid-Zellgröße: max(tolerance, BBox-basiert) für weniger Zellen
+     * - Fortschritts-Logging bei >1000 Entities
+     * - Spread-freies Array-Append für große Segmente
+     */
     chainContours(entities, tolerance = 0.1) {
         if (!entities || entities.length === 0) return [];
+        const t0 = performance.now();
+        const total = entities.length;
+        const logProgress = total > 1000;
+
         const segments = entities.map((e, idx) => ({
             points: e.points || [], used: false, layer: e.layer || '', isClosed: e.isClosed || false, type: e.type, originalIndex: idx,
             _splineData: e._splineData || null,
             _center: e.center || null, _radius: e.radius || null
         })).filter(s => s.points.length >= 2);
+
+        if (logProgress) console.log(`[DXF Parser V3.7] Chaining: ${segments.length} Segmente...`);
+
         const result = [];
-        const cellSize = tolerance;
+        let processedCount = 0;
 
         // Geschlossene Segmente zuerst verarbeiten
         for (let i = 0; i < segments.length; i++) {
             if (segments[i].isClosed) {
                 segments[i].used = true;
+                processedCount++;
                 result.push(this._createContour(segments[i].points, segments[i].layer, true, segments[i].type, segments[i]._splineData, segments[i]._center, segments[i]._radius));
             }
         }
 
+        // Adaptive Grid-Zellgröße: mindestens tolerance, aber bei großen BBoxen größere Zellen
+        const cellSize = this._adaptiveCellSize(segments, tolerance);
+
         // Grid für offene Segmente aufbauen
         const grid = this._buildEndpointGrid(segments, cellSize);
+
+        let lastLogPct = 0;
 
         for (let i = 0; i < segments.length; i++) {
             if (segments[i].used) continue;
             segments[i].used = true;
+            processedCount++;
             this._removeFromGrid(grid, i, segments[i], cellSize);
-            let chain = [...segments[i].points];
-            // V3.3: Layer-aware Chaining — nur innerhalb gleichen Layers verketten
+
+            // V3.7: Deque-Pattern — Front-Segmente sammeln, am Ende konkatenieren
+            const tailParts = [segments[i].points];  // Segmente für append (nach hinten)
+            const headParts = [];                      // Segmente für prepend (nach vorne, reversed)
+            let headPoint = segments[i].points[0];
+            let tailPoint = segments[i].points[segments[i].points.length - 1];
             const chainLayer = segments[i].layer || '';
             let changed = true;
 
@@ -927,47 +962,137 @@ const DXFParser = {
                 changed = false;
 
                 // Ketten-Ende verlängern
-                const endMatch = this._findGridMatch(grid, chain[chain.length - 1], segments, cellSize, tolerance, chainLayer);
+                const endMatch = this._findGridMatch(grid, tailPoint, segments, cellSize, tolerance, chainLayer);
                 if (endMatch) {
                     const seg = segments[endMatch.segIdx];
                     segments[endMatch.segIdx].used = true;
+                    processedCount++;
                     this._removeFromGrid(grid, endMatch.segIdx, seg, cellSize);
                     if (endMatch.isStart) {
-                        chain.push(...seg.points.slice(1));
+                        tailParts.push(seg.points);
+                        tailPoint = seg.points[seg.points.length - 1];
                     } else {
-                        chain.push(...[...seg.points].reverse().slice(1));
+                        // Reversed — eigenes Array erstellen
+                        const rev = seg.points.slice().reverse();
+                        tailParts.push(rev);
+                        tailPoint = rev[rev.length - 1];
                     }
                     changed = true;
                     continue;
                 }
 
                 // Ketten-Anfang verlängern
-                const startMatch = this._findGridMatch(grid, chain[0], segments, cellSize, tolerance, chainLayer);
+                const startMatch = this._findGridMatch(grid, headPoint, segments, cellSize, tolerance, chainLayer);
                 if (startMatch) {
                     const seg = segments[startMatch.segIdx];
                     segments[startMatch.segIdx].used = true;
+                    processedCount++;
                     this._removeFromGrid(grid, startMatch.segIdx, seg, cellSize);
                     if (startMatch.isStart) {
-                        chain = [...[...seg.points].reverse().slice(0, -1), ...chain];
+                        // Segment reversed an den Anfang
+                        headParts.push(seg.points.slice().reverse());
+                        headPoint = seg.points[seg.points.length - 1];
                     } else {
-                        chain = [...seg.points.slice(0, -1), ...chain];
+                        headParts.push(seg.points);
+                        headPoint = seg.points[0];
                     }
                     changed = true;
                     continue;
                 }
             }
 
+            // Deque konkatenieren: headParts (reversed) + tailParts
+            const chain = this._concatDeque(headParts, tailParts);
+
             const isClosed = this._dist(chain[0], chain[chain.length - 1]) < tolerance;
             if (isClosed && chain.length > 2) chain[chain.length - 1] = { x: chain[0].x, y: chain[0].y };
             result.push(this._createContour(chain, segments[i].layer, isClosed, segments[i].type, segments[i]._splineData));
+
+            // Fortschritts-Log
+            if (logProgress) {
+                const pct = Math.floor(processedCount / segments.length * 100);
+                if (pct >= lastLogPct + 20) {
+                    console.log(`[DXF Parser V3.7] Chaining: ${pct}%...`);
+                    lastLogPct = pct;
+                }
+            }
         }
 
-        // V3.3: Diagnostik — unverkettete Segmente warnen
+        // Diagnostik
         const unusedSegs = segments.filter(s => !s.used);
         if (unusedSegs.length > 0) {
-            console.warn(`[DXF V3.5] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
+            console.warn(`[DXF Parser V3.7] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
         }
 
+        const dt = (performance.now() - t0).toFixed(1);
+        console.log(`[DXF Parser V3.7] Chaining: ${segments.length} Seg → ${result.length} Konturen in ${dt}ms`);
+        return result;
+    },
+
+    /**
+     * V3.7: Adaptive Grid-Zellgröße basierend auf BBox und Datendichte.
+     * Ziel: ~100-1000 Entities pro Zelle vermeiden, aber auch nicht zu grob.
+     */
+    _adaptiveCellSize(segments, tolerance) {
+        if (segments.length < 100) return tolerance;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const seg of segments) {
+            if (seg.used || seg.isClosed || !seg.points.length) continue;
+            const s = seg.points[0], e = seg.points[seg.points.length - 1];
+            if (s.x < minX) minX = s.x; if (s.y < minY) minY = s.y;
+            if (s.x > maxX) maxX = s.x; if (s.y > maxY) maxY = s.y;
+            if (e.x < minX) minX = e.x; if (e.y < minY) minY = e.y;
+            if (e.x > maxX) maxX = e.x; if (e.y > maxY) maxY = e.y;
+        }
+
+        const span = Math.max(maxX - minX, maxY - minY, 1);
+        // Zielgröße: BBox-Spanne / sqrt(n) — ergibt O(sqrt(n)) Zellen pro Dimension
+        const adaptive = span / Math.sqrt(segments.length);
+        // Mindestens tolerance (sonst wird Chaining ungenau), maximal 10% der BBox
+        return Math.max(tolerance, Math.min(adaptive, span * 0.1));
+    },
+
+    /**
+     * V3.7: Deque-Konkatenation — vermeidet O(n)-Prepends.
+     * headParts: Array von Punkt-Arrays (in umgekehrter Reihenfolge gesammelt)
+     * tailParts: Array von Punkt-Arrays (in Reihenfolge gesammelt)
+     * Ergebnis: Einzelnes Punkt-Array, Überlappungspunkte entfernt.
+     */
+    _concatDeque(headParts, tailParts) {
+        // headParts sind in umgekehrter Reihenfolge → reversed iterieren
+        const allParts = [];
+        for (let i = headParts.length - 1; i >= 0; i--) allParts.push(headParts[i]);
+        for (let i = 0; i < tailParts.length; i++) allParts.push(tailParts[i]);
+
+        if (allParts.length === 0) return [];
+        if (allParts.length === 1) return allParts[0].map(p => ({ x: p.x, y: p.y }));
+
+        // Gesamtlänge vorberechnen für preallocated Array
+        let totalLen = allParts[0].length;
+        for (let i = 1; i < allParts.length; i++) {
+            totalLen += allParts[i].length - 1; // -1 wegen Überlappungspunkt
+        }
+
+        const result = new Array(totalLen);
+        let idx = 0;
+
+        // Erstes Part komplett
+        const first = allParts[0];
+        for (let j = 0; j < first.length; j++) {
+            result[idx++] = { x: first[j].x, y: first[j].y };
+        }
+
+        // Folgende Parts: ab Index 1 (Überlappungspunkt überspringen)
+        for (let i = 1; i < allParts.length; i++) {
+            const part = allParts[i];
+            for (let j = 1; j < part.length; j++) {
+                result[idx++] = { x: part[j].x, y: part[j].y };
+            }
+        }
+
+        // Falls durch Rundung idx < totalLen
+        result.length = idx;
         return result;
     },
 
@@ -1107,18 +1232,23 @@ const DXFParser = {
         remove(pts[pts.length - 1].x, pts[pts.length - 1].y);
     },
 
+    /**
+     * V3.7: Grid-Match mit adaptivem Suchradius.
+     * Bei cellSize > tolerance werden mehr Nachbarzellen geprüft.
+     */
     _findGridMatch(grid, point, segments, cellSize, tolerance, chainLayer) {
         const cx = Math.floor(point.x / cellSize);
         const cy = Math.floor(point.y / cellSize);
+        // Suchradius: mindestens 1 Zelle, bei großen Zellen ceil(tolerance/cellSize)
+        const searchR = Math.max(1, Math.ceil(tolerance / cellSize));
         let bestDist = tolerance;
         let bestMatch = null;
-        for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -searchR; dx <= searchR; dx++) {
+            for (let dy = -searchR; dy <= searchR; dy++) {
                 const bucket = grid.get((cx + dx) + ',' + (cy + dy));
                 if (!bucket) continue;
                 for (const entry of bucket) {
                     if (segments[entry.segIdx].used) continue;
-                    // V3.3: Layer-Filter — nur Segmente gleichen Layers verketten
                     if (chainLayer !== undefined && segments[entry.segIdx].layer !== chainLayer) continue;
                     const pts = segments[entry.segIdx].points;
                     const ep = entry.isStart ? pts[0] : pts[pts.length - 1];
@@ -1216,7 +1346,7 @@ const DXFParser = {
         }));
         points.push({ ...points[0] }); // Schließen
 
-        console.log(`[DXF Parser V3.5] TEXT: "${text}" at (${x.toFixed(1)}, ${y.toFixed(1)}) h=${height}`);
+        console.log(`[DXF Parser V3.7] TEXT: "${text}" at (${x.toFixed(1)}, ${y.toFixed(1)}) h=${height}`);
 
         return {
             type: 'TEXT',
@@ -1278,7 +1408,7 @@ const DXFParser = {
             boundaryPoints.push({ ...first });
         }
 
-        console.log(`[DXF Parser V3.5] HATCH: ${boundaryPoints.length} boundary points`);
+        console.log(`[DXF Parser V3.7] HATCH: ${boundaryPoints.length} boundary points`);
 
         return {
             type: 'HATCH',

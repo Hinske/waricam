@@ -10,7 +10,7 @@ const WARICAM_BUILD = {
     time: '12:00 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.6', build: '20260311-centerpass' },
+        'dxf-parser':         { version: '3.7', build: '20260311-deque' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.1', build: '20260212-1400' },
         'cam-contour':        { version: '4.8', build: '20260311-leadroute' },
@@ -133,7 +133,8 @@ const WARICAM_BUILD = {
         'V5.5.1: Dog-Leg Leads als isAlternative markiert für gelbe Darstellung',
         'V5.5.1: Offset-Tool Ghost-Preview — halbtransparente Vorschau beim Mausbewegen (advanced-tools V1.3)',
         'V5.5.1: Chamfer Continuous Mode — Tool bleibt nach Anwendung aktiv',
-        'V5.5.1: Offset-Preview RubberBand-Type im Renderer (grün halbtransparent)'
+        'V5.5.1: Offset-Preview RubberBand-Type im Renderer (grün halbtransparent)',
+        'V5.5.1: DXF Chaining Optimierung — Deque-Pattern, adaptive Grid-Zellgröße, Progress-Logging (dxf-parser V3.7)'
     ],
     
     print() {

@@ -58,7 +58,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **App** | `app.js` | **V5.5.1** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle |
-| **DXF-Parser** | `dxf-parser.js` | **V3.6** | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
+| **DXF-Parser** | `dxf-parser.js` | **V3.7** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
 | **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
 | **Renderer** | `canvas-renderer.js` | **V3.13** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
@@ -120,7 +120,7 @@ waterjet_v2/
 │   ├── build-info.js                  ← Versions-Banner V5.5.1
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
 │   ├── app.js                         ← Hauptanwendung V5.5.1 (Print, FSAPI-Save)
-│   ├── dxf-parser.js                  ← DXF Parser V3.6 (Center/Radius-Passthrough)
+│   ├── dxf-parser.js                  ← DXF Parser V3.7 (Deque-Chaining, Adaptive Grid)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
@@ -329,8 +329,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH unterstuetzt (V3.5), Center/Radius-Passthrough (V3.6) |
-| DXF-Parser | 🔴 | O(n^3) Chaining bei >5000 Entities |
+| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7) |
 | DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
 | Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
 | Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
@@ -356,7 +355,7 @@ Console-Ausgabe beim Laden:
 ```
 WARICAM/CeraCAM V5.5.1 - Build 20260311-tier3
 [BUILD] Modules:
-  dxf-parser: V3.6 (20260311-centerpass)
+  dxf-parser: V3.7 (20260311-deque)
   dxf-writer: V1.1 (20260311-utf8circle)
   cam-contour: V4.8 (20260311-leadroute)
   canvas-renderer: V3.13 (20260311-leaddiff)
