@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-03-09
-> **Version:** V5.5.0
-> **Build:** 20260309-features
+> **Letzte Aktualisierung:** 2026-03-11
+> **Version:** V5.5.1
+> **Build:** 20260311-print
 
 ---
 
@@ -44,38 +44,38 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | Feld | Wert |
 |------|------|
 | Name | WARICAM / CeraCAM |
-| Version | **V5.5.0** |
+| Version | **V5.5.1** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
 
 ---
 
-## Module & Versionen (Stand 2026-03-09)
+## Module & Versionen (Stand 2026-03-11)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.5.0** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput |
+| **App** | `app.js` | **V5.5.1** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle |
-| **DXF-Parser** | `dxf-parser.js` | **V3.5** | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware, TEXT/MTEXT/HATCH |
-| **CAMContour** | `cam-contour.js` | **V4.7** | Lead-In/Out, Overcut, Multi-Contour-Collision, Slit, Kerf-Flip, Arc-Metadaten, clone() |
+| **DXF-Parser** | `dxf-parser.js` | **V3.6** | DXF → Entities, SPLINE-Tessellation, Grid-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
+| **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | V3.12 | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect |
+| **Renderer** | `canvas-renderer.js` | **V3.13** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.3** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
 | **Drawing Tools** | `drawing-tools.js` | **V2.3** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, Previous Selection |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | — | Tier 3: Explode, Join, Break |
-| **Advanced Tools** | `advanced-tools.js` | V1.2 | Arabeske-Tool, Aufteilen (CL2D/CLND/CLDCL) |
+| **Advanced Tools** | `advanced-tools.js` | **V1.3** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
 | **Tool Manager** | `tool-manager.js` | V2.2 | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
 | **Command Line** | `command-line.js` | V1.0 | AutoCAD-style Prompt, Koordinaten-Parser, History |
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
 | **Snap Manager** | `snap-manager.js` | V1.2 | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
 | **Layer Manager** | `layer-manager.js` | V1.0 | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
-| **DXF Writer** | `dxf-writer.js` | V1.0 | DXF R12 (AC1009) Export |
+| **DXF Writer** | `dxf-writer.js` | **V1.1** | DXF R12 (AC1009) Export, UTF-8 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
 | **Properties Panel** | `properties-panel.js` | V1.1 | Kontur-Eigenschaften, Piercing, Lead-In, Area-Class |
@@ -90,7 +90,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Machine Profiles** | `machine-profiles.js` | **V1.0** | Maschinenpark-Verwaltung, PP-Profile, localStorage |
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
 | **Quality Zones** | `quality-zones.js` | **V1.0** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
-| **Build-Info** | `build-info.js` | **V5.5.0** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V5.5.1** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
@@ -117,16 +117,16 @@ waterjet_v2/
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.5.0
+│   ├── build-info.js                  ← Versions-Banner V5.5.1
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.5.0
-│   ├── dxf-parser.js                  ← DXF Parser V3.5 (TEXT/MTEXT/HATCH)
+│   ├── app.js                         ← Hauptanwendung V5.5.1 (Print, FSAPI-Save)
+│   ├── dxf-parser.js                  ← DXF Parser V3.6 (Center/Radius-Passthrough)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
-│   ├── cam-contour.js                 ← Kontur-Klasse V4.7 (Multi-Collision)
+│   ├── cam-contour.js                 ← Kontur-Klasse V4.8 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.12 (Grip-Editing)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.13 (Lead-Differenzierung)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.0
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.3 (Multi-Head)
@@ -135,11 +135,11 @@ waterjet_v2/
 │   ├── snap-manager.js               ← Snap-System V1.2
 │   ├── drawing-tools.js              ← CAD-Tools V2.3 (AutoCAD-Aliases, Continuous)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
-│   ├── advanced-tools.js              ← Arabeske, Aufteilen
+│   ├── advanced-tools.js              ← Tier 5 Tools V1.3 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.0
-│   ├── dxf-writer.js                 ← DXF R12 Export V1.0
+│   ├── dxf-writer.js                 ← DXF R12 Export V1.1 (UTF-8, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import
 │   ├── properties-panel.js            ← Eigenschaften-Panel V1.1
@@ -158,7 +158,6 @@ waterjet_v2/
 │   └── package.json                   ← Node.js Metadaten
 ├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
-├── CHECKLIST.md                       ← Implementierungs-Checkliste
 ├── CLAUDE.md                          ← Diese Datei
 └── README.md                          ← Projekt-Uebersicht
 ```
@@ -246,6 +245,7 @@ Canvas-Click →
 | STRG+A | Alle selektieren |
 | STRG+S | DXF Speichern |
 | STRG+Shift+S | DXF Speichern unter |
+| STRG+P | Drucken (A4L, schwarz auf weiß) |
 | STRG+Shift+D | Debug Monitor |
 | Rechtsklick | Enter/Bestaetigen (aktives Tool) oder Kontextmenu |
 
@@ -310,7 +310,18 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 **Code-Stil:** Deutsch (Kommentare, Doku), Optional Chaining, kategorisierte Logs
 
-**Implementierung:** Phase 0 (Besprechen) → Phase 1 (Design) → Phase 2 (Code) → Phase 3 (Verifikation). Details: `CHECKLIST.md`
+**Implementierung:** Phase 0 (Besprechen) → Phase 1 (Design) → Phase 2 (Code) → Phase 3 (Verifikation)
+
+**Bekannte Fallen:**
+
+| Falle | Symptom | Loesung |
+|-------|---------|---------|
+| Browser-Cache | Code geaendert, Verhalten gleich | Cache-Busting `?v=` hochzaehlen |
+| PropertyChange ohne Render | Wert korrekt, UI zeigt alten Stand | `_refreshAfterUndoRedo()` nach undo/redo |
+| Slider ohne Snapshot | Undo springt auf falschen Wert | `_captureSnapshot()` beim ersten `input`-Event |
+| Import auf Undo-Stack | STRG+Z loescht alles | Import = Snapshot, NICHT Command |
+| forEach ohne Group | Jede Kontur einzeln undo-bar | `beginGroup()` / `endGroup()` |
+| FunctionCommand auf Stack.push | Execute wird nicht aufgerufen | Nur wenn Aktion BEREITS ausgefuehrt |
 
 ---
 
@@ -318,12 +329,13 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH jetzt unterstuetzt (V3.5) |
+| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH unterstuetzt (V3.5), Center/Radius-Passthrough (V3.6) |
 | DXF-Parser | 🔴 | O(n^3) Chaining bei >5000 Entities |
-| Collision | 🟢 | Multi-Kontur Collision Detection (V4.7) |
-| Lead-Routing | 🟡 | Kein Routing um Hindernisse |
+| DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
+| Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
+| Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
 | Postprozessor | 🟡 | M03/M05, Z-Achse, Abrasiv fehlen |
-| Modification Tools | 🟡 | Offset nur Platzhalter |
+| Modification Tools | 🟢 | Tier 3/5 komplett: Trim, Extend, Fillet, Chamfer, Offset (V1.3) |
 | Koordinatensystem | 🟡 | 90-Grad-Drehung Software vs. Maschine (offen) |
 
 ---
@@ -332,7 +344,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 1. **PP Praxistest** — CNC-Datei auf echter Sinumerik 840D validieren
 2. **PP vervollstaendigen** — M03/M05, Z-Achse, Abrasiv
-3. **Tier 3 CAD-Tools erweitern** — Trim, Fillet, Chamfer, Extend, Offset
+3. ~~**Tier 3 CAD-Tools erweitern**~~ — erledigt (V1.3: Trim, Fillet, Chamfer, Extend, Offset mit Ghost-Preview)
 4. **Nesting Praxistest** — BLF-Algorithmus mit realen Teilen validieren
 5. **Kalkulation Praxistest** — Kostenmodell mit realen CeraJet-Daten abgleichen
 
@@ -342,10 +354,12 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-WARICAM/CeraCAM V5.5.0 - Build 20260309-features
+WARICAM/CeraCAM V5.5.1 - Build 20260311-tier3
 [BUILD] Modules:
-  dxf-parser: V3.5 (20260309-text)
-  cam-contour: V4.7 (20260309-multicol)
+  dxf-parser: V3.6 (20260311-centerpass)
+  dxf-writer: V1.1 (20260311-utf8circle)
+  cam-contour: V4.8 (20260311-leadroute)
+  canvas-renderer: V3.13 (20260311-leaddiff)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.3 (20260309-multihead)
   drawing-tools: V2.3 (20260309-autocad)
@@ -356,6 +370,7 @@ WARICAM/CeraCAM V5.5.0 - Build 20260309-features
   machine-profiles: V1.0 (20260309)
   bridge-cutting: V1.0 (20260309)
   quality-zones: V1.0 (20260309)
+  advanced-tools: V1.3 (20260311-offset)
   ...
 ```
 

@@ -4,17 +4,17 @@
  */
 
 const WARICAM_BUILD = {
-    version: '5.5.0',
-    build: '20260309-features',
-    date: '2026-03-09',
-    time: '21:00 MEZ',
+    version: '5.5.1',
+    build: '20260311-tier3',
+    date: '2026-03-11',
+    time: '12:00 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.5', build: '20260309-text' },
+        'dxf-parser':         { version: '3.6', build: '20260311-centerpass' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.1', build: '20260212-1400' },
-        'cam-contour':        { version: '4.7', build: '20260309-multicol' },
-        'canvas-renderer':    { version: '3.12', build: '20260216' },
+        'cam-contour':        { version: '4.8', build: '20260311-leadroute' },
+        'canvas-renderer':    { version: '3.13', build: '20260311-leaddiff' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.3', build: '20260309-multihead' },
         'command-line':       { version: '1.0', build: '20260213-1200' },
@@ -24,8 +24,8 @@ const WARICAM_BUILD = {
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
-        'dxf-writer':         { version: '1.0', build: '20260215-2200' },
-        'app':                { version: '5.5.0', build: '20260309-v55' },
+        'dxf-writer':         { version: '1.1', build: '20260311-utf8circle' },
+        'app':                { version: '5.5.1', build: '20260311-v551' },
         'properties-panel':   { version: '1.1', build: '20260219-phaseB' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.0', build: '20260309' },
@@ -33,7 +33,8 @@ const WARICAM_BUILD = {
         'cost-calculator':    { version: '1.0', build: '20260309' },
         'machine-profiles':   { version: '1.0', build: '20260309' },
         'bridge-cutting':     { version: '1.0', build: '20260309' },
-        'quality-zones':      { version: '1.0', build: '20260309' }
+        'quality-zones':      { version: '1.0', build: '20260309' },
+        'advanced-tools':     { version: '1.3', build: '20260311-offset' }
     },
     
     changes: [
@@ -126,7 +127,13 @@ const WARICAM_BUILD = {
         'V5.5.0: AutoCAD Aliases — E=Erase, CO=Copy, RO=Rotate, MI=Mirror, SC=Scale, REC=Rectangle, PL=Polyline',
         'V5.5.0: Continuous Mode — Modification Tools starten nach Abschluss automatisch neu',
         'V5.5.0: Previous Selection (P) — Vorherige Auswahl in Modification-Tool Selektionsphase',
-        'V5.5.0: Dynamic Input HUD — Koordinaten/Distanz/Winkel am Cursor (DynamicInput V1.0)'
+        'V5.5.0: Dynamic Input HUD — Koordinaten/Distanz/Winkel am Cursor (DynamicInput V1.0)',
+        'V5.5.1: Visuelle Lead-Differenzierung — Cyan/Rot/Grün/Gelb/Magenta nach Zustand (canvas-renderer V3.13)',
+        'V5.5.1: Lead-Routing isRotated/isAlternative Flags (cam-contour V4.8)',
+        'V5.5.1: Dog-Leg Leads als isAlternative markiert für gelbe Darstellung',
+        'V5.5.1: Offset-Tool Ghost-Preview — halbtransparente Vorschau beim Mausbewegen (advanced-tools V1.3)',
+        'V5.5.1: Chamfer Continuous Mode — Tool bleibt nach Anwendung aktiv',
+        'V5.5.1: Offset-Preview RubberBand-Type im Renderer (grün halbtransparent)'
     ],
     
     print() {

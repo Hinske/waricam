@@ -1,14 +1,15 @@
 /**
- * WARICAM V3.12 - Canvas Renderer
+ * WARICAM V3.13 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
  * V3.12: Dimension Rendering Integration
  * V3.10: Grip Editing System (Vertex, Midpoint, Center, Quadrant)
  *        Anschussfahnen nur in CAM-Modi (nicht im CAD-Zeichenmodus)
  * V3.11: Image Underlay Rendering
  * V3.5: Ghost-Preview + Window-Selection Rendering
  * V3.4: Drawing-Overlay + SnapManager-Rendering
- * Last Modified: 2026-02-16 MEZ
+ * Last Modified: 2026-03-11 MEZ
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -33,6 +34,11 @@ const CANVAS_THEMES = {
         original:       'rgba(255,255,255,0.4)',
         leadIn:         '#00ff00',
         leadOut:        '#ff00ff',
+        leadDefault:    '#00FFFF',       // Cyan: Standard-Lead (ungekürzt)
+        leadShortened:  '#FF0000',       // Rot: Gekürzter Lead (Warnung)
+        leadRotated:    '#00FF00',       // Grün: Rotiert (Strategy A)
+        leadAlternative:'#FFFF00',       // Gelb: Dog-Leg / Alternative (Strategy B)
+        leadFallback:   '#FF00FF',       // Magenta: Center-Pierce Fallback
         overcut:        '#00ffff',
         microjoint:     '#ff8800',
         travel:         '#888888',
@@ -64,6 +70,11 @@ const CANVAS_THEMES = {
         original:       'rgba(0,0,0,0.35)',
         leadIn:         '#007700',
         leadOut:        '#880088',
+        leadDefault:    '#008888',
+        leadShortened:  '#CC0000',
+        leadRotated:    '#007700',
+        leadAlternative:'#AA8800',
+        leadFallback:   '#880088',
         overcut:        '#006688',
         microjoint:     '#cc5500',
         travel:         '#666666',
@@ -953,7 +964,7 @@ class CanvasRenderer {
         if (pts.length < 2) return;
 
         const pierce = pts[0];
-        const color = this.colors.leadIn;
+        const color = this._getLeadColor(leadPath, 'in');
         const lw = CanvasRenderer.LINE_WIDTH.LEAD / this.scale;
         const dash = this._getLeadDash(leadPath.type, lw);
 
@@ -1058,6 +1069,19 @@ class CanvasRenderer {
         ctx.stroke();
     }
 
+    /**
+     * V4.8: Lead-Farbe nach Zustand — visuelle Differenzierung
+     * Priorität: Fallback > Shortened > Alternative > Rotated > Default
+     */
+    _getLeadColor(leadPath, direction) {
+        if (!leadPath) return direction === 'in' ? this.colors.leadIn : this.colors.leadOut;
+        if (leadPath.isFallbackCenterPierce) return this.colors.leadFallback;
+        if (leadPath.shortened)              return this.colors.leadShortened;
+        if (leadPath.isAlternative)          return this.colors.leadAlternative;
+        if (leadPath.isRotated)              return this.colors.leadRotated;
+        return this.colors.leadDefault;
+    }
+
     /** Dash-Pattern je Lead-Typ (skaliert auf Linewidth) */
     _getLeadDash(type, lw) {
         const s = Math.max(lw * 3, 2 / this.scale);
@@ -1065,6 +1089,7 @@ class CanvasRenderer {
             case 'arc':      return [];                        // durchgezogen
             case 'linear':   return [s * 2, s];                // gestrichelt ▬ ▬ ▬
             case 'tangent':  return [s * 2, s * 0.6, s * 0.5, s * 0.6]; // strichpunkt ▬·▬·
+            case 'dog_leg':  return [s, s * 0.5];              // kurz gestrichelt ▪ ▪ ▪
             default:         return [];
         }
     }
@@ -1075,6 +1100,7 @@ class CanvasRenderer {
             case 'arc':     return 'A';
             case 'linear':  return 'L';
             case 'tangent': return 'T';
+            case 'dog_leg': return 'DL';
             default:        return '';
         }
     }
@@ -1105,7 +1131,7 @@ class CanvasRenderer {
         if (!leadPath?.points?.length || leadPath.points.length < 2) return;
 
         const pts = leadPath.points;
-        const color = this.colors.leadOut;
+        const color = this._getLeadColor(leadPath, 'out');
         const lw = CanvasRenderer.LINE_WIDTH.LEAD / this.scale;
         const dash = this._getLeadDash(leadPath.type, lw);
 

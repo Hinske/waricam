@@ -754,6 +754,23 @@ class DrawingToolManager {
                 }
                 break;
             }
+
+            // V5.5.1: Offset-Preview — Grün halbtransparent (Ghost)
+            case 'offsetPreview': {
+                if (rb.data.points && rb.data.points.length >= 2) {
+                    ctx.strokeStyle = 'rgba(0, 255, 136, 0.6)';
+                    ctx.lineWidth = 2.0 / scale;
+                    ctx.setLineDash([8 / scale, 4 / scale]);
+                    ctx.beginPath();
+                    ctx.moveTo(rb.data.points[0].x, rb.data.points[0].y);
+                    for (let i = 1; i < rb.data.points.length; i++) {
+                        ctx.lineTo(rb.data.points[i].x, rb.data.points[i].y);
+                    }
+                    if (rb.data.closed) ctx.closePath();
+                    ctx.stroke();
+                }
+                break;
+            }
         }
 
         ctx.restore();

@@ -1,19 +1,20 @@
 /**
- * WARICAM Advanced Tools V1.2 — Tier 5 CAD Tools
+ * WARICAM Advanced Tools V1.3 — Tier 5 CAD Tools
  * 13 CAD-Werkzeuge + Ribbon-Alias-Fix
- * 
+ *
+ * V1.3: Offset Ghost-Preview (handleMouseMove), Chamfer Continuous Mode + finish()
  * V1.2: Arabeske-Tool (AB) — Parametrische Laternenfliese, 8 Kreisbögen, Fugen-Offset
  * V1.1: Fillet Continuous Mode + Bogen-Preview, Trim Hover-Preview (Rot gestrichelt)
  * V1.0: Initial 12 Tools
- * 
+ *
  * Tools: Fillet (F), Trim (T), Offset (O), Extend (EX), Chamfer (CH),
  *        Zero Fillet (ZF), Boolean (BO), N-gon (NG), Obround (OB),
  *        Array (AR), Lengthen (LE), Boundary Poly (BP), Arabeske (AB)
- * 
- * Benötigt: geometry-ops.js V2.2, drawing-tools.js V2.5
- * 
- * Last Modified: 2026-02-15 MEZ
- * Build: 20260215b
+ *
+ * Benötigt: geometry-ops.js V2.2, drawing-tools.js V2.3
+ *
+ * Last Modified: 2026-03-11 MEZ
+ * Build: 20260311-offset
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -616,6 +617,37 @@ class OffsetToolAdvanced extends BaseTool {
         return false;
     }
 
+    // V1.3: Offset-Seite berechnen (Vorzeichen)
+    _getOffsetSign(point, target) {
+        if (target.isClosed) {
+            return GeometryOps.pointInPolygon(point, target.points) ? -1 : 1;
+        }
+        var hit = GeometryOps.findNearestSegment(target.points, point.x, point.y);
+        if (hit) {
+            var p1 = target.points[hit.segmentIndex], p2 = target.points[hit.segmentIndex + 1];
+            var cross = (p2.x - p1.x) * (point.y - p1.y) - (p2.y - p1.y) * (point.x - p1.x);
+            return cross > 0 ? 1 : -1;
+        }
+        return 1;
+    }
+
+    // V1.3: Ghost-Preview beim Mausbewegen
+    handleMouseMove(point) {
+        if (this.state !== 'side' || !this.targetContour) return;
+
+        var sign = this._getOffsetSign(point, this.targetContour);
+        var previewPts = GeometryOps.offsetContour(this.targetContour.points, this.distance * sign, this.targetContour.isClosed);
+        if (previewPts && previewPts.length >= 2) {
+            this.manager.rubberBand = {
+                type: 'offsetPreview',
+                data: { points: previewPts, closed: this.targetContour.isClosed }
+            };
+        } else {
+            this.manager.rubberBand = null;
+        }
+        this.manager.renderer?.render();
+    }
+
     handleClick(point) {
         var app = this.manager.app;
         var contours = app?.contours;
@@ -634,23 +666,13 @@ class OffsetToolAdvanced extends BaseTool {
             clicked.isSelected = true;
             this.manager.renderer?.render();
             this.state = 'side';
-            this.cmd?.setPrompt('OFFSET — Seite anklicken:');
+            this.cmd?.setPrompt('OFFSET — Seite anklicken (Maus zeigt Vorschau):');
             return;
         }
 
         if (this.state === 'side') {
             var target = this.targetContour;
-            var sign = 1;
-            if (target.isClosed) {
-                sign = GeometryOps.pointInPolygon(point, target.points) ? -1 : 1;
-            } else {
-                var hit = GeometryOps.findNearestSegment(target.points, point.x, point.y);
-                if (hit) {
-                    var p1 = target.points[hit.segmentIndex], p2 = target.points[hit.segmentIndex + 1];
-                    var cross = (p2.x - p1.x) * (point.y - p1.y) - (p2.y - p1.y) * (point.x - p1.x);
-                    sign = cross > 0 ? 1 : -1;
-                }
-            }
+            var sign = this._getOffsetSign(point, target);
 
             var offsetPts = GeometryOps.offsetContour(target.points, this.distance * sign, target.isClosed);
             if (!offsetPts || offsetPts.length < 2) { this.cmd?.log('Offset fehlgeschlagen', 'error'); this.state = 'pick'; return; }
@@ -676,6 +698,7 @@ class OffsetToolAdvanced extends BaseTool {
             this.targetContour = null;
             this.state = 'pick';
             contours.forEach(function(c) { c.isSelected = false; });
+            this.manager.rubberBand = null;
             this.cmd?.setPrompt('OFFSET ' + dist + 'mm — Nächste Kontur (ESC = Ende):');
             this.manager.renderer?.render();
         }
@@ -760,8 +783,19 @@ class ChamferTool extends BaseTool {
             );
             app.undoManager?.execute(cmd);
             this.cmd?.log('✔ Chamfer angewendet (Strg+Z = Rückgängig)', 'success');
-            this.manager.rubberBand = null; this.manager.activeTool = null;
-            this.manager._setDefaultPrompt(); this.manager.renderer?.render();
+            // V1.3: Continuous Mode — zurück zu pick1
+            this.seg1Contour = null; this.seg1Index = -1; this.state = 'pick1';
+            this.manager.rubberBand = null;
+            this.cmd?.setPrompt('CHAMFER ' + this.dist1 + 'mm — Nächstes Segment [ESC=Ende]:');
+            this.manager.renderer?.render();
+        }
+    }
+
+    // V1.3: Enter/Space mit aktuellem Abstand weitermachen
+    finish() {
+        if (this.state === 'distance') {
+            this.state = 'pick1';
+            this.cmd?.setPrompt('CHAMFER ' + this.dist1 + 'mm — Erstes Segment:');
         }
     }
 }
@@ -1572,7 +1606,7 @@ if (typeof DrawingToolManager !== 'undefined') {
             if (!this.tools['SC']) this.tools['SC'] = () => new ScaleTool(this);
             if (!this.tools['E'])  this.tools['E']  = () => new EraseTool(this);
 
-            console.log('[AdvancedTools V1.1] ✅ 13 Tier 5 Tools + Arabeske + Alias-Fix registriert');
+            console.log('[AdvancedTools V1.3] ✅ 13 Tier 5 Tools + Arabeske + Alias-Fix registriert');
         }
 
         // Auto-Apply Erweiterung
@@ -1587,5 +1621,5 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolAdv.call(this, shortcut);
     };
 
-    console.log('[AdvancedTools V1.1] ✅ Lazy-Patch installiert');
+    console.log('[AdvancedTools V1.3] ✅ Lazy-Patch installiert');
 }

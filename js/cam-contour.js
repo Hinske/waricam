@@ -1,5 +1,5 @@
 /**
- * WARICAM CamContour V4.6 - IGEMS-konformes Lead-In/Out System
+ * WARICAM CamContour V4.8 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -7,7 +7,8 @@
  * V4.5: Außen/Innen-Lead Differenzierung, clone(), IGEMS 4-Slot Fallback-Kette
  * V4.6: Alternativ-Lead Property-Rename (altLeadInLength/Angle/OutLength/Overcut)
  * V4.7: Multi-Kontur Collision Detection — Lead vs. ALLE Konturen
- * Last Modified: 2026-03-09 UTC
+ * V4.8: Lead-Routing Strategien A (Rotation) + B (Dog-Leg), isRotated/isAlternative Flags
+ * Last Modified: 2026-03-11 UTC
  */
 
 class CamContour {
@@ -1074,48 +1075,287 @@ class CamContour {
      * @param {number} [safetyMargin=0.5] - Mindestabstand zu Nachbar-Konturen (mm)
      */
     checkMultiContourCollision(allContours, safetyMargin = 0.5) {
-        if (!allContours || allContours.length < 2) return;
+        if (!allContours || allContours.length < 2) return false;
 
+        // Nachbar-Konturen mit BBox vorfiltern (einmalig)
+        const neighbors = this._getNeighborContours(allContours, safetyMargin);
+        if (neighbors.length === 0) return false;
+
+        // Lead-In prüfen — mit erweiterter Fallback-Kette
+        let leadInModified = false;
         const leadIn = this.getLeadInPath();
+
+        if (leadIn?.points?.length >= 2 && !leadIn.isFallbackCenterPierce) {
+            const collision = this._checkLeadAgainstNeighbors(leadIn, neighbors, 'in', safetyMargin);
+            if (collision) {
+                // ── Strategy A: Startpunkt rotieren ──
+                const rotated = this._tryRotateStartPoint(allContours, neighbors, safetyMargin);
+                if (rotated) {
+                    leadInModified = true;
+                    // Lead-In nach Rotation neu holen und als rotiert markieren
+                    const rotatedLead = this.getLeadInPath();
+                    if (rotatedLead) rotatedLead.isRotated = true;
+                    console.log(`[CamContour V4.8] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
+                } else {
+                    // ── Strategy B: Dog-Leg Routing ──
+                    const dogLeg = this._tryDogLegLeadIn(neighbors, safetyMargin);
+                    if (dogLeg) {
+                        this._cachedLeadInPath = dogLeg;
+                        leadInModified = true;
+                        console.log(`[CamContour V4.8] Lead-Routing B: Dog-Leg für ${this.name}`);
+                    } else {
+                        // Kein Routing möglich → konventionelles Shortening
+                        for (const nb of neighbors) {
+                            if (this._shortenLeadAgainstContour(leadIn, nb.pts, 'in', safetyMargin)) {
+                                leadInModified = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Lead-Out prüfen — nur konventionelles Shortening (kein Routing)
+        let leadOutModified = false;
         const leadOut = this.getLeadOutPath();
 
-        let modified = false;
-
-        for (const other of allContours) {
-            if (other === this) continue;
-            if (other.isReference) continue;
-
-            // Bounding-Box Quick-Reject
-            const otherBB = this._getBBox(other.points);
-            if (!otherBB) continue;
-
-            // Lead-In vs. andere Kontur
-            if (leadIn?.points?.length >= 2) {
-                const leadBB = this._getBBox(leadIn.points);
-                if (leadBB && this._bboxOverlap(leadBB, otherBB, safetyMargin)) {
-                    const otherPts = other.getKerfOffsetPolyline()?.points || other.points;
-                    if (this._shortenLeadAgainstContour(leadIn, otherPts, 'in', safetyMargin)) {
-                        modified = true;
-                    }
-                }
-            }
-
-            // Lead-Out vs. andere Kontur
-            if (leadOut?.points?.length >= 2) {
+        if (leadOut?.points?.length >= 2) {
+            for (const nb of neighbors) {
                 const leadBB = this._getBBox(leadOut.points);
-                if (leadBB && this._bboxOverlap(leadBB, otherBB, safetyMargin)) {
-                    const otherPts = other.getKerfOffsetPolyline()?.points || other.points;
-                    if (this._shortenLeadAgainstContour(leadOut, otherPts, 'out', safetyMargin)) {
-                        modified = true;
+                if (leadBB && this._bboxOverlap(leadBB, nb.bbox, safetyMargin)) {
+                    if (this._shortenLeadAgainstContour(leadOut, nb.pts, 'out', safetyMargin)) {
+                        leadOutModified = true;
                     }
                 }
             }
         }
 
+        const modified = leadInModified || leadOutModified;
         if (modified) {
-            console.log(`[CamContour V4.7] Multi-Collision: Lead gekürzt für ${this.name}`);
+            console.log(`[CamContour V4.8] Multi-Collision: Lead angepasst für ${this.name}`);
         }
         return modified;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // LEAD-ROUTING STRATEGIEN (V4.8)
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Sammelt Nachbar-Konturen mit vorberechneter BBox + Kerf-Punkten.
+     * BBox-Quick-Reject gegen eigene Kontur-BBox + Lead-Reichweite.
+     */
+    _getNeighborContours(allContours, margin) {
+        const selfBB = this._getBBox(this.points);
+        if (!selfBB) return [];
+
+        // Suchradius: eigene BBox + maximale Lead-Länge + Margin
+        const reach = Math.max(this.leadInLength, this.leadInRadius, this.leadOutLength, 10) + margin;
+        const searchBB = {
+            minX: selfBB.minX - reach, minY: selfBB.minY - reach,
+            maxX: selfBB.maxX + reach, maxY: selfBB.maxY + reach
+        };
+
+        const neighbors = [];
+        for (const other of allContours) {
+            if (other === this || other.isReference) continue;
+            const bbox = this._getBBox(other.points);
+            if (!bbox) continue;
+            if (!this._bboxOverlap(searchBB, bbox, 0)) continue;
+            neighbors.push({
+                contour: other,
+                bbox,
+                pts: other.getKerfOffsetPolyline()?.points || other.points
+            });
+        }
+        return neighbors;
+    }
+
+    /**
+     * Prüft ob ein Lead-Pfad mit irgendeiner Nachbar-Kontur kollidiert.
+     * Gibt true zurück wenn Kollision gefunden.
+     */
+    _checkLeadAgainstNeighbors(leadPath, neighbors, direction, margin) {
+        if (!leadPath?.points || leadPath.points.length < 2) return false;
+        const leadBB = this._getBBox(leadPath.points);
+        if (!leadBB) return false;
+
+        for (const nb of neighbors) {
+            if (!this._bboxOverlap(leadBB, nb.bbox, margin)) continue;
+            if (this._leadIntersectsContour(leadPath.points, nb.pts, margin)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Prüft ob Lead-Punkte eine Kontur schneiden oder zu nah kommen.
+     * Wie _shortenLeadAgainstContour, aber ohne Mutation — nur Detection.
+     */
+    _leadIntersectsContour(leadPts, contourPts, margin) {
+        // Intersection check
+        for (let li = 0; li < leadPts.length - 1; li++) {
+            const la = leadPts[li], lb = leadPts[li + 1];
+            for (let ci = 0; ci < contourPts.length - 1; ci++) {
+                if (this._segmentIntersect(la, lb, contourPts[ci], contourPts[ci + 1])) {
+                    return true;
+                }
+            }
+        }
+        // Proximity check
+        for (const p of leadPts) {
+            for (let ci = 0; ci < contourPts.length - 1; ci++) {
+                if (this._pointToSegDist(p, contourPts[ci], contourPts[ci + 1]) < margin) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Strategy A: Startpunkt in 5°-Schritten rotieren.
+     * Sucht die erste Position mit kollisionsfreiem Lead-In.
+     * Prüft zuerst Ecken (bevorzugte Positionen), dann gleichverteilt.
+     */
+    _tryRotateStartPoint(allContours, neighbors, margin) {
+        if (!this.isClosed || !this.points || this.points.length < 4) return false;
+
+        const n = this.points.length - 1; // Closed: letzter = erster
+        const totalLen = this._pathLength(this.points);
+        if (totalLen < 1) return false;
+
+        // Originalzustand sichern
+        const origPoints = this.points.map(p => ({ x: p.x, y: p.y }));
+        const origRotation = this._rotationCount;
+
+        // Kandidaten sammeln: erst Ecken, dann 5°-Schritte (= Umfangsanteile)
+        const candidates = [];
+
+        // Ecken als bevorzugte Kandidaten (Index > 0, da 0 = aktueller Startpunkt)
+        const corners = typeof Geometry !== 'undefined' && Geometry.findCorners
+            ? Geometry.findCorners(this.points, this.cornerAngleThreshold)
+            : [];
+        for (const c of corners) {
+            if (c.index > 0 && c.index < n) candidates.push(c.index);
+        }
+
+        // Gleichverteilte Positionen (5°-Schritte → 72 Positionen)
+        const step = Math.max(1, Math.round(n / 72));
+        for (let i = step; i < n; i += step) {
+            if (!candidates.includes(i)) candidates.push(i);
+        }
+
+        // Jeden Kandidaten testen
+        for (const idx of candidates) {
+            // Punkte rotieren
+            const rotated = [];
+            for (let i = 0; i < n; i++) {
+                rotated.push(origPoints[(idx + i) % n]);
+            }
+            rotated.push({ x: rotated[0].x, y: rotated[0].y });
+            this.points = rotated;
+            this._rotationCount++;
+            this.invalidate();
+
+            // Lead-In an neuer Position generieren und testen
+            const testLead = this.getLeadInPath();
+            if (testLead?.points?.length >= 2 && !testLead.isFallbackCenterPierce) {
+                const hasCollision = this._checkLeadAgainstNeighbors(testLead, neighbors, 'in', margin);
+                if (!hasCollision) {
+                    // Kollisionsfrei → Position beibehalten
+                    this.startPointIndex = 0;
+                    return true;
+                }
+            }
+        }
+
+        // Keine kollisionsfreie Position gefunden → Original wiederherstellen
+        this.points = origPoints;
+        this._rotationCount = origRotation;
+        this.invalidate();
+        return false;
+    }
+
+    /**
+     * Strategy B: Dog-Leg Lead-In mit Waypoint auf der Verschnittseite.
+     * Erstellt einen geknickten Pfad: Pierce → Waypoint → Entry.
+     * Der Waypoint liegt seitlich versetzt auf der Abfallseite.
+     */
+    _tryDogLegLeadIn(neighbors, margin) {
+        if (!this.isClosed) return null;
+
+        const pts = this.getKerfOffsetPolyline()?.points || this.points;
+        if (!pts || pts.length < 3) return null;
+
+        const entry = pts[0];
+        const next = pts[1];
+        const dx = next.x - entry.x, dy = next.y - entry.y;
+        const tLen = Math.hypot(dx, dy);
+        if (tLen < 1e-6) return null;
+        const tangent = { x: dx / tLen, y: dy / tLen };
+        const normal = this._getWasteSideNormal(entry, tangent);
+
+        const leadLen = this.leadInLength;
+
+        // Verschiedene Dog-Leg-Konfigurationen testen:
+        // Winkel (15°, 30°, 45°, 60°) × Seite (links/rechts relativ zur Normalen)
+        const angles = [30, 45, 15, 60];
+        const sides = [1, -1]; // 1 = normal, -1 = gespiegelt
+
+        for (const angleDeg of angles) {
+            for (const side of sides) {
+                const angleRad = angleDeg * Math.PI / 180;
+
+                // Waypoint: Lead-Länge in Normalenrichtung + seitlicher Versatz
+                const cosA = Math.cos(angleRad);
+                const sinA = Math.sin(angleRad);
+
+                // Richtung: Normale rotiert um angleDeg
+                const dirX = normal.x * cosA + side * tangent.x * sinA;
+                const dirY = normal.y * cosA + side * tangent.y * sinA;
+
+                const waypoint = {
+                    x: entry.x + dirX * leadLen * 0.6,
+                    y: entry.y + dirY * leadLen * 0.6
+                };
+
+                // Pierce-Punkt: Von Waypoint weiter in Normalenrichtung
+                const pierce = {
+                    x: waypoint.x + normal.x * leadLen * 0.4,
+                    y: waypoint.y + normal.y * leadLen * 0.4
+                };
+
+                const testPoints = [pierce, waypoint, entry];
+
+                // Kollisionscheck gegen alle Nachbarn
+                let collision = false;
+                for (const nb of neighbors) {
+                    if (this._leadIntersectsContour(testPoints, nb.pts, margin)) {
+                        collision = true;
+                        break;
+                    }
+                }
+
+                // Auch gegen eigene Kontur prüfen
+                if (!collision) {
+                    collision = this._leadIntersectsContour(testPoints, pts, margin);
+                }
+
+                if (!collision) {
+                    return {
+                        points: testPoints,
+                        piercingPoint: pierce,
+                        entryPoint: entry,
+                        type: 'dog_leg',
+                        dogLegAngle: angleDeg,
+                        shortened: false,
+                        multiContourCollision: false,
+                        isAlternative: true
+                    };
+                }
+            }
+        }
+        return null; // Kein Dog-Leg möglich
     }
 
     /**
@@ -1224,7 +1464,7 @@ class CamContour {
             }
         }
         if (totalModified > 0) {
-            console.log(`[CamContour V4.7] Multi-Collision: ${totalModified}/${contours.length} Leads angepasst`);
+            console.log(`[CamContour V4.8] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
         }
         return totalModified;
     }
