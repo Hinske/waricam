@@ -393,18 +393,23 @@ WARICAM/CeraCAM V5.6 - Build 20260313-workspace
 
 Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refactorings. Bei Architektur-Entscheidungen sollen diese langfristigen Ziele berücksichtigt werden.
 
-### 1. Architektur & Infrastruktur (Technische Schulden & Skalierung)
-* **Build-System Evaluierung:** Der aktuelle "Vanilla"-Ansatz ohne Bundler stößt bei >35 Modulen an seine Grenzen. Mittelfristig ist eine Migration auf einen modernen Bundler (z. B. Vite) anzustreben. Dies automatisiert das Cache-Busting, ermöglicht Code-Minification und vereinfacht das Dependency-Management.
-* **Schrittweise Typisierung:** Um fehleranfällige Vektorberechnungen (NaN-Bugs) abzufangen, sollte mittelfristig eine Migration auf TypeScript (beginnend beim Geometrie-Kernel `geometry.js`) evaluiert werden.
-* **Performance-Monitoring:** Das O(n) Deque-Chaining im `dxf-parser.js` muss bei extrem großen/komplexen DXF-Dateien auf Performance-Engpässe überwacht und ggf. optimiert werden.
+### 1. Code-Hygiene & Stabilitaet
+* **Runtime-Guards im Geometrie-Kernel:** `assertFinite()`-Helper in `geometry.js` und
+  `geometry-ops.js` an kritischen Rechenpfaden (Normalisierung, Division, Arc-Berechnung).
+  Faengt NaN-Bugs dort ab wo sie entstehen — ohne TypeScript-Migration.
+* **Modul-Ladereihenfolge dokumentieren:** Die 35+ Script-Tags in `index.html` haben implizite
+  Abhaengigkeiten. Kommentarblock in der Script-Sektion soll die Abhaengigkeitskette explizit
+  machen. Bundler-Migration nur evaluieren wenn Syncthing-Workflow es erlaubt.
+* **DXF-Parser Stress-Tests:** Grosse Praxis-DXFs (>5000 Entities) als Test-Suite in `Examples/`
+  sammeln. Parser-Performance ist seit V3.7 (Deque) gut, aber Regressionen sollen auffallen.
 
 ### 2. Offene Kernaufgaben (Kurzfristige Prio 1)
-* **Postprozessor komplettieren:** Essenzielle Maschinenbefehle für die Sinumerik 840D (Hochdruckpumpe M03/M05, Z-Achsen-Bewegung, Abrasiv-Steuerung) implementieren.
 * **Praxis-Validierung:**
-  * Generierten MPF/SPF-Code auf der echten Maschine testen (Kollisionsprüfung).
+  * Generierten MPF/SPF-Code auf der echten Maschine testen (Kollisionspruefung).
   * `cost-calculator.js` mit realen CeraJet-Maschinendaten kalibrieren.
   * BLF-Nesting mit realen Praxis-Szenarien verproben.
-* **Koordinatensystem:** Konflikt der 90-Grad-Drehung (Darstellung im Browser vs. reales Maschinen-Koordinatensystem) auflösen.
+* **Koordinatensystem:** Konflikt der 90-Grad-Drehung (Darstellung im Browser vs. reales
+  Maschinen-Koordinatensystem) aufloesen.
 
 ### 3. Zukünftige Feature-Roadmap (Enterprise-Niveau)
 * **Material- & Technologie-Datenbank:** Ausbau der `cerajet-engine.js`. Statt starrer Prozentwerte soll die Software Vorschubgeschwindigkeiten, Ramping, Abrasivfluss und Pumpendruck dynamisch anhand der Parameter "Materialart" und "Materialdicke" berechnen.
