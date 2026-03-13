@@ -386,3 +386,28 @@ WARICAM/CeraCAM V5.6 - Build 20260313-workspace
 - **Entwickler:** Markus (Cerasell GmbH)
 - **System-Anweisung:** `.claude/system-anweisung-v15.md` (verbindlich, nicht in Git)
 - **Sprache:** Deutsch bevorzugt
+
+---
+
+## Strategische Roadmap & Architektur-Ziele
+
+Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refactorings. Bei Architektur-Entscheidungen sollen diese langfristigen Ziele berücksichtigt werden.
+
+### 1. Architektur & Infrastruktur (Technische Schulden & Skalierung)
+* **Build-System Evaluierung:** Der aktuelle "Vanilla"-Ansatz ohne Bundler stößt bei >35 Modulen an seine Grenzen. Mittelfristig ist eine Migration auf einen modernen Bundler (z. B. Vite) anzustreben. Dies automatisiert das Cache-Busting, ermöglicht Code-Minification und vereinfacht das Dependency-Management.
+* **Schrittweise Typisierung:** Um fehleranfällige Vektorberechnungen (NaN-Bugs) abzufangen, sollte mittelfristig eine Migration auf TypeScript (beginnend beim Geometrie-Kernel `geometry.js`) evaluiert werden.
+* **Performance-Monitoring:** Das O(n) Deque-Chaining im `dxf-parser.js` muss bei extrem großen/komplexen DXF-Dateien auf Performance-Engpässe überwacht und ggf. optimiert werden.
+
+### 2. Offene Kernaufgaben (Kurzfristige Prio 1)
+* **Postprozessor komplettieren:** Essenzielle Maschinenbefehle für die Sinumerik 840D (Hochdruckpumpe M03/M05, Z-Achsen-Bewegung, Abrasiv-Steuerung) implementieren.
+* **Praxis-Validierung:**
+  * Generierten MPF/SPF-Code auf der echten Maschine testen (Kollisionsprüfung).
+  * `cost-calculator.js` mit realen CeraJet-Maschinendaten kalibrieren.
+  * BLF-Nesting mit realen Praxis-Szenarien verproben.
+* **Koordinatensystem:** Konflikt der 90-Grad-Drehung (Darstellung im Browser vs. reales Maschinen-Koordinatensystem) auflösen.
+
+### 3. Zukünftige Feature-Roadmap (Enterprise-Niveau)
+* **Material- & Technologie-Datenbank:** Ausbau der `cerajet-engine.js`. Statt starrer Prozentwerte soll die Software Vorschubgeschwindigkeiten, Ramping, Abrasivfluss und Pumpendruck dynamisch anhand der Parameter "Materialart" und "Materialdicke" berechnen.
+* **True-Shape Nesting:** Erweiterung des aktuellen BLF-Algorithmus (Bounding-Box) zu formtreuem Verschachteln, sodass kleine Bauteile in die Restgitter-Ausschnitte (Holes) großer Bauteile platziert werden können.
+* **Tip-Up Avoidance (Kollisionsvermeidung):** Erweiterung des `toolpath-simulator.js` und der Lead-Routings. Der Schneidkopf soll im Eilgang (G00) intelligent um bereits geschnittene Teile herumgeführt werden, um Kollisionen mit aufgestellten Bauteilen im Wasserbecken zu vermeiden.
+* **PDF-Rüstblatt (Setup Sheet):** Generierung eines Export-Dokuments für den Maschinenbediener mit allen relevanten Job-Daten (Nullpunkt-Position, Brutto-Plattengröße, geschätzte Laufzeit, Anzahl der Piercings).
