@@ -2071,3 +2071,133 @@ html, body {
         font-size: 8pt;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   WORKSPACE SIDEBAR (LEFT)
+   ═══════════════════════════════════════════════════════════════ */
+
+.workspace-sidebar {
+    width: 200px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.2s;
+}
+
+.workspace-sidebar.hidden {
+    display: none;
+}
+
+.workspace-sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    border-right: none;
+}
+
+.ws-header {
+    background: var(--panel-header-bg);
+    padding: 6px 8px;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--panel-text);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.ws-header-btn {
+    background: none;
+    border: none;
+    color: var(--panel-text);
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 4px;
+    opacity: 0.6;
+}
+.ws-header-btn:hover { opacity: 1; }
+
+.ws-file-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+
+.ws-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.1s;
+}
+.ws-file:hover {
+    background: var(--ribbon-hover);
+}
+.ws-file.active {
+    background: var(--ribbon-active);
+    border-left-color: #0078d4;
+    font-weight: 600;
+}
+
+.ws-file-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.ws-file-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.ws-file-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    color: var(--panel-text);
+}
+
+.ws-file-meta {
+    font-size: 9px;
+    color: #888;
+    white-space: nowrap;
+}
+
+.ws-empty {
+    padding: 16px 12px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Dark Theme */
+[data-theme="dark"] .workspace-sidebar {
+    background: #252526;
+    border-right-color: #3e3e42;
+}
+[data-theme="dark"] .ws-header {
+    background: #333;
+    color: #ccc;
+    border-bottom-color: #3e3e42;
+}
+[data-theme="dark"] .ws-file:hover {
+    background: #2a2d2e;
+}
+[data-theme="dark"] .ws-file.active {
+    background: #094771;
+}
+[data-theme="dark"] .ws-file-name {
+    color: #ccc;
+}
+
+@media (max-width: 768px) {
+    .workspace-sidebar { display: none; }
+}

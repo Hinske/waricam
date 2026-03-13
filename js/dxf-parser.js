@@ -1,7 +1,14 @@
 /**
- * WARICAM DXF Parser V3.7
- * Last Modified: 2026-03-11 MEZ
- * Build: 20260311-deque
+ * WARICAM DXF Parser V3.8
+ * Last Modified: 2026-03-12 MEZ
+ * Build: 20260312-textglyphs
+ *
+ * V3.8 Änderungen:
+ *   - TEXT/MTEXT Glyph-Import: TextTool.textToContours() → echte Buchstaben-Konturen
+ *   - TEXT Justierung: Group Codes 72 (halign), 11/21 (Alignment-Punkt) korrekt ausgewertet
+ *   - BBox-Fallback: Center/Right-Alignment bei Bounding-Box-Rechtecken
+ *   - Multi-Kontur-Return: TEXT-Entities geben Array zurück (wie INSERT)
+ *   - Warnung TEXT_BBOX_FALLBACK wenn kein Font geladen
  *
  * V3.7 Änderungen:
  *   - Chaining-Optimierung: Deque-Pattern statt Array-Prepend (O(1) amortisiert)
@@ -81,7 +88,7 @@ const DXFParser = {
     _entityStats: {},
 
     parse(dxfContent, options = {}) {
-        console.log('[DXF Parser V3.7] Starting parse...');
+        console.log('[DXF Parser V3.8] Starting parse...');
         const startTime = performance.now();
         
         try {
@@ -105,7 +112,7 @@ const DXFParser = {
             const normResult = this._autoNormalizeEntities(entities);
             if (normResult.normalized) {
                 entities = normResult.entities;
-                console.log(`[DXF V3.7] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
+                console.log(`[DXF V3.8] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
             }
 
             // Layer: Entity-Layer + TABLES-Layer zusammenführen
@@ -124,11 +131,11 @@ const DXFParser = {
             
             // V3.3: Detaillierte Entity-Typ-Statistik
             const typeBreakdown = Object.entries(this._entityStats).map(([t,c]) => `${c}\u00d7${t}`).join(', ');
-            console.log(`[DXF V3.7] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
+            console.log(`[DXF V3.8] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
             
             // V3.3: Kontur-Details loggen
             contours.forEach((c, i) => {
-                console.log(`[DXF V3.7]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
+                console.log(`[DXF V3.8]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
             });
 
             // Ignorierte Entities loggen
@@ -165,7 +172,7 @@ const DXFParser = {
                 warnings: this._generateWarnings(contours, entities)
             };
         } catch (error) {
-            console.error('[DXF Parser V3.7] Error:', error);
+            console.error('[DXF Parser V3.8] Error:', error);
             return { 
                 success: false, 
                 error: error.message, 
@@ -212,6 +219,16 @@ const DXFParser = {
             });
         }
         
+        // TEXT ohne Font (BBox-Fallback)
+        const textBBoxCount = contours.filter(c => c.sourceType === 'TEXT' && c.sourceText).length;
+        if (textBBoxCount > 0) {
+            warnings.push({
+                type: 'TEXT_BBOX_FALLBACK',
+                message: `${textBBoxCount} Text-Element(e) als Bounding-Box importiert — Font laden (TX → FONT) und neu importieren für Buchstaben-Konturen`,
+                count: textBBoxCount
+            });
+        }
+
         // Große Datei
         if (entities.length > 5000) {
             warnings.push({
@@ -220,7 +237,7 @@ const DXFParser = {
                 count: entities.length
             });
         }
-        
+
         return warnings;
     },
 
@@ -274,6 +291,23 @@ const DXFParser = {
                     case 'ARC': entity = this._parseArc(lines, i); break;
                     case 'SPLINE': entity = this._parseSpline(lines, i); break;
                     case 'ELLIPSE': entity = this._parseEllipse(lines, i); break;
+                    case 'TEXT':
+                    case 'MTEXT': {
+                        const blkTextResult = this._parseText(lines, i);
+                        if (Array.isArray(blkTextResult)) {
+                            let blkEndIdx = null;
+                            for (const te of blkTextResult) {
+                                te.layer = te._layer || currentLayer;
+                                delete te._layer;
+                                if (te._endIndex) { blkEndIdx = te._endIndex; delete te._endIndex; }
+                                currentBlockEntities.push(te);
+                            }
+                            if (blkEndIdx && blkEndIdx > i) i = blkEndIdx - 2;
+                        } else {
+                            entity = blkTextResult;
+                        }
+                        break;
+                    }
                 }
                 if (entity && entity.points && entity.points.length >= 2) {
                     entity.layer = entity._layer || currentLayer;
@@ -335,7 +369,7 @@ const DXFParser = {
         }
 
         if (layerDefs.names.length > 0) {
-            console.log(`[DXF V3.7] TABLES: ${layerDefs.names.length} Layer gefunden:`,
+            console.log(`[DXF V3.8] TABLES: ${layerDefs.names.length} Layer gefunden:`,
                 layerDefs.names.map(n => `${n}(ACI ${layerDefs.colors[n]})`).join(', '));
         }
         return layerDefs;
@@ -398,9 +432,26 @@ const DXFParser = {
                         entityType = null; // Schon getracked
                         break;
                     case 'TEXT':
-                    case 'MTEXT':
-                        entity = this._parseText(lines, i);
+                    case 'MTEXT': {
+                        const textResult = this._parseText(lines, i);
+                        if (Array.isArray(textResult)) {
+                            // Multi-Kontur von TextTool (opentype.js Glyphen)
+                            let textEndIndex = null;
+                            for (const te of textResult) {
+                                te.layer = te._layer || currentLayer;
+                                delete te._layer;
+                                te.sourceType = value;
+                                if (te._endIndex) { textEndIndex = te._endIndex; delete te._endIndex; }
+                                entities.push(te);
+                            }
+                            if (textEndIndex && textEndIndex > i) i = textEndIndex - 2;
+                            this._trackEntity(value, textResult.length);
+                            entityType = null;
+                        } else {
+                            entity = textResult;
+                        }
                         break;
+                    }
                     case 'HATCH':
                         entity = this._parseHatch(lines, i);
                         break;
@@ -411,7 +462,7 @@ const DXFParser = {
                         }
                         entityType = null;
                 }
-                
+
                 if (entity && entity.points && entity.points.length >= 2) {
                     entity.layer = entity._layer || currentLayer;
                     delete entity._layer;
@@ -510,9 +561,25 @@ const DXFParser = {
                         if (insertEntities2) entities.push(...insertEntities2);
                         break;
                     case 'TEXT':
-                    case 'MTEXT':
-                        entity = this._parseText(lines, i);
+                    case 'MTEXT': {
+                        const textResult2 = this._parseText(lines, i);
+                        if (Array.isArray(textResult2)) {
+                            let textEndIdx = null;
+                            for (const te of textResult2) {
+                                te.layer = te._layer || currentLayer;
+                                delete te._layer;
+                                te.sourceType = value;
+                                if (te._endIndex) { textEndIdx = te._endIndex; delete te._endIndex; }
+                                entities.push(te);
+                            }
+                            if (textEndIdx && textEndIdx > i) i = textEndIdx - 2;
+                            this._trackEntity(value, textResult2.length);
+                            entity = null;
+                        } else {
+                            entity = textResult2;
+                        }
                         break;
+                    }
                     case 'HATCH':
                         entity = this._parseHatch(lines, i);
                         break;
@@ -595,7 +662,7 @@ const DXFParser = {
 
         // V3.3: Warnung wenn Vertices nicht der erwarteten Anzahl entsprechen
         if (expectedCount > 0 && vertices.length !== expectedCount) {
-            console.warn(`[DXF V3.7] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
+            console.warn(`[DXF V3.8] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
         }
 
         const isClosed = (flags & 1) === 1;
@@ -922,7 +989,7 @@ const DXFParser = {
             _center: e.center || null, _radius: e.radius || null
         })).filter(s => s.points.length >= 2);
 
-        if (logProgress) console.log(`[DXF Parser V3.7] Chaining: ${segments.length} Segmente...`);
+        if (logProgress) console.log(`[DXF Parser V3.8] Chaining: ${segments.length} Segmente...`);
 
         const result = [];
         let processedCount = 0;
@@ -1012,7 +1079,7 @@ const DXFParser = {
             if (logProgress) {
                 const pct = Math.floor(processedCount / segments.length * 100);
                 if (pct >= lastLogPct + 20) {
-                    console.log(`[DXF Parser V3.7] Chaining: ${pct}%...`);
+                    console.log(`[DXF Parser V3.8] Chaining: ${pct}%...`);
                     lastLogPct = pct;
                 }
             }
@@ -1021,11 +1088,11 @@ const DXFParser = {
         // Diagnostik
         const unusedSegs = segments.filter(s => !s.used);
         if (unusedSegs.length > 0) {
-            console.warn(`[DXF Parser V3.7] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
+            console.warn(`[DXF Parser V3.8] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
         }
 
         const dt = (performance.now() - t0).toFixed(1);
-        console.log(`[DXF Parser V3.7] Chaining: ${segments.length} Seg → ${result.length} Konturen in ${dt}ms`);
+        console.log(`[DXF Parser V3.8] Chaining: ${segments.length} Seg → ${result.length} Konturen in ${dt}ms`);
         return result;
     },
 
@@ -1294,6 +1361,8 @@ const DXFParser = {
 
     _parseText(lines, startIndex) {
         let x = 0, y = 0, height = 10, rotation = 0, text = '', layer = null;
+        let halign = 0;          // Group 72: 0=left, 1=center, 2=right
+        let ax = null, ay = null; // Group 11/21: Alignment-Punkt
         let endIndex = startIndex;
 
         for (let i = startIndex + 2; i < Math.min(startIndex + 100, lines.length); i += 2) {
@@ -1308,30 +1377,45 @@ const DXFParser = {
                 case '40': height = parseFloat(value) || 10; break;
                 case '50': rotation = parseFloat(value) || 0; break;
                 case '1': text = value || ''; break;
+                case '72': halign = parseInt(value) || 0; break;
+                case '11': ax = parseFloat(value); break;
+                case '21': ay = parseFloat(value); break;
             }
         }
 
         if (!text) return null;
 
+        // Bei Justierung: Alignment-Punkt statt Insertion-Punkt verwenden
+        const posX = (halign > 0 && ax !== null) ? ax : x;
+        const posY = (halign > 0 && ay !== null) ? ay : y;
+        const align = halign === 1 ? 'center' : (halign === 2 ? 'right' : 'left');
+
         // Versuche opentype.js Glyph-Konvertierung wenn TextTool verfügbar
         if (typeof TextTool !== 'undefined' && TextTool.textToContours) {
             try {
-                const contourData = TextTool.textToContours(text, x, y, height);
-                if (contourData && contourData.points && contourData.points.length >= 2) {
-                    contourData._layer = layer;
-                    contourData._endIndex = endIndex;
-                    contourData.sourceText = text;
-                    return contourData;
+                const contours = TextTool.textToContours(text, posX, posY, height, { rotation, align });
+                if (contours && contours.length > 0) {
+                    // Array von Entities zurueckgeben (wie INSERT)
+                    for (const c of contours) {
+                        c._layer = layer;
+                        c._endIndex = endIndex;
+                    }
+                    return contours;
                 }
             } catch (e) {
-                // Fallback zu Bounding-Box
+                console.warn('[DXF Parser V3.8] TextTool-Fehler, Fallback:', e.message);
             }
         }
 
-        // Fallback: Bounding-Box Rechteck
+        // Fallback: Bounding-Box Rechteck (kein Font geladen)
         const approxWidth = text.length * height * 0.6;
         const rotRad = rotation * Math.PI / 180;
         const cos = Math.cos(rotRad), sin = Math.sin(rotRad);
+
+        // Bei Center/Right: Bounding-Box korrekt positionieren
+        let bbX = posX;
+        if (align === 'center') bbX -= approxWidth / 2;
+        else if (align === 'right') bbX -= approxWidth;
 
         const corners = [
             { dx: 0, dy: 0 },
@@ -1341,12 +1425,12 @@ const DXFParser = {
         ];
 
         const points = corners.map(c => ({
-            x: this._snap(x + c.dx * cos - c.dy * sin),
-            y: this._snap(y + c.dx * sin + c.dy * cos)
+            x: this._snap(bbX + c.dx * cos - c.dy * sin),
+            y: this._snap(posY + c.dx * sin + c.dy * cos)
         }));
         points.push({ ...points[0] }); // Schließen
 
-        console.log(`[DXF Parser V3.7] TEXT: "${text}" at (${x.toFixed(1)}, ${y.toFixed(1)}) h=${height}`);
+        console.log(`[DXF Parser V3.8] TEXT: "${text}" at (${posX.toFixed(1)}, ${posY.toFixed(1)}) h=${height} align=${align} [BBox-Fallback]`);
 
         return {
             type: 'TEXT',
@@ -1408,7 +1492,7 @@ const DXFParser = {
             boundaryPoints.push({ ...first });
         }
 
-        console.log(`[DXF Parser V3.7] HATCH: ${boundaryPoints.length} boundary points`);
+        console.log(`[DXF Parser V3.8] HATCH: ${boundaryPoints.length} boundary points`);
 
         return {
             type: 'HATCH',

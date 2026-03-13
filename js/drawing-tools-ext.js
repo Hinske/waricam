@@ -572,6 +572,285 @@ class XLineTool extends BaseTool {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+//  OVERLAP BREAK TOOL (OB) — Kontur trennen + tangentiale Überlappung
+//  Für Wasserstrahl-Einläufe: Split + Verlängerung = physische Überlappung
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * OVERLAP BREAK (OB) — Kontur an einem Punkt teilen + tangentiale Überlappung.
+ * Phase 1: Kontur auswählen (oder Noun-Verb)
+ * Phase 2: Split-Punkt auf der Kontur anklicken
+ * Phase 3: Richtung der Verlängerung durch Mausposition bestimmen (Teil A / Teil B)
+ *
+ * Geschlossene Kontur → wird geöffnet, ein Ende ragt über das andere hinaus
+ * Offene Kontur → wird geteilt, ein Teil wird tangential verlängert
+ */
+class OverlapBreakTool extends BaseTool {
+    constructor(manager) {
+        super(manager);
+        this.targetContour = null;
+        this.splitHit = null;         // { segmentIndex, t, point }
+        this.overlapLength = 5.0;     // Default: 5mm
+        this.state = 'select';        // 'select' → 'pickPoint' → 'pickDirection'
+    }
+
+    start() {
+        this.cmd?.setPrompt('OVERLAP BREAK — Kontur auswählen [Überlappung=' + this.overlapLength.toFixed(1) + 'mm]:');
+        this.cmd?.log('✂️ Overlap Break: Kontur trennen + tangentiale Überlappung', 'info');
+        this.cmd?.log('   Optionen: Zahl eingeben = Überlappungslänge ändern', 'info');
+
+        // Noun-Verb: Genau eine offene Kontur vorausgewählt
+        const selected = this.manager.getSelectedContours?.() || [];
+        if (selected.length === 1) {
+            if (selected[0].isClosed) {
+                this.cmd?.log('Overlap Break nur für offene Konturen — geschlossene Kontur ignoriert', 'warning');
+            } else {
+                this.targetContour = selected[0];
+                this.state = 'pickPoint';
+                this.cmd?.log(`Kontur "${this.targetContour.name}" ausgewählt`, 'info');
+                this.cmd?.setPrompt('OVERLAP BREAK — Teilungspunkt auf der Kontur anklicken:');
+            }
+        }
+    }
+
+    handleClick(point) {
+        const contours = this.manager.app?.contours;
+        if (!contours) return;
+
+        if (this.state === 'select') {
+            // Phase 1: Kontur unter Cursor finden
+            const clicked = this.manager.renderer?.findContourAtPoint(point.x, point.y);
+            if (!clicked || clicked.isReference) {
+                this.cmd?.log('Keine gültige Kontur getroffen', 'warning');
+                return;
+            }
+            if (clicked.isClosed) {
+                this.cmd?.log('Overlap Break nur für offene Konturen — geschlossene Kontur ignoriert', 'warning');
+                return;
+            }
+            this.targetContour = clicked;
+            this.state = 'pickPoint';
+            contours.forEach(c => { c.isSelected = false; });
+            clicked.isSelected = true;
+            this.manager.renderer?.render();
+            this.cmd?.log(`Kontur "${clicked.name}" ausgewählt`, 'info');
+            this.cmd?.setPrompt('OVERLAP BREAK — Teilungspunkt auf der Kontur anklicken:');
+            return;
+        }
+
+        if (this.state === 'pickPoint') {
+            // Phase 2: Split-Punkt bestimmen
+            const snapMgr = this.manager.snapManager;
+            const snapped = snapMgr?.currentSnap?.point || point;
+            const tolerance = 10 / (this.manager.renderer?.scale || 1);
+            const hit = GeometryOps.findNearestSegment(this.targetContour.points, snapped.x, snapped.y, tolerance);
+            if (!hit) {
+                this.cmd?.log('Klickpunkt nicht auf der Kontur — näher klicken', 'warning');
+                return;
+            }
+            // Vertex-Snap
+            if (hit.t < 1e-6) {
+                hit.point = { x: this.targetContour.points[hit.segmentIndex].x, y: this.targetContour.points[hit.segmentIndex].y };
+                hit.t = 0;
+            } else if (hit.t > 1 - 1e-6) {
+                hit.point = { x: this.targetContour.points[hit.segmentIndex + 1].x, y: this.targetContour.points[hit.segmentIndex + 1].y };
+                hit.t = 1;
+            }
+            this.splitHit = hit;
+
+            if (this.targetContour.isClosed) {
+                // Geschlossene Konturen ignorieren — OB nur für offene Konturen sinnvoll
+                this.cmd?.log('Overlap Break nur für offene Konturen — geschlossene Kontur ignoriert', 'warning');
+                this.splitHit = null;
+                return;
+            } else {
+                // Offene Kontur: Richtung wählen
+                this.state = 'pickDirection';
+                this.cmd?.setPrompt('OVERLAP BREAK — Seite für Überlappung anklicken (A=vor Split / B=nach Split):');
+            }
+            return;
+        }
+
+        if (this.state === 'pickDirection') {
+            // Phase 3: Richtung bestimmen — welches Teil verlängern?
+            const extendA = this._isCloserToPartA(point);
+            this._executeOverlapBreak(extendA);
+        }
+    }
+
+    /** Bestimmt ob der Klickpunkt näher an Teil A (vor Split) oder Teil B (nach Split) liegt */
+    _isCloserToPartA(mousePoint) {
+        const target = this.targetContour;
+        const hit = this.splitHit;
+        if (!target || !hit) return true;
+
+        // Mittelpunkt von Teil A (Start→Split) vs Teil B (Split→Ende)
+        const midIdxA = Math.floor(hit.segmentIndex / 2);
+        const midIdxB = Math.min(hit.segmentIndex + 1 + Math.floor((target.points.length - 1 - hit.segmentIndex) / 2), target.points.length - 1);
+        const midA = target.points[midIdxA] || target.points[0];
+        const midB = target.points[midIdxB] || target.points[target.points.length - 1];
+        const dA = Math.hypot(mousePoint.x - midA.x, mousePoint.y - midA.y);
+        const dB = Math.hypot(mousePoint.x - midB.x, mousePoint.y - midB.y);
+        return dA < dB;
+    }
+
+    _executeOverlapBreak(extendA) {
+        const contours = this.manager.app?.contours;
+        const target = this.targetContour;
+        const hit = this.splitHit;
+        if (!contours || !target || !hit || typeof GeometryOps === 'undefined') return;
+
+        // splitAndOverlap aufrufen
+        const parts = GeometryOps.splitAndOverlap(
+            target.points, target.isClosed, hit.segmentIndex, hit.point,
+            this.overlapLength, extendA
+        );
+
+        if (!parts || parts.length === 0) {
+            this.cmd?.log('Überlappungs-Break fehlgeschlagen', 'error');
+            this.cancel();
+            return;
+        }
+
+        // Neue Konturen erzeugen — CAM-Properties vererben, cuttingMode = null (Slit)
+        const newContours = parts.map((pts, i) => {
+            const nc = new CamContour(pts, {
+                layer: target.layer || 'DRAW',
+                name: `${target.name}_OB${i + 1}`,
+                quality: target.quality,
+                cuttingMode: null,  // Slit-Modus: kein Kerf-Offset
+                leadInType: target.leadInType,
+                leadInLength: target.leadInLength,
+                leadInRadius: target.leadInRadius,
+                leadInAngle: target.leadInAngle,
+                leadOutType: target.leadOutType,
+                leadOutLength: target.leadOutLength,
+                leadOutRadius: target.leadOutRadius,
+                leadOutAngle: target.leadOutAngle
+            });
+            nc.kerfWidth = 0;       // Kein Kerf bei Überlappung
+            nc.kerfSide = 'none';
+            return nc;
+        });
+
+        // Undo-Command
+        const targetIndex = contours.indexOf(target);
+        const app = this.manager.app;
+        const rerender = () => {
+            app.renderer?.setContours(app.contours);
+            app.rebuildCutOrder?.();
+            app.updateContourPanel?.();
+            app.renderer?.render();
+        };
+
+        const cmd = new FunctionCommand(
+            `Overlap Break → ${parts.length} Teil(e), ${this.overlapLength.toFixed(1)}mm Überlappung`,
+            () => {
+                const idx = contours.indexOf(target);
+                if (idx !== -1) contours.splice(idx, 1);
+                contours.push(...newContours);
+                contours.forEach(c => { c.isSelected = false; });
+                // Pipeline re-trigger für Topologie-Validierung
+                if (typeof WaricamPipeline !== 'undefined') {
+                    WaricamPipeline.autoProcess(app.contours, { kerfWidth: app.kerfWidth || 0.8 });
+                }
+                rerender();
+            },
+            () => {
+                for (const nc of newContours) {
+                    const idx = contours.indexOf(nc);
+                    if (idx !== -1) contours.splice(idx, 1);
+                }
+                const insertIdx = Math.min(targetIndex, contours.length);
+                contours.splice(insertIdx, 0, target);
+                rerender();
+            }
+        );
+
+        app.undoManager?.execute(cmd);
+        const sideInfo = extendA ? 'Teil A verlängert' : 'Teil B verlängert';
+        const closedInfo = target.isClosed ? ' (geschlossen → offen + Überlappung)' : '';
+        this.cmd?.log(`✔ Overlap Break: ${sideInfo}, ${this.overlapLength.toFixed(1)}mm${closedInfo} (Strg+Z = Rückgängig)`, 'success');
+
+        // Continuous Mode: zurück auf 'select'
+        this.manager.rubberBand = null;
+        this.targetContour = null;
+        this.splitHit = null;
+        this.state = 'select';
+        this.cmd?.setPrompt('OVERLAP BREAK — Nächste Kontur auswählen (ESC = Beenden):');
+        this.manager.renderer?.render();
+    }
+
+    handleMouseMove(point) {
+        if (!this.targetContour || typeof GeometryOps === 'undefined') return;
+        const snapMgr = this.manager.snapManager;
+        const snapped = snapMgr?.currentSnap?.point || point;
+
+        if (this.state === 'pickPoint') {
+            // Split-Punkt Vorschau mit Überlappungslinie
+            const hit = GeometryOps.findNearestSegment(this.targetContour.points, snapped.x, snapped.y, Infinity);
+            if (hit) {
+                // Vorschau für Teil-A-Verlängerung (Standard)
+                const preview = GeometryOps.getOverlapPreview(
+                    this.targetContour.points, this.targetContour.isClosed,
+                    hit.segmentIndex, hit.point, this.overlapLength, true
+                );
+                this.manager.rubberBand = {
+                    type: 'overlapBreak',
+                    data: {
+                        point: hit.point,
+                        overlapLine: preview,
+                        label: this.overlapLength.toFixed(1) + ' mm'
+                    }
+                };
+                this.manager.renderer?.render();
+            }
+        }
+
+        if (this.state === 'pickDirection') {
+            // Richtungs-Vorschau: zeige Überlappung auf der mausnahen Seite
+            const extendA = this._isCloserToPartA(point);
+            const preview = GeometryOps.getOverlapPreview(
+                this.targetContour.points, this.targetContour.isClosed,
+                this.splitHit.segmentIndex, this.splitHit.point,
+                this.overlapLength, extendA
+            );
+            this.manager.rubberBand = {
+                type: 'overlapBreak',
+                data: {
+                    point: this.splitHit.point,
+                    overlapLine: preview,
+                    label: (extendA ? 'A: ' : 'B: ') + this.overlapLength.toFixed(1) + ' mm'
+                }
+            };
+            this.manager.renderer?.render();
+        }
+    }
+
+    /** Zahlen-Eingabe ändert die Überlappungslänge */
+    handleRawInput(value) {
+        const num = parseFloat(value);
+        if (!isNaN(num) && num > 0 && num <= 500) {
+            this.overlapLength = num;
+            this.cmd?.log(`Überlappungslänge: ${num.toFixed(1)} mm`, 'info');
+            this.cmd?.setPrompt(`OVERLAP BREAK — Überlappung=${num.toFixed(1)}mm — Kontur/Punkt wählen:`);
+            return true;
+        }
+        return false;
+    }
+
+    finish() {
+        if (this.state === 'select') {
+            this.cancel();
+        } else if (this.state === 'pickDirection') {
+            // Enter = Standard (Teil A verlängern)
+            this._executeOverlapBreak(true);
+        }
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
 //  LAZY-PATCH REGISTRATION (gleiches Pattern wie advanced-tools.js)
 //  Patcht startTool() um Tools beim ersten Aufruf zu registrieren
 // ════════════════════════════════════════════════════════════════════════════
@@ -588,14 +867,16 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['DONUT']    = () => new DonutTool(this);
             this.tools['XL']       = () => new XLineTool(this);
             this.tools['XLINE']    = () => new XLineTool(this);
+            this.tools['OBREAK']       = () => new OverlapBreakTool(this);
+            this.tools['OVERLAPBREAK'] = () => new OverlapBreakTool(this);
 
-            console.log('[DrawingToolsExt V1.0] ✅ 4 Tools registriert: EL, SP, DO, XL');
+            console.log('[DrawingToolsExt V1.1] ✅ 5 Tools registriert: EL, SP, DO, XL, OBREAK');
         }
 
         return _origStartToolExt.call(this, shortcut);
     };
 
-    console.log('[DrawingToolsExt V1.0] Lazy-Patch auf startTool() installiert');
+    console.log('[DrawingToolsExt V1.1] Lazy-Patch auf startTool() installiert');
 } else {
-    console.error('[DrawingToolsExt V1.0] ❌ DrawingToolManager nicht gefunden! drawing-tools.js VOR drawing-tools-ext.js laden.');
+    console.error('[DrawingToolsExt V1.1] ❌ DrawingToolManager nicht gefunden! drawing-tools.js VOR drawing-tools-ext.js laden.');
 }

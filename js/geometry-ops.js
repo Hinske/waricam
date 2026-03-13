@@ -194,11 +194,21 @@ const GeometryOps = {
     },
 
     _splitOpenContour(points, segIdx, splitPt) {
+        const sp = { x: splitPt.x, y: splitPt.y };
         const partA = [];
         for (let i = 0; i <= segIdx; i++) partA.push({ x: points[i].x, y: points[i].y });
-        partA.push({ x: splitPt.x, y: splitPt.y });
-        const partB = [{ x: splitPt.x, y: splitPt.y }];
-        for (let i = segIdx + 1; i < points.length; i++) partB.push({ x: points[i].x, y: points[i].y });
+        // Nur hinzufügen wenn splitPt nicht identisch mit letztem Punkt (Vertex-Split)
+        const lastA = partA[partA.length - 1];
+        if (!lastA || Math.abs(lastA.x - sp.x) > 1e-6 || Math.abs(lastA.y - sp.y) > 1e-6) {
+            partA.push(sp);
+        }
+        const partB = [{ x: sp.x, y: sp.y }];
+        for (let i = segIdx + 1; i < points.length; i++) {
+            const pt = { x: points[i].x, y: points[i].y };
+            // Erstes Element überspringen wenn identisch mit splitPt (Vertex-Split)
+            if (partB.length === 1 && Math.abs(partB[0].x - pt.x) < 1e-6 && Math.abs(partB[0].y - pt.y) < 1e-6) continue;
+            partB.push(pt);
+        }
         const result = [];
         if (partA.length >= 2) result.push(partA);
         if (partB.length >= 2) result.push(partB);
@@ -679,6 +689,114 @@ const GeometryOps = {
             newPoints[0] = { x: bestHit.x, y: bestHit.y };
         }
         return newPoints;
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // V2.2: SPLIT AND OVERLAP — Kontur trennen + tangential verlängern
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Splittet eine Kontur und verlängert ein Ende tangential um overlapLength.
+     * @param {Array} points — Kontur-Punkte
+     * @param {boolean} isClosed — Geschlossene Kontur?
+     * @param {number} segmentIndex — Segment-Index des Split-Punktes
+     * @param {Object} splitPoint — {x, y} Punkt auf dem Segment
+     * @param {number} overlapLength — Verlängerung in mm (Standard: 5)
+     * @param {boolean} extendA — true=Teil A verlängern, false=Teil B
+     * @returns {Array} Array von Punkt-Arrays (1 oder 2 Teile, eines mit Überlappung)
+     */
+    splitAndOverlap(points, isClosed, segmentIndex, splitPoint, overlapLength = 5.0, extendA = true) {
+        if (!points || points.length < 2) return [points];
+
+        const parts = this.splitContourAtPoint(points, isClosed, segmentIndex, splitPoint);
+        if (!parts || parts.length === 0) return [points];
+
+        if (isClosed) {
+            // Geschlossene Kontur → 1 offenes Teil; Ende tangential verlängern
+            const openPart = parts[0];
+            if (!openPart || openPart.length < 2) return parts;
+            return [this._extendEndTangential(openPart, extendA ? 'end' : 'start', overlapLength)];
+        }
+
+        // Offene Kontur → 2 Teile
+        if (parts.length < 2) return parts;
+        const result = parts.map(p => p.slice());
+        if (extendA) {
+            // Teil A am Ende (= Split-Punkt) verlängern
+            result[0] = this._extendEndTangential(result[0], 'end', overlapLength);
+        } else {
+            // Teil B am Anfang (= Split-Punkt) verlängern
+            result[1] = this._extendEndTangential(result[1], 'start', overlapLength);
+        }
+        return result;
+    },
+
+    /**
+     * Verlängert eine Kontur tangential an einem Ende um eine feste Distanz.
+     * Keine Boundary-Prüfung — reine geometrische Verlängerung (C1-stetig).
+     */
+    _extendEndTangential(points, whichEnd, distance) {
+        if (!points || points.length < 2 || distance <= 0) return points;
+        const result = points.map(p => ({ x: p.x, y: p.y }));
+        let seg1, seg2;
+        if (whichEnd === 'end') {
+            seg1 = result[result.length - 2];
+            seg2 = result[result.length - 1];
+        } else {
+            seg1 = result[1];
+            seg2 = result[0];
+        }
+        const dx = seg2.x - seg1.x, dy = seg2.y - seg1.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 1e-10) return result;
+        const extPt = { x: seg2.x + (dx / len) * distance, y: seg2.y + (dy / len) * distance };
+        if (whichEnd === 'end') {
+            result.push(extPt);
+        } else {
+            result.unshift(extPt);
+        }
+        return result;
+    },
+
+    /**
+     * Berechnet die Vorschau-Linie für die Überlappung (Ghost-Preview).
+     * @returns {Object} { from: {x,y}, to: {x,y} } — Verlängerungslinie
+     */
+    getOverlapPreview(points, isClosed, segmentIndex, splitPoint, overlapLength, extendA) {
+        if (!points || points.length < 2) return null;
+        const parts = this.splitContourAtPoint(points, isClosed, segmentIndex, splitPoint);
+        if (!parts || parts.length === 0) return null;
+
+        let sourcePart, whichEnd;
+        if (isClosed) {
+            sourcePart = parts[0];
+            whichEnd = extendA ? 'end' : 'start';
+        } else if (parts.length >= 2) {
+            if (extendA) {
+                sourcePart = parts[0];
+                whichEnd = 'end';
+            } else {
+                sourcePart = parts[1];
+                whichEnd = 'start';
+            }
+        } else {
+            return null;
+        }
+        if (!sourcePart || sourcePart.length < 2) return null;
+
+        let seg1, seg2;
+        if (whichEnd === 'end') {
+            seg1 = sourcePart[sourcePart.length - 2];
+            seg2 = sourcePart[sourcePart.length - 1];
+        } else {
+            seg1 = sourcePart[1];
+            seg2 = sourcePart[0];
+        }
+        const dx = seg2.x - seg1.x, dy = seg2.y - seg1.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 1e-10) return null;
+        const extPt = { x: seg2.x + (dx / len) * overlapLength, y: seg2.y + (dy / len) * overlapLength };
+        return { from: { x: seg2.x, y: seg2.y }, to: extPt };
     },
 
     // ════════════════════════════════════════════════════════════════

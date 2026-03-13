@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CeraCAM V5.0 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260217-tech10">
+    <link rel="stylesheet" href="styles.css?v=20260313-workspace">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260219-phaseB">
 </head>
 <body>
@@ -128,6 +128,31 @@
                 </div>
             </div>
             <div class="ribbon-group-label">CNC</div>
+        </div>
+        <!-- ── Workspace ── -->
+        <div class="ribbon-group">
+            <div class="ribbon-group-content">
+                <div class="ribbon-btn-lg" id="btn-workspace-open" title="Arbeitsordner öffnen">
+                    <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M4 8h10l2-3h12v20H4V8z" stroke="#22c55e" stroke-width="2" fill="none"/><path d="M4 13h24v12H4z" stroke="#22c55e" stroke-width="1" fill="none" opacity="0.4"/></svg></div>
+                    <span class="label">Workspace</span>
+                </div>
+                <div class="ribbon-sm-stack">
+                    <div class="ribbon-btn-sm" id="btn-workspace-reconnect" title="Workspace erneut verbinden" style="display:none">
+                        <div class="icon"><svg viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 0111.5-2M14 8a6 6 0 01-11.5 2" stroke="#e8a020" stroke-width="1.2"/><path d="M13 3v3h-3M3 13v-3h3" stroke="#e8a020" stroke-width="1.2"/></svg></div>
+                        <span class="label">Verbinden</span>
+                    </div>
+                    <div class="ribbon-btn-sm" id="btn-workspace-close" title="Workspace schliessen" style="display:none">
+                        <div class="icon"><svg viewBox="0 0 16 16" fill="none"><line x1="4" y1="4" x2="12" y2="12" stroke="#e04040" stroke-width="1.2"/><line x1="12" y1="4" x2="4" y2="12" stroke="#e04040" stroke-width="1.2"/></svg></div>
+                        <span class="label">Schliessen</span>
+                    </div>
+                    <div class="ribbon-inline-row" style="font-size:10px;color:#888;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="workspace-status"></div>
+                    <div class="ribbon-btn-sm" id="btn-workspace-refresh" title="Dateiliste aktualisieren" style="display:none">
+                        <div class="icon"><svg viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 0111.5-2M14 8a6 6 0 01-11.5 2" stroke="#888" stroke-width="1.2"/></svg></div>
+                        <span class="label">Aktualisieren</span>
+                    </div>
+                </div>
+            </div>
+            <div class="ribbon-group-label">Workspace</div>
         </div>
         <!-- ── Einstellungen (kompakt) ── -->
         <div class="ribbon-group">
@@ -290,6 +315,7 @@
                             <div class="flyout-item" data-fly-tool="X" style="padding:6px 14px;cursor:pointer;font-size:12px;color:#ddd;white-space:nowrap;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="#c44" stroke-width="1"/><line x1="8" y1="2" x2="8" y2="5" stroke="#c44" stroke-width="1"/><line x1="8" y1="11" x2="8" y2="14" stroke="#c44" stroke-width="1"/><line x1="2" y1="8" x2="5" y2="8" stroke="#c44" stroke-width="1"/><line x1="11" y1="8" x2="14" y2="8" stroke="#c44" stroke-width="1"/></svg> Explode (X)</div>
                             <div class="flyout-item" data-fly-tool="J" style="padding:6px 14px;cursor:pointer;font-size:12px;color:#ddd;white-space:nowrap;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 10 L8 10 L8 6 L13 6" stroke="#c44" stroke-width="1.5" fill="none"/></svg> Join (J)</div>
                             <div class="flyout-item" data-fly-tool="B" style="padding:6px 14px;cursor:pointer;font-size:12px;color:#ddd;white-space:nowrap;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="2" y1="8" x2="7" y2="8" stroke="#c44" stroke-width="1.5"/><line x1="9" y1="8" x2="14" y2="8" stroke="#c44" stroke-width="1.5"/><circle cx="8" cy="8" r="2" stroke="#c44" stroke-width="1.2" fill="none"/></svg> Brechen (B)</div>
+                            <div class="flyout-item" data-fly-tool="OBREAK" style="padding:6px 14px;cursor:pointer;font-size:12px;color:#ddd;white-space:nowrap;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="2" y1="8" x2="6" y2="8" stroke="#cc0" stroke-width="1.5"/><line x1="10" y1="8" x2="14" y2="8" stroke="#cc0" stroke-width="1.5"/><line x1="6" y1="8" x2="8" y2="5" stroke="#cc0" stroke-width="1.2" stroke-dasharray="2 1"/><circle cx="8" cy="8" r="2" stroke="#cc0" stroke-width="1.2" fill="none"/></svg> Overlap Break (OBREAK)</div>
                         </div>
                     </div>
                 </div>
@@ -1012,6 +1038,17 @@
          ═══════════════════════════════════════════════════════ -->
     <div class="main-content">
 
+        <!-- ── Workspace Sidebar (links) ── -->
+        <aside class="workspace-sidebar hidden" id="workspace-sidebar">
+            <div class="ws-header">
+                <span class="ws-title">Workspace</span>
+                <button class="ws-header-btn" id="btn-ws-collapse" title="Sidebar einklappen">◀</button>
+            </div>
+            <div class="ws-file-list" id="workspace-file-list">
+                <div class="ws-empty">Keine DXF-Dateien</div>
+            </div>
+        </aside>
+
         <!-- ── Canvas / Viewport ── -->
         <div class="canvas-area" id="canvas-area">
             <canvas id="canvas"></canvas>
@@ -1369,11 +1406,11 @@
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260219-dm10"></script>
-<script src="js/build-info.js?v=20260311-v551"></script>
+<script src="js/build-info.js?v=20260313-v56"></script>
 <script src="js/constants.js?v=20260215-2200"></script>
 <script src="js/geometry.js?v=20260215-2200"></script>
 <script src="js/arc-fitting.js?v=20260215-2200"></script>
-<script src="js/dxf-parser.js?v=20260311-v37-deque"></script>
+<script src="js/dxf-parser.js?v=20260312-v38-textglyphs"></script>
 <script src="js/cam-contour.js?v=20260311-v48"></script>
 <script src="js/cerajet-engine.js?v=20260217-tech10"></script>
 <script src="js/waricam-pipeline.js?v=20260215-2200"></script>
@@ -1383,16 +1420,17 @@
 <script src="js/command-line.js?v=20260216-v4dbg"></script>
 <script src="js/dynamic-input.js?v=20260309-dynhud"></script>
 <script src="js/snap-manager.js?v=20260217-snap13"></script>
-<script src="js/geometry-ops.js?v=20260220-v22-arabeske"></script>
-<script src="js/drawing-tools.js?v=20260311-v23-offsetpv"></script>
+<script src="js/geometry-ops.js?v=20260311-v23-overlap"></script>
+<script src="js/drawing-tools.js?v=20260311-v24-breaktool"></script>
 <script src="js/layer-manager.js?v=20260216-1500"></script>
 <script src="js/dxf-writer.js?v=20260215-2200"></script>
 <script src="js/tool-manager.js?v=20260216-0015"></script>
 <script src="js/advanced-tools.js?v=20260311-v13-offset"></script>
 <script src="js/cam-tools.js?v=20260217-camtools11"></script>
-<script src="js/drawing-tools-ext.js?v=20260216-1700"></script>
+<script src="js/drawing-tools-ext.js?v=20260311-v11-overlapbreak"></script>
 <script src="js/opentype.min.js"></script>
-<script src="js/text-tool.js?v=20260216-1900"></script>
+<script src="js/default-font.js?v=20260312"></script>
+<script src="js/text-tool.js?v=20260312-v12-textimport"></script>
 <script src="js/image-underlay.js?v=20260216-img1"></script>
 <script src="js/dimension-tool.js?v=20260217-dim23"></script>
 <script src="js/measure-tool.js?v=20260220-meas3"></script>
@@ -1405,7 +1443,8 @@
 <script src="js/machine-profiles.js?v=20260309"></script>
 <script src="js/bridge-cutting.js?v=20260309"></script>
 <script src="js/quality-zones.js?v=20260309"></script>
-<script src="js/app.js?v=20260309-v55"></script>
+<script src="js/project-manager.js?v=20260313-v10"></script>
+<script src="js/app.js?v=20260313-workspace"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1813,8 +1852,29 @@
             // File System Access API verfügbar? (Chrome/Edge)
             const hasFSAPI = ('showOpenFilePicker' in window);
 
+            // ═══ Workspace — ProjectManager Events ═══
+            if (origApp.projectManager) {
+                const pm = origApp.projectManager;
+
+                document.getElementById('btn-workspace-open')?.addEventListener('click', () => pm.openWorkspace());
+                document.getElementById('btn-workspace-reconnect')?.addEventListener('click', () => pm.reconnectWorkspace());
+                document.getElementById('btn-workspace-close')?.addEventListener('click', () => {
+                    pm.closeWorkspace();
+                    origApp.showToast('Workspace geschlossen', 'info');
+                });
+                document.getElementById('btn-workspace-refresh')?.addEventListener('click', () => {
+                    pm.scanWorkspace().then(() => origApp.showToast('Dateiliste aktualisiert', 'success'));
+                });
+                document.getElementById('btn-ws-collapse')?.addEventListener('click', () => {
+                    const sidebar = document.getElementById('workspace-sidebar');
+                    sidebar?.classList.toggle('collapsed');
+                    const btn = document.getElementById('btn-ws-collapse');
+                    if (btn) btn.textContent = sidebar?.classList.contains('collapsed') ? '▶' : '◀';
+                });
+            }
+
             // ═══ CNC Export — in konfigurierten Ordner ═══
-            let cncDirHandle = null;
+            let cncDirHandle = origApp.projectManager?.cncDirHandle || null;
 
             // CNC-Ordner wählen
             document.getElementById('btn-cnc-folder')?.addEventListener('click', async () => {
@@ -1825,6 +1885,8 @@
                 try {
                     cncDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
                     window._cncDirHandle = cncDirHandle; // V5.2: Expose für Intarsien-Export
+                    // V5.6: ProjectManager synchronisieren
+                    if (origApp.projectManager) origApp.projectManager.cncDirHandle = cncDirHandle;
                     const pathEl = document.getElementById('cnc-folder-path');
                     if (pathEl) {
                         pathEl.textContent = '📁 ' + cncDirHandle.name;

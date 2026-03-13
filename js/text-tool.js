@@ -1,8 +1,9 @@
 /**
- * WARICAM Text Tool V1.1
+ * WARICAM Text Tool V1.2
  * Text → schneidbare Vektor-Konturen via opentype.js
  * Created: 2026-02-16 MEZ
- * Build: 20260216-1900 MEZ
+ * Last Modified: 2026-03-12 MEZ
+ * Build: 20260312-textimport
  *
  * Features:
  *   - Beliebige TTF/OTF Fonts (per File-Picker)
@@ -41,7 +42,7 @@ class TextTool extends BaseTool {
     }
 
     start() {
-        console.log('[TextTool V1.1] gestartet');
+        console.log('[TextTool V1.2] gestartet');
 
         if (!TextTool._loadedFont) {
             this._loadDefaultFont();
@@ -57,14 +58,21 @@ class TextTool extends BaseTool {
     // ── Statischer Font-Cache ───────────────────────────────────────
     static _loadedFont = null;
     static _fontName = '';
+    static _defaultFontLoaded = false;
 
     _loadDefaultFont() {
         if (typeof opentype === 'undefined') {
-            console.error('[TextTool V1.1] ❌ opentype.js nicht geladen!');
+            console.error('[TextTool V1.2] ❌ opentype.js nicht geladen!');
             this.cmd?.log('❌ opentype.js fehlt! Bitte opentype.min.js einbinden.', 'error');
             return;
         }
-        console.log('[TextTool V1.1] Kein Font gecacht — öffne Datei-Dialog...');
+        // Default-Font bereits geladen? Direkt verwenden.
+        if (TextTool._loadedFont) {
+            this.font = TextTool._loadedFont;
+            this.cmd?.log('✅ Font: ' + TextTool._fontName, 'info');
+            return;
+        }
+        console.log('[TextTool V1.2] Kein Font gecacht — öffne Datei-Dialog...');
         this.cmd?.log('📂 Font-Datei auswählen (.ttf/.otf) — z.B. C:\\Windows\\Fonts\\arial.ttf', 'info');
         this.cmd?.log('   Für FETT: arialbd.ttf | Für KURSIV: ariali.ttf', 'info');
         this._openFontPicker();
@@ -86,7 +94,7 @@ class TextTool extends BaseTool {
             this.text = trimmed.replace(/\|/g, '\n');
             this.state = 'height';
             this.cmd?.setPrompt('TEXT — Schrifthöhe <' + this.height + '> (Enter=Standard):');
-            console.log('[TextTool V1.1] Text: "' + this.text.replace(/\n/g, '|') + '"');
+            console.log('[TextTool V1.2] Text: "' + this.text.replace(/\n/g, '|') + '"');
             return true;
         }
 
@@ -256,7 +264,7 @@ class TextTool extends BaseTool {
             var file = e.target.files[0];
             if (!file) return;
 
-            console.log('[TextTool V1.1] Lade Font: ' + file.name);
+            console.log('[TextTool V1.2] Lade Font: ' + file.name);
             var reader = new FileReader();
             reader.onload = function(evt) {
                 try {
@@ -265,13 +273,13 @@ class TextTool extends BaseTool {
                     TextTool._loadedFont = font;
                     TextTool._fontName = file.name;
                     self.font = font;
-                    console.log('[TextTool V1.1] ✅ Font: ' + file.name + ' (' + font.numGlyphs + ' Glyphen)');
+                    console.log('[TextTool V1.2] ✅ Font: ' + file.name + ' (' + font.numGlyphs + ' Glyphen)');
                     self.cmd?.log('✅ Font: ' + file.name, 'success');
                     if (self.state === 'text' && self.text === '') {
                         self.cmd?.setPrompt('TEXT — Text eingeben (| = Zeilenumbruch):');
                     }
                 } catch (err) {
-                    console.error('[TextTool V1.1] Font-Fehler:', err);
+                    console.error('[TextTool V1.2] Font-Fehler:', err);
                     self.cmd?.log('❌ Font-Fehler: ' + err.message, 'error');
                 }
             };
@@ -288,7 +296,7 @@ class TextTool extends BaseTool {
             return;
         }
 
-        console.time('[TextTool V1.1] Kontur-Erzeugung');
+        console.time('[TextTool V1.2] Kontur-Erzeugung');
 
         var lines = this.text.split('\n');
         var allContours = [];
@@ -352,8 +360,8 @@ class TextTool extends BaseTool {
 
         this._previewPaths = allContours;
 
-        console.timeEnd('[TextTool V1.1] Kontur-Erzeugung');
-        console.log('[TextTool V1.1] ' + allContours.length + ' Konturen, ' +
+        console.timeEnd('[TextTool V1.2] Kontur-Erzeugung');
+        console.log('[TextTool V1.2] ' + allContours.length + ' Konturen, ' +
                      lines.length + ' Zeile(n), Align=' + this.align +
                      (this.stencil ? ', Stencil=EIN' : ''));
     }
@@ -478,7 +486,7 @@ class TextTool extends BaseTool {
             }
         }
 
-        console.log('[TextTool V1.1] Stencil: ' + bridgeCuts.length + ' Brücken bei ' +
+        console.log('[TextTool V1.2] Stencil: ' + bridgeCuts.length + ' Brücken bei ' +
                      bridgeCuts.length / 2 + ' Inselbuchstaben');
         return result;
     }
@@ -635,7 +643,7 @@ class TextTool extends BaseTool {
             return;
         }
 
-        console.log('[TextTool V1.1] Platziere bei (' + point.x.toFixed(2) + ', ' + point.y.toFixed(2) + ')');
+        console.log('[TextTool V1.2] Platziere bei (' + point.x.toFixed(2) + ', ' + point.y.toFixed(2) + ')');
 
         var totalPoints = 0;
         for (var i = 0; i < this._previewPaths.length; i++) {
@@ -660,7 +668,7 @@ class TextTool extends BaseTool {
 
         var info = this._previewPaths.length + ' Konturen, ' + totalPoints + ' Pkt';
         if (this.stencil) info += ', Stencil';
-        console.log('[TextTool V1.1] ✔ "' + this.text.replace(/\n/g, '|') + '" → ' + info);
+        console.log('[TextTool V1.2] ✔ "' + this.text.replace(/\n/g, '|') + '" → ' + info);
         this.cmd?.log('✔ Text → ' + info, 'success');
 
         // Reset
@@ -677,6 +685,75 @@ class TextTool extends BaseTool {
     }
 
     getLastPoint() { return null; }
+
+    // ── Statische Text→Konturen Konvertierung (für DXF-Import) ────────
+
+    /**
+     * Konvertiert Text zu Polylinien-Konturen via opentype.js.
+     * Wird vom DXF-Parser aufgerufen wenn TEXT/MTEXT-Entities importiert werden.
+     *
+     * @param {string} text - Der Text-Inhalt
+     * @param {number} x - X-Position (Einfügepunkt oder Alignment-Punkt)
+     * @param {number} y - Y-Position
+     * @param {number} height - Schrifthöhe in mm
+     * @param {Object} [options] - { rotation: 0, align: 'left'|'center'|'right' }
+     * @returns {Array|null} Array von {type, points, isClosed, sourceText} oder null
+     */
+    static textToContours(text, x, y, height, options = {}) {
+        if (!TextTool._loadedFont) return null;
+        if (!text || height <= 0) return null;
+
+        const font = TextTool._loadedFont;
+        const align = options.align || 'left';
+        const rotation = (options.rotation || 0) * Math.PI / 180;
+
+        // Textbreite für Alignment berechnen
+        let xOffset = 0;
+        if (align === 'center' || align === 'right') {
+            const totalWidth = font.getAdvanceWidth(text, height);
+            if (align === 'center') xOffset = -totalWidth / 2;
+            else xOffset = -totalWidth;
+        }
+
+        // opentype.js Pfad generieren (Baseline bei y=0)
+        const path = font.getPath(text, xOffset, 0, height);
+
+        // Bezier → Polylinien (via Instanz-Methoden ohne Constructor)
+        const helper = Object.create(TextTool.prototype);
+        const rawContours = helper._pathToContours(path.commands);
+
+        if (!rawContours || rawContours.length === 0) return null;
+
+        // Translation + Rotation auf jede Kontur anwenden
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+        const results = [];
+
+        for (const pts of rawContours) {
+            if (pts.length < 3) continue;
+            const translated = pts.map(p => {
+                // _pathToContours flippt Y bereits (-cmd.y), das passt zu CAD (Y-up)
+                let px = p.x, py = p.y;
+                if (rotation !== 0) {
+                    const rx = px * cos - py * sin;
+                    const ry = px * sin + py * cos;
+                    px = rx;
+                    py = ry;
+                }
+                return { x: px + x, y: py + y };
+            });
+            results.push({
+                type: 'POLYLINE',
+                points: translated,
+                isClosed: true,
+                sourceText: text
+            });
+        }
+
+        if (results.length === 0) return null;
+        console.log(`[TextTool V1.2] textToContours: "${text}" → ${results.length} Konturen`);
+        return results;
+    }
 }
 
 
@@ -692,12 +769,69 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['TEXT']  = () => new TextTool(this);
             this.tools['DTEXT'] = () => new TextTool(this);
 
-            console.log('[TextTool V1.1] ✅ Text-Tool registriert: TX, TEXT, DTEXT');
+            console.log('[TextTool V1.2] ✅ Text-Tool registriert: TX, TEXT, DTEXT');
         }
         return _origStartToolTxt.call(this, shortcut);
     };
 
-    console.log('[TextTool V1.1] Lazy-Patch auf startTool() installiert');
+    console.log('[TextTool V1.2] Lazy-Patch auf startTool() installiert');
 } else {
-    console.error('[TextTool V1.1] ❌ DrawingToolManager nicht gefunden!');
+    console.error('[TextTool V1.2] ❌ DrawingToolManager nicht gefunden!');
 }
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  AUTO-LOAD DEFAULT FONT (für DXF TEXT-Import ohne manuelle Font-Auswahl)
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Lädt den Default-Font automatisch beim App-Start.
+ * Priorität: 1. Eingebetteter Base64-Font (default-font.js) — funktioniert immer
+ *            2. fetch('fonts/default.ttf') — nur mit HTTP-Server
+ * Benutzerdefinierter Font (via TX → FONT) überschreibt den Default.
+ */
+TextTool.loadDefaultFont = function() {
+    if (TextTool._defaultFontLoaded || TextTool._loadedFont) return;
+    if (typeof opentype === 'undefined') return;
+    TextTool._defaultFontLoaded = true;
+
+    // Priorität 1: Eingebetteter Base64-Font (kein Netzwerk nötig, funktioniert auch mit file://)
+    if (typeof DEFAULT_FONT_BASE64 === 'string' && DEFAULT_FONT_BASE64.length > 0) {
+        try {
+            var binary = atob(DEFAULT_FONT_BASE64);
+            var buffer = new ArrayBuffer(binary.length);
+            var view = new Uint8Array(buffer);
+            for (var i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i);
+            var font = opentype.parse(buffer);
+            TextTool._loadedFont = font;
+            TextTool._fontName = 'Liberation Sans (eingebettet)';
+            console.log('[TextTool V1.2] ✅ Default-Font geladen: Liberation Sans (' + font.numGlyphs + ' Glyphen, eingebettet)');
+            return;
+        } catch (e) {
+            console.warn('[TextTool V1.2] Base64-Font fehlerhaft:', e.message);
+        }
+    }
+
+    // Priorität 2: Fetch (nur mit HTTP-Server)
+    if (typeof fetch === 'function') {
+        fetch('fonts/default.ttf')
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.arrayBuffer();
+            })
+            .then(function(buffer) {
+                if (!TextTool._loadedFont) {
+                    var font = opentype.parse(buffer);
+                    TextTool._loadedFont = font;
+                    TextTool._fontName = 'default.ttf';
+                    console.log('[TextTool V1.2] ✅ Default-Font geladen via fetch (' + font.numGlyphs + ' Glyphen)');
+                }
+            })
+            .catch(function() {
+                // Stille Fehlerbehandlung — Base64-Font ist der primäre Pfad
+            });
+    }
+};
+
+// Auto-Load beim Laden des Scripts starten
+TextTool.loadDefaultFont();

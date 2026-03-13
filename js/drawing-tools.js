@@ -710,6 +710,69 @@ class DrawingToolManager {
                 break;
             }
 
+            // V5.5.1: Overlap-Break Preview — Gelb + ×-Markierung
+            case 'overlapBreak': {
+                const obPt = rb.data.point;
+                if (obPt) {
+                    const r = 4 / scale;
+                    // ×-Markierung am Split-Punkt
+                    ctx.strokeStyle = '#FFFF00';
+                    ctx.lineWidth = 2 / scale;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(obPt.x - r, obPt.y - r);
+                    ctx.lineTo(obPt.x + r, obPt.y + r);
+                    ctx.moveTo(obPt.x + r, obPt.y - r);
+                    ctx.lineTo(obPt.x - r, obPt.y + r);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(obPt.x, obPt.y, r * 1.5, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+                    ctx.stroke();
+                }
+                // Ghost-Preview der Überlappungslinie
+                if (rb.data.overlapLine) {
+                    const ol = rb.data.overlapLine;
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.lineWidth = 3 / scale;
+                    ctx.setLineDash([6 / scale, 3 / scale]);
+                    ctx.beginPath();
+                    ctx.moveTo(ol.from.x, ol.from.y);
+                    ctx.lineTo(ol.to.x, ol.to.y);
+                    ctx.stroke();
+                    // Pfeilspitze
+                    const dx = ol.to.x - ol.from.x, dy = ol.to.y - ol.from.y;
+                    const alen = Math.hypot(dx, dy);
+                    if (alen > 1e-6) {
+                        const ux = dx / alen, uy = dy / alen;
+                        const aSize = 5 / scale;
+                        ctx.setLineDash([]);
+                        ctx.beginPath();
+                        ctx.moveTo(ol.to.x, ol.to.y);
+                        ctx.lineTo(ol.to.x - ux * aSize + uy * aSize * 0.5, ol.to.y - uy * aSize - ux * aSize * 0.5);
+                        ctx.moveTo(ol.to.x, ol.to.y);
+                        ctx.lineTo(ol.to.x - ux * aSize - uy * aSize * 0.5, ol.to.y - uy * aSize + ux * aSize * 0.5);
+                        ctx.stroke();
+                    }
+                }
+                // Überlappungslänge als Text
+                if (rb.data.overlapLine && rb.data.label) {
+                    const ol = rb.data.overlapLine;
+                    const mx = (ol.from.x + ol.to.x) / 2, my = (ol.from.y + ol.to.y) / 2;
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    const renderer = this.app?.renderer;
+                    if (renderer) {
+                        const sx = renderer.offsetX + mx * scale, sy = renderer.offsetY + my * scale;
+                        ctx.font = '11px monospace';
+                        ctx.fillStyle = '#FFFF00';
+                        ctx.fillText(rb.data.label, sx + 8, sy - 6);
+                    }
+                    ctx.restore();
+                }
+                break;
+            }
+
             // V3.10: Fillet-Preview — Cyan gestrichelt (Segment-Highlight + Bogen-Vorschau)
             case 'filletPreview': {
                 // Highlightete Segmente (Cyan gestrichelt)
@@ -3447,13 +3510,26 @@ class BreakTool extends BaseTool {
         const target = this.targetContour;
         if (!contours || !target || typeof GeometryOps === 'undefined') return;
 
-        // Nächstes Segment zum Klickpunkt finden
-        const tolerance = 10 / (this.manager.renderer?.scale || 1); // 10px Toleranz
-        const hit = GeometryOps.findNearestSegment(target.points, clickPoint.x, clickPoint.y, tolerance);
+        // Snap-Manager nutzen falls verfügbar (Endpoint, Midpoint, etc.)
+        const snapMgr = this.manager.snapManager;
+        const snapped = snapMgr?.currentSnap?.point || clickPoint;
+
+        // Nächstes Segment zum (ggf. gesnappten) Punkt finden
+        const tolerance = 10 / (this.manager.renderer?.scale || 1);
+        const hit = GeometryOps.findNearestSegment(target.points, snapped.x, snapped.y, tolerance);
 
         if (!hit) {
             this.cmd?.log('Klickpunkt nicht auf der Kontur — näher klicken', 'warning');
             return;
+        }
+
+        // Vertex-Snap: t≈0 oder t≈1 → exakt auf Vertex setzen (keine Degenerate-Segmente)
+        if (hit.t < 1e-6) {
+            hit.point = { x: target.points[hit.segmentIndex].x, y: target.points[hit.segmentIndex].y };
+            hit.t = 0;
+        } else if (hit.t > 1 - 1e-6) {
+            hit.point = { x: target.points[hit.segmentIndex + 1].x, y: target.points[hit.segmentIndex + 1].y };
+            hit.t = 1;
         }
 
         // Teilung berechnen
@@ -3467,12 +3543,23 @@ class BreakTool extends BaseTool {
             return;
         }
 
-        // Neue Konturen erzeugen
+        // Neue Konturen erzeugen — CAM-Properties vom Parent vererben
         const newContours = parts.map((pts, i) => {
             const nc = new CamContour(pts, {
                 layer: target.layer || 'DRAW',
-                name: `${target.name}_Teil${i + 1}`
+                name: `${target.name}_Teil${i + 1}`,
+                quality: target.quality,
+                leadInType: target.leadInType,
+                leadInLength: target.leadInLength,
+                leadInRadius: target.leadInRadius,
+                leadInAngle: target.leadInAngle,
+                leadOutType: target.leadOutType,
+                leadOutLength: target.leadOutLength,
+                leadOutRadius: target.leadOutRadius,
+                leadOutAngle: target.leadOutAngle
             });
+            nc.kerfWidth = target.kerfWidth;
+            nc.kerfSide = target.kerfSide;
             return nc;
         });
 
@@ -3510,18 +3597,22 @@ class BreakTool extends BaseTool {
         const info = target.isClosed ? '(geschlossen → offen)' : `(→ ${parts.length} Teile)`;
         this.cmd?.log(`✔ Kontur geteilt ${info} (Strg+Z = Rückgängig)`, 'success');
 
-        // Tool beenden
+        // Continuous Mode: Zurück auf 'select' statt Tool beenden
         this.manager.rubberBand = null;
-        this.manager.activeTool = null;
-        this.manager._setDefaultPrompt();
+        this.targetContour = null;
+        this.state = 'select';
+        this.cmd?.setPrompt('BREAK — Nächste Kontur auswählen (ESC = Beenden):');
         this.manager.renderer?.render();
     }
 
     handleMouseMove(point) {
-        // Im pickPoint-Modus: Nächsten Punkt auf Kontur anzeigen
         if (this.state === 'pickPoint' && this.targetContour) {
+            // Snap-Manager für Indikator-Darstellung nutzen
+            const snapMgr = this.manager.snapManager;
+            const snapped = snapMgr?.currentSnap?.point || point;
+
             const hit = GeometryOps?.findNearestSegment(
-                this.targetContour.points, point.x, point.y, Infinity
+                this.targetContour.points, snapped.x, snapped.y, Infinity
             );
             if (hit) {
                 this.manager.rubberBand = {
@@ -3535,7 +3626,6 @@ class BreakTool extends BaseTool {
 
     finish() {
         if (this.state === 'select') {
-            // Enter ohne Auswahl → Tool beenden
             this.cancel();
         }
     }

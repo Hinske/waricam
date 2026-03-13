@@ -94,7 +94,7 @@ class WaricamApp {
         // Undo/Redo & Clipboard (V1.0)
         this.undoManager = new UndoManager({
             maxHistory: 50,
-            onStateChange: (state) => this._updateUndoUI(state)
+            onStateChange: (state) => { this.isDirty = true; this._updateUndoUI(state); }
         });
         this.clipboardManager = new ClipboardManager({
             undoManager: this.undoManager,
@@ -112,9 +112,16 @@ class WaricamApp {
         this.layerManager.onChange = () => this._updateLayerUI();
         this.dxfWriter = new DXFWriter();
         this.loadedFileName = '';  // Geladener Dateiname (für "Speichern")
+        this.currentProjectName = ''; // Projektname (für suggestedName)
+        this.isDirty = false;      // Ungespeicherte Änderungen
         this._lastDirHandle = null; // Letzter Ordner (für "Speichern unter")
         this._dxfFileHandle = null; // FileHandle für "Speichern" direkt (FSAPI)
-        
+
+        // V5.6: ProjectManager (Workspace-Verwaltung)
+        if (typeof ProjectManager !== 'undefined') {
+            this.projectManager = new ProjectManager(this);
+        }
+
         // V3.11: Image Underlay Manager
         this.imageUnderlayManager = new ImageUnderlayManager(this);
         
@@ -151,6 +158,13 @@ class WaricamApp {
         this.bindDrawingEvents();    // V3.4
         
         this.updateStepUI();
+
+        // V5.6: Workspace wiederherstellen (async, non-blocking)
+        if (this.projectManager) {
+            this.projectManager.restoreWorkspace().catch(err => {
+                console.warn('[App V5.6] Workspace-Restore fehlgeschlagen:', err);
+            });
+        }
     }
     
     // ════════════════════════════════════════════════════════════════
@@ -2448,6 +2462,8 @@ class WaricamApp {
         
         this.dxfFileName = file.name;
         this.loadedFileName = file.name;  // V3.8: Für DXF-Speichern
+        this.currentProjectName = file.name;
+        this.isDirty = false;
         this.outputFileName = file.name.replace(/\.dxf$/i, '.cnc');
         
         const reader = new FileReader();
@@ -2531,7 +2547,7 @@ class WaricamApp {
                 // Parser-Warnungen anzeigen
                 if (this.dxfResult.warnings && this.dxfResult.warnings.length > 0) {
                     this.dxfResult.warnings.forEach(w => {
-                        if (w.type === 'OPEN_CONTOURS') {
+                        if (w.type === 'OPEN_CONTOURS' || w.type === 'TEXT_BBOX_FALLBACK') {
                             this.showToast(`⚠️ ${w.message}`, 'warning');
                         }
                     });
@@ -3447,7 +3463,7 @@ class WaricamApp {
         return rParams;
     }
 
-    exportGCode() {
+    async exportGCode() {
         if (!this.contours || this.contours.length === 0) {
             this.showToast('Keine Konturen zum Exportieren', 'error');
             return;
@@ -3480,6 +3496,16 @@ class WaricamApp {
         if (result.warnings.length > 0) {
             console.warn('[EXPORT] Warnungen:', result.warnings);
             this.showToast(`Export mit ${result.warnings.length} Warnung(en)`, 'warning');
+        }
+
+        // V5.6: Workspace-CNC-Ordner nutzen wenn verfügbar
+        if (this.projectManager?.isWorkspaceOpen && this.projectManager.cncDirHandle) {
+            const saved = await this.projectManager.saveCNCFile(result.filename, result.code);
+            if (saved) {
+                this.showToast(`✅ ${result.filename} → ${this.projectManager.workspaceName}/CNC/ (${result.stats.contours} Konturen)`, 'success');
+                return;
+            }
+            // Fallback: normaler Download
         }
 
         // Download auslösen
@@ -4038,6 +4064,7 @@ class WaricamApp {
             await writable.write(result.content);
             await writable.close();
 
+            this.isDirty = false;
             this.showToast(
                 `✅ ${filename} gespeichert (${result.stats.entities} Entities, ${(result.stats.fileSize / 1024).toFixed(1)} KB)`,
                 'success'
@@ -4051,14 +4078,18 @@ class WaricamApp {
 
     /** Speichern unter... (neuer Dateiname) — öffnet immer Ordnerauswahl */
     async saveDXFAs() {
-        const defaultName = this.loadedFileName || 'zeichnung.dxf';
+        const defaultName = this.currentProjectName || this.loadedFileName || 'zeichnung.dxf';
 
         // File System Access API (Chrome, Edge, Opera)
         if (window.showSaveFilePicker) {
             try {
                 const opts = {
                     id: 'waricam-dxf',
-                    suggestedName: defaultName
+                    suggestedName: defaultName,
+                    types: [{
+                        description: 'DXF-Zeichnung',
+                        accept: { 'application/dxf': ['.dxf'] }
+                    }]
                 };
                 // Letzten Ordner wiederverwenden
                 if (this._lastDirHandle) {
@@ -4083,6 +4114,8 @@ class WaricamApp {
                 await writable.write(result.content);
                 await writable.close();
 
+                this.isDirty = false;
+                this.currentProjectName = filename;
                 this.showToast(
                     `✅ ${filename} gespeichert (${result.stats.entities} Entities, ${(result.stats.fileSize / 1024).toFixed(1)} KB)`,
                     'success'
@@ -4101,6 +4134,7 @@ class WaricamApp {
         if (!filename) return;
         const safeName = filename.endsWith('.dxf') ? filename : filename + '.dxf';
         this.loadedFileName = safeName;
+        this.currentProjectName = safeName;
         this._doSaveDXF(safeName);
     }
 
@@ -4118,6 +4152,7 @@ class WaricamApp {
                 { filename }
             );
 
+            this.isDirty = false;
             const stats = result.stats;
             this.showToast(
                 `✅ ${filename} gespeichert (${stats.entities} Entities, ${(stats.fileSize / 1024).toFixed(1)} KB)`,

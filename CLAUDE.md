@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-11
-> **Version:** V5.5.1
-> **Build:** 20260311-print
+> **Version:** V5.6
+> **Build:** 20260313-workspace
 
 ---
 
@@ -44,7 +44,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | Feld | Wert |
 |------|------|
 | Name | WARICAM / CeraCAM |
-| Version | **V5.5.1** |
+| Version | **V5.6** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -55,9 +55,9 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.5.1** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save |
+| **App** | `app.js` | **V5.6** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
-| **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle |
+| **GeometryOps** | `geometry-ops.js` | **V2.3** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.7** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
 | **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
@@ -66,8 +66,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
-| **Drawing Tools** | `drawing-tools.js` | **V2.3** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, Previous Selection |
-| **Drawing Tools Ext** | `drawing-tools-ext.js` | — | Tier 3: Explode, Join, Break |
+| **Drawing Tools** | `drawing-tools.js` | **V2.4** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
+| **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.3** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
 | **Tool Manager** | `tool-manager.js` | V2.2 | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
@@ -90,7 +90,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Machine Profiles** | `machine-profiles.js` | **V1.0** | Maschinenpark-Verwaltung, PP-Profile, localStorage |
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
 | **Quality Zones** | `quality-zones.js` | **V1.0** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
-| **Build-Info** | `build-info.js` | **V5.5.1** | Versions-Banner, Modul-Versionen, Changelog |
+| **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
+| **Build-Info** | `build-info.js` | **V5.6** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
@@ -117,9 +118,9 @@ waterjet_v2/
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.5.1
+│   ├── build-info.js                  ← Versions-Banner V5.6
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.5.1 (Print, FSAPI-Save)
+│   ├── app.js                         ← Hauptanwendung V5.6 (Print, FSAPI-Save, ProjectManager)
 │   ├── dxf-parser.js                  ← DXF Parser V3.7 (Deque-Chaining, Adaptive Grid)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
@@ -154,6 +155,7 @@ waterjet_v2/
 │   ├── machine-profiles.js           ← Maschinenpark V1.0
 │   ├── bridge-cutting.js             ← Haltestege V1.0
 │   ├── quality-zones.js              ← Qualitaetszonen V1.0
+│   ├── project-manager.js            ← Workspace-Verwaltung V1.0 (FSAPI, Auto-Save)
 │   ├── opentype.min.js               ← Font-Rendering Library
 │   └── package.json                   ← Node.js Metadaten
 ├── fonts/                             ← Font-Dateien (nicht in Git)
@@ -236,6 +238,7 @@ Canvas-Click →
 | X | ExplodeTool |
 | J | JoinTool |
 | B | BreakTool |
+| OBREAK | OverlapBreakTool (Split + tangentiale Überlappung) |
 | F8 | Ortho Toggle |
 | F3 | Messmodus |
 | ESC | Escape-Kaskade: Tool → Measure → Startpoint → Selection |
@@ -294,7 +297,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 - Multi-Head: Konturen-Verteilung auf N Schneidkoepfe (V1.3)
 - Machine Profiles: Maschinenpark-Integration (V1.3)
 
-**Noch offen:** M03/M05 Pumpe, Z-Achse, Abrasiv-Steuerung
+**Status:** Funktional komplett fuer aktuelle Anforderungen
 
 ---
 
@@ -333,8 +336,9 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 | DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
 | Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
 | Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
-| Postprozessor | 🟡 | M03/M05, Z-Achse, Abrasiv fehlen |
+| Postprozessor | 🟢 | Funktional komplett (V1.3) |
 | Modification Tools | 🟢 | Tier 3/5 komplett: Trim, Extend, Fillet, Chamfer, Offset (V1.3) |
+| Overlap Break | 🟢 | Sonderfunktion: Split + tangentiale Überlappung für WJ-Einläufe (OB, V1.1) |
 | Koordinatensystem | 🟡 | 90-Grad-Drehung Software vs. Maschine (offen) |
 
 ---
@@ -342,10 +346,9 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 ## Naechste Prioritaeten
 
 1. **PP Praxistest** — CNC-Datei auf echter Sinumerik 840D validieren
-2. **PP vervollstaendigen** — M03/M05, Z-Achse, Abrasiv
-3. ~~**Tier 3 CAD-Tools erweitern**~~ — erledigt (V1.3: Trim, Fillet, Chamfer, Extend, Offset mit Ghost-Preview)
-4. **Nesting Praxistest** — BLF-Algorithmus mit realen Teilen validieren
-5. **Kalkulation Praxistest** — Kostenmodell mit realen CeraJet-Daten abgleichen
+2. ~~**Tier 3 CAD-Tools erweitern**~~ — erledigt (V1.3: Trim, Fillet, Chamfer, Extend, Offset mit Ghost-Preview)
+3. **Nesting Praxistest** — BLF-Algorithmus mit realen Teilen validieren
+4. **Kalkulation Praxistest** — Kostenmodell mit realen CeraJet-Daten abgleichen
 
 ---
 
@@ -353,7 +356,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-WARICAM/CeraCAM V5.5.1 - Build 20260311-tier3
+WARICAM/CeraCAM V5.6 - Build 20260313-workspace
 [BUILD] Modules:
   dxf-parser: V3.7 (20260311-deque)
   dxf-writer: V1.1 (20260311-utf8circle)
@@ -370,6 +373,7 @@ WARICAM/CeraCAM V5.5.1 - Build 20260311-tier3
   bridge-cutting: V1.0 (20260309)
   quality-zones: V1.0 (20260309)
   advanced-tools: V1.3 (20260311-offset)
+  project-manager: V1.0 (20260313-workspace)
   ...
 ```
 

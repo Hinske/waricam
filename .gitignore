@@ -40,3 +40,4 @@ system-anweisung-*.md
 # Fonts (Copyright, lokal via Syncthing)
 fonts/*.ttf
 fonts/*.TTF
+!fonts/default.ttf

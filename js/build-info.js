@@ -4,13 +4,13 @@
  */
 
 const WARICAM_BUILD = {
-    version: '5.5.1',
-    build: '20260311-tier3',
-    date: '2026-03-11',
+    version: '5.6',
+    build: '20260313-workspace',
+    date: '2026-03-13',
     time: '12:00 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.7', build: '20260311-deque' },
+        'dxf-parser':         { version: '3.8', build: '20260312-textglyphs' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.1', build: '20260212-1400' },
         'cam-contour':        { version: '4.8', build: '20260311-leadroute' },
@@ -19,13 +19,16 @@ const WARICAM_BUILD = {
         'sinumerik-pp':       { version: '1.3', build: '20260309-multihead' },
         'command-line':       { version: '1.0', build: '20260213-1200' },
         'snap-manager':       { version: '1.2', build: '20260216-snap12' },
-        'geometry-ops':       { version: '2.2', build: '20260220-arabeske' },
-        'drawing-tools':      { version: '2.3', build: '20260309-autocad' },
+        'geometry-ops':       { version: '2.3', build: '20260311-overlap' },
+        'drawing-tools':      { version: '2.4', build: '20260311-breaktool' },
+        'drawing-tools-ext':  { version: '1.1', build: '20260311-overlapbreak' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
+        'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.1', build: '20260311-utf8circle' },
-        'app':                { version: '5.5.1', build: '20260311-v551' },
+        'app':                { version: '5.6', build: '20260313-workspace' },
+        'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.1', build: '20260219-phaseB' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.0', build: '20260309' },
@@ -134,7 +137,22 @@ const WARICAM_BUILD = {
         'V5.5.1: Offset-Tool Ghost-Preview — halbtransparente Vorschau beim Mausbewegen (advanced-tools V1.3)',
         'V5.5.1: Chamfer Continuous Mode — Tool bleibt nach Anwendung aktiv',
         'V5.5.1: Offset-Preview RubberBand-Type im Renderer (grün halbtransparent)',
-        'V5.5.1: DXF Chaining Optimierung — Deque-Pattern, adaptive Grid-Zellgröße, Progress-Logging (dxf-parser V3.7)'
+        'V5.5.1: DXF Chaining Optimierung — Deque-Pattern, adaptive Grid-Zellgröße, Progress-Logging (dxf-parser V3.7)',
+        'V5.5.1: BreakTool Finalisierung — Snap-Manager, CAM-Property-Vererbung, Vertex-Split-Fix, Continuous Mode (drawing-tools V2.4)',
+        'V5.5.1: splitContourAtPoint Vertex-Degeneration Fix — keine Null-Längen-Segmente bei Vertex-Split (geometry-ops V2.2)',
+        'V5.5.1: Overlap Break Tool (OB) — Kontur trennen + tangentiale Überlappung für Wasserstrahl-Einläufe (drawing-tools-ext V1.1)',
+        'V5.5.1: splitAndOverlap() — Split + feste tangentiale Verlängerung mit C1-Stetigkeit (geometry-ops V2.3)',
+        'V5.5.1: Ghost-Preview (Gelb #FFFF00) mit Pfeilspitze + Längenanzeige für Überlappungsrichtung',
+        'V5.5.1: Slit-Modus (kerfWidth=0) automatisch bei Überlappungs-Konturen, Pipeline-Revalidierung',
+        'V5.5.1: TEXT/MTEXT Glyph-Import — echte Buchstaben-Konturen via opentype.js (dxf-parser V3.8, text-tool V1.2)',
+        'V5.5.1: TEXT Justierung — Group Codes 72/11/21 für Center/Right-Alignment korrekt ausgewertet',
+        'V5.5.1: BBox-Fallback-Warnung wenn TEXT-Entities ohne geladenen Font importiert werden',
+        'V5.6: ProjectManager V1.0 — Workspace-Verwaltung mit FSAPI Directory Picker',
+        'V5.6: Workspace Sidebar — DXF-Dateiliste mit Klick-zum-Laden',
+        'V5.6: Auto-Save (.bak.dxf) in regelmässigen Abständen (60s)',
+        'V5.6: CNC-Unterordner automatisch im Workspace erstellt',
+        'V5.6: IndexedDB Handle-Persistenz über Browser-Sitzungen',
+        'V5.6: CNC-Export direkt in Workspace/CNC/ Ordner'
     ],
     
     print() {
