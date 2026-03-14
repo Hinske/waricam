@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-03-11
+> **Letzte Aktualisierung:** 2026-03-14
 > **Version:** V5.6
 > **Build:** 20260313-workspace
 
@@ -51,14 +51,14 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ---
 
-## Module & Versionen (Stand 2026-03-11)
+## Module & Versionen (Stand 2026-03-14)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
 | **App** | `app.js` | **V5.6** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
-| **GeometryOps** | `geometry-ops.js` | **V2.3** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
-| **DXF-Parser** | `dxf-parser.js` | **V3.7** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
+| **GeometryOps** | `geometry-ops.js` | V2.2 | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
+| **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
 | **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
 | **Renderer** | `canvas-renderer.js` | **V3.13** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
@@ -66,7 +66,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
-| **Drawing Tools** | `drawing-tools.js` | **V2.4** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
+| **Drawing Tools** | `drawing-tools.js` | V2.2 | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.3** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
@@ -79,7 +79,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
 | **Properties Panel** | `properties-panel.js` | V1.1 | Kontur-Eigenschaften, Piercing, Lead-In, Area-Class |
-| **Text Tool** | `text-tool.js` | — | Text-Entities (opentype.js) |
+| **Text Tool** | `text-tool.js` | V1.2 | Text-Entities (opentype.js) |
+| **Default Font** | `default-font.js` | — | Eingebetteter Default-Font |
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
 | **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
@@ -121,7 +122,7 @@ waterjet_v2/
 │   ├── build-info.js                  ← Versions-Banner V5.6
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
 │   ├── app.js                         ← Hauptanwendung V5.6 (Print, FSAPI-Save, ProjectManager)
-│   ├── dxf-parser.js                  ← DXF Parser V3.7 (Deque-Chaining, Adaptive Grid)
+│   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, Adaptive Grid)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
@@ -134,7 +135,7 @@ waterjet_v2/
 │   ├── command-line.js                ← Command-Line UI V1.0
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.2
-│   ├── drawing-tools.js              ← CAD-Tools V2.3 (AutoCAD-Aliases, Continuous)
+│   ├── drawing-tools.js              ← CAD-Tools V2.2 (AutoCAD-Aliases, Continuous)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.3 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
@@ -157,7 +158,7 @@ waterjet_v2/
 │   ├── quality-zones.js              ← Qualitaetszonen V1.0
 │   ├── project-manager.js            ← Workspace-Verwaltung V1.0 (FSAPI, Auto-Save)
 │   ├── opentype.min.js               ← Font-Rendering Library
-│   └── package.json                   ← Node.js Metadaten
+│   └── default-font.js               ← Eingebetteter Default-Font
 ├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
 ├── CLAUDE.md                          ← Diese Datei
@@ -332,7 +333,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7) |
+| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7), V3.8 |
 | DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
 | Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
 | Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
@@ -358,13 +359,13 @@ Console-Ausgabe beim Laden:
 ```
 WARICAM/CeraCAM V5.6 - Build 20260313-workspace
 [BUILD] Modules:
-  dxf-parser: V3.7 (20260311-deque)
+  dxf-parser: V3.8 (20260311-deque)
   dxf-writer: V1.1 (20260311-utf8circle)
   cam-contour: V4.8 (20260311-leadroute)
   canvas-renderer: V3.13 (20260311-leaddiff)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.3 (20260309-multihead)
-  drawing-tools: V2.3 (20260309-autocad)
+  drawing-tools: V2.2 (20260309-autocad)
   dynamic-input: V1.0 (20260309-dynhud)
   nesting: V1.0 (20260309)
   toolpath-simulator: V1.0 (20260309)
