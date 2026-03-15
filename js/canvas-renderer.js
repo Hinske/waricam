@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.18 - Canvas Renderer
+ * CeraCUT V3.19 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.19: Arc-Lead Rendering Fix — gekürzte Arcs Polylinien-Fallback, breitere Linear-Dashes
  * V3.16: Notebook-Navigation — Trackpad-Pan (Zwei-Finger), Pinch-to-Zoom, Space+Drag Pan
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
  * V3.12: Dimension Rendering Integration
@@ -1152,9 +1153,10 @@ class CanvasRenderer {
     }
 
     /**
-     * V5.6: Echte ctx.arc() Darstellung für Arc-Leads
+     * V3.19: Echte ctx.arc() Darstellung für Arc-Leads
      * Nutzt arcStartAngle/arcEndAngle direkt aus leadPath-Metadaten
      * Zeichnet: optionale Gerade (Pierce → Bogenstart) + Canvas-Bogen
+     * Bei gekürzten Leads: Fallback auf Polylinien-Rendering (gekürzte Metadaten)
      */
     _drawArcLead(ctx, leadPath, color, lineWidth) {
         const { arcCenter, arcRadius, arcSweepCCW, arcStartAngle, arcEndAngle, points, hasLinePortion } = leadPath;
@@ -1162,6 +1164,12 @@ class CanvasRenderer {
 
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
+
+        // Gekürzte Arc-Leads: Polylinien-Fallback (Arc-Metadaten passen nicht mehr zu gekürzten Punkten)
+        if (leadPath.shortened) {
+            this._drawLeadPath(ctx, points, color, lineWidth);
+            return;
+        }
 
         // Gerade Portion: Pierce-Punkt → Bogenstart (wenn Lead länger als Bogenlänge)
         if (hasLinePortion && points.length > 2) {
@@ -1226,10 +1234,10 @@ class CanvasRenderer {
     _getLeadDash(type, lw) {
         const s = Math.max(lw * 3, 2 / this.scale);
         switch (type) {
-            case 'arc':      return [];                        // durchgezogen
-            case 'linear':   return [s * 2, s];                // gestrichelt ▬ ▬ ▬
-            case 'tangent':  return [s * 2, s * 0.6, s * 0.5, s * 0.6]; // strichpunkt ▬·▬·
-            case 'dog_leg':  return [s, s * 0.5];              // kurz gestrichelt ▪ ▪ ▪
+            case 'arc':      return [];                                    // durchgezogen ———
+            case 'linear':   return [s * 3, s * 2];                       // gestrichelt ▬  ▬  ▬ (breitere Lücken)
+            case 'tangent':  return [s * 2, s * 0.6, s * 0.5, s * 0.6];  // strichpunkt ▬·▬·
+            case 'dog_leg':  return [s, s * 0.5];                         // kurz gestrichelt ▪ ▪ ▪
             default:         return [];
         }
     }
