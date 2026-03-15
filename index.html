@@ -1470,18 +1470,34 @@
     const ribbonTabs = document.querySelectorAll('.ribbon-tab[data-ribbon]');
     const ribbonPanels = document.querySelectorAll('.ribbon-panel[data-ribbon]');
     
+    // Ribbon-Tab → Wizard-Step Mapping
+    const ribbonToStep = { file: 1, cad: 1, cam: 4, order: 5, export: 6, view: null };
+    const ribbonToName = { file: 'Datei laden', cad: 'Zeichnen', cam: 'Schneiden', order: 'Reihenfolge', export: 'Export', view: 'Ansicht' };
+
     ribbonTabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const target = tab.dataset.ribbon;
-            
+
             // Update tab active state
             ribbonTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
+
             // Show/hide panels
             ribbonPanels.forEach(panel => {
                 panel.style.display = panel.dataset.ribbon === target ? 'flex' : 'none';
             });
+
+            // Wizard-Indikator aktualisieren
+            const step = ribbonToStep[target];
+            const badge = document.getElementById('wizard-step-badge');
+            const stepName = document.getElementById('wizard-step-name');
+            if (badge && step) badge.textContent = step + '/6';
+            if (stepName) stepName.textContent = ribbonToName[target] || '';
+
+            // App-Step synchronisieren (CAM-Modi brauchen korrekte Renderer-Mode)
+            if (step && window.app && window.app.currentStep !== step) {
+                window.app.goToStep(step);
+            }
         });
     });
     

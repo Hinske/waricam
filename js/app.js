@@ -2449,11 +2449,23 @@ class CeraCutApp {
         document.getElementById('btn-next').textContent = this.currentStep === this.totalSteps ? '✓ Fertig' : 'Weiter →';
         
         // Wizard-Indikator aktualisieren
+        const stepToRibbon = { 1: 'file', 2: 'cam', 3: 'cam', 4: 'cam', 5: 'order', 6: 'export' };
         const stepNames = ['', 'Datei laden', 'Referenz', 'Nullpunkt', 'Schneiden', 'Reihenfolge', 'Export'];
         const badge = document.getElementById('wizard-step-badge');
-        const stepName = document.getElementById('wizard-step-name');
+        const stepNameEl = document.getElementById('wizard-step-name');
         if (badge) badge.textContent = `${this.currentStep}/${this.totalSteps}`;
-        if (stepName) stepName.textContent = stepNames[this.currentStep] || '';
+        if (stepNameEl) stepNameEl.textContent = stepNames[this.currentStep] || '';
+
+        // Ribbon-Tab synchronisieren (nur für Steps 2-6, Step 1 lässt den Tab wie er ist)
+        const targetRibbon = stepToRibbon[this.currentStep];
+        if (targetRibbon && this.currentStep > 1) {
+            document.querySelectorAll('.ribbon-tab[data-ribbon]').forEach(t => {
+                t.classList.toggle('active', t.dataset.ribbon === targetRibbon);
+            });
+            document.querySelectorAll('.ribbon-panel[data-ribbon]').forEach(p => {
+                p.style.display = p.dataset.ribbon === targetRibbon ? 'flex' : 'none';
+            });
+        }
 
         // Start-Hint ausblenden sobald Konturen existieren oder Datei geladen
         const startHint = document.getElementById('start-hint');
