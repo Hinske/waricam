@@ -4619,30 +4619,45 @@ class CeraCutApp {
     _updateLayerUI() {
         const layers = this.layerManager.getAllLayers();
         const active = this.layerManager.activeLayer;
-
-        // Ribbon-Dropdown
-        const ribbonSel = document.getElementById('ribbon-layer-select');
-        if (ribbonSel) {
-            ribbonSel.innerHTML = layers.map(l => {
-                const sel = l.name === active ? ' selected' : '';
-                const vis = l.visible ? '' : ' (aus)';
-                return `<option value="${l.name}"${sel}>${l.name}${vis}</option>`;
-            }).join('');
-        }
-
-        // Status-Bar Dropdown
-        const statusSel = document.getElementById('status-layer-select');
-        if (statusSel) {
-            statusSel.innerHTML = ribbonSel?.innerHTML || '';
-        }
-
-        // Farbpunkte
         const activeLayer = this.layerManager.getActiveLayer();
-        const color = activeLayer?.color || '#fff';
-        const ribbonDot = document.getElementById('ribbon-layer-color-dot');
-        if (ribbonDot) ribbonDot.style.background = color;
-        const statusDot = document.getElementById('status-layer-color');
-        if (statusDot) statusDot.style.background = color;
+        const activeColor = activeLayer?.color || '#fff';
+
+        // Row-HTML generieren (für beide Dropdowns)
+        const rowsHtml = layers.map(l => {
+            const isActive = l.name === active;
+            const cls = ['layer-dd-row'];
+            if (isActive) cls.push('active');
+            if (!l.visible) cls.push('dimmed');
+            const visIcon = l.visible ? '&#128065;' : '&#128065;&#xFE0E;';
+            const visTitle = l.visible ? 'Ausblenden' : 'Einblenden';
+            return `<div class="${cls.join(' ')}" data-layer="${l.name}">` +
+                `<span class="layer-dd-vis" title="${visTitle}" style="opacity:${l.visible ? 1 : 0.3}">${visIcon}</span>` +
+                `<span class="layer-dd-row-color" style="background:${l.color}"></span>` +
+                `<span class="layer-dd-row-name">${l.name}</span>` +
+                `</div>`;
+        }).join('');
+
+        // Ribbon-Dropdown Trigger + Panel
+        const ribbonTrigger = document.getElementById('ribbon-layer-trigger');
+        if (ribbonTrigger) {
+            const colorSpan = ribbonTrigger.querySelector('.layer-dd-color');
+            const nameSpan = ribbonTrigger.querySelector('.layer-dd-name');
+            if (colorSpan) colorSpan.style.background = activeColor;
+            if (nameSpan) nameSpan.textContent = active;
+        }
+        const ribbonPanel = document.getElementById('ribbon-layer-panel');
+        if (ribbonPanel) ribbonPanel.innerHTML = rowsHtml;
+
+        // Status-Bar Dropdown Trigger + Panel
+        const statusTrigger = document.getElementById('status-layer-trigger');
+        if (statusTrigger) {
+            const colorSpan = statusTrigger.querySelector('.layer-dd-color');
+            const nameSpan = statusTrigger.querySelector('.layer-dd-name');
+            if (colorSpan) colorSpan.style.background = activeColor;
+            if (nameSpan) nameSpan.textContent = active;
+        }
+        const statusPanel = document.getElementById('status-layer-panel');
+        if (statusPanel) statusPanel.innerHTML = rowsHtml;
     }
 
     /** Selektierte Konturen auf neuen Layer verschieben */

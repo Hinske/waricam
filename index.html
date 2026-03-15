@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CeraCUT V5.9 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260315-ux">
+    <link rel="stylesheet" href="styles.css?v=20260315-layerdd">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
 </head>
 <body>
@@ -354,20 +354,23 @@
                 </div>
                 <div class="ribbon-sm-stack" style="min-width:160px">
                     <div class="ribbon-inline-row">
-                        <select class="ribbon-select layer-dropdown" id="ribbon-layer-select" style="width:150px" title="Aktiver Layer">
-                            <option value="0">0</option>
-                        </select>
+                        <div class="layer-dropdown-wrap" id="ribbon-layer-dropdown" style="width:150px">
+                            <div class="layer-dropdown-trigger" id="ribbon-layer-trigger" title="Aktiver Layer">
+                                <span class="layer-dd-color" style="background:#fff"></span>
+                                <span class="layer-dd-name">0</span>
+                                <span class="layer-dd-arrow">&#9662;</span>
+                            </div>
+                            <div class="layer-dropdown-panel" id="ribbon-layer-panel"></div>
+                        </div>
                     </div>
                     <div class="ribbon-inline-row" style="gap:2px">
-                        <button class="ribbon-btn-mini" id="btn-layer-visible" title="Sichtbarkeit">💡</button>
-                        <button class="ribbon-btn-mini" id="btn-layer-lock" title="Sperren">🔓</button>
-                        <button class="ribbon-btn-mini" id="btn-layer-color" title="Farbe ändern">🎨</button>
-                        <span class="layer-color-dot" id="ribbon-layer-color-dot" style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#fff;border:1px solid #555;vertical-align:middle"></span>
+                        <button class="ribbon-btn-mini" id="btn-layer-lock" title="Sperren">&#128275;</button>
+                        <button class="ribbon-btn-mini" id="btn-layer-color" title="Farbe ändern">&#127912;</button>
                     </div>
                     <div class="ribbon-inline-row" style="gap:2px">
-                        <button class="ribbon-btn-mini" id="btn-layer-add" title="Neuer Layer">＋</button>
-                        <button class="ribbon-btn-mini" id="btn-layer-delete" title="Layer löschen">✕</button>
-                        <button class="ribbon-btn-mini" id="btn-layer-set-current" title="Als aktuell festlegen">✓ Aktuell</button>
+                        <button class="ribbon-btn-mini" id="btn-layer-add" title="Neuer Layer">&#65291;</button>
+                        <button class="ribbon-btn-mini" id="btn-layer-delete" title="Layer löschen">&#10005;</button>
+                        <button class="ribbon-btn-mini" id="btn-layer-set-current" title="Als aktuell festlegen">&#10003; Aktuell</button>
                     </div>
                 </div>
             </div>
@@ -1204,10 +1207,14 @@
         <div class="status-separator"></div>
         <div class="status-layer-bar">
             <span class="status-layer-label">Layer:</span>
-            <select class="status-layer-select" id="status-layer-select" title="Aktiver Layer">
-                <option value="0">0</option>
-            </select>
-            <span class="status-layer-color" id="status-layer-color"></span>
+            <div class="layer-dropdown-wrap layer-dropdown-wrap--status" id="status-layer-dropdown">
+                <div class="layer-dropdown-trigger" id="status-layer-trigger" title="Aktiver Layer">
+                    <span class="layer-dd-color" style="background:#fff"></span>
+                    <span class="layer-dd-name">0</span>
+                    <span class="layer-dd-arrow">&#9662;</span>
+                </div>
+                <div class="layer-dropdown-panel layer-dropdown-panel--up" id="status-layer-panel"></div>
+            </div>
         </div>
         <div class="status-spacer"></div>
         <span class="status-label">SINUMERIK 840D</span>
@@ -1456,7 +1463,7 @@
 <script src="js/quality-zones.js?v=20260315-bugfix35"></script>
 <script src="js/project-manager.js?v=20260315-bugfix35"></script>
 <script src="js/dxf-browser.js?v=20260315-bugfix35"></script>
-<script src="js/app.js?v=20260315-intarsia20"></script>
+<script src="js/app.js?v=20260315-layerdd"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1759,72 +1766,78 @@
                 }
             });
             
-            // Ribbon Layer-Dropdown: Aktiven Layer wechseln + selektierte Konturen verschieben
-            document.getElementById('ribbon-layer-select')?.addEventListener('change', (e) => {
-                const newLayer = e.target.value;
-                origApp.layerManager.setActive(newLayer);
-                origApp._moveSelectedContoursToLayer(newLayer);
-            });
-            
-            // Status Layer-Dropdown: Aktiven Layer wechseln + selektierte Konturen verschieben
-            document.getElementById('status-layer-select')?.addEventListener('change', (e) => {
-                const newLayer = e.target.value;
-                origApp.layerManager.setActive(newLayer);
-                origApp._moveSelectedContoursToLayer(newLayer);
-            });
-            
-            // Ribbon: Sichtbarkeit des ausgewählten Layers togglen
-            document.getElementById('btn-layer-visible')?.addEventListener('click', () => {
-                const sel = document.getElementById('ribbon-layer-select');
-                if (sel) {
-                    origApp.layerManager.toggleVisibility(sel.value);
-                    origApp.renderer?.render();
+            // ═══ Custom Layer-Dropdown Logik ═══
+            function setupLayerDropdown(triggerId, panelId) {
+                const trigger = document.getElementById(triggerId);
+                const panel = document.getElementById(panelId);
+                if (!trigger || !panel) return;
+
+                trigger.addEventListener('click', () => {
+                    // Alle anderen Panels schließen
+                    document.querySelectorAll('.layer-dropdown-panel.open').forEach(p => {
+                        if (p !== panel) p.classList.remove('open');
+                    });
+                    panel.classList.toggle('open');
+                });
+
+                panel.addEventListener('click', (e) => {
+                    const visBtn = e.target.closest('.layer-dd-vis');
+                    const row = e.target.closest('.layer-dd-row');
+                    if (!row) return;
+                    const layerName = row.dataset.layer;
+
+                    if (visBtn) {
+                        // Visibility toggle — Panel bleibt offen
+                        origApp.layerManager.toggleVisibility(layerName);
+                        origApp.renderer?.render();
+                        return;
+                    }
+                    // Layer auswählen
+                    origApp.layerManager.setActive(layerName);
+                    origApp._moveSelectedContoursToLayer(layerName);
+                    panel.classList.remove('open');
+                });
+            }
+            setupLayerDropdown('ribbon-layer-trigger', 'ribbon-layer-panel');
+            setupLayerDropdown('status-layer-trigger', 'status-layer-panel');
+
+            // Click außerhalb → Panel schließen
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.layer-dropdown-wrap')) {
+                    document.querySelectorAll('.layer-dropdown-panel.open').forEach(p => p.classList.remove('open'));
                 }
             });
-            
+
             // Ribbon: Lock togglen
             document.getElementById('btn-layer-lock')?.addEventListener('click', () => {
-                const sel = document.getElementById('ribbon-layer-select');
-                if (sel) origApp.layerManager.toggleLock(sel.value);
+                const active = origApp.layerManager.activeLayer;
+                if (active) origApp.layerManager.toggleLock(active);
             });
-            
-            // Ribbon: Farbe ändern — V2.3: showPicker() API für zuverlässigen Color-Dialog
+
+            // Ribbon: Farbe ändern
             document.getElementById('btn-layer-color')?.addEventListener('click', () => {
-                const sel = document.getElementById('ribbon-layer-select');
                 const picker = document.getElementById('layer-color-picker');
-                if (!sel || !picker) return;
-                const layer = origApp.layerManager.getLayer(sel.value);
-                if (!layer) return;
-                
+                const active = origApp.layerManager.activeLayer;
+                const layer = origApp.layerManager.getLayer(active);
+                if (!layer || !picker) return;
+
                 picker.value = layer.color || '#ffffff';
-                const layerName = sel.value; // Capture für Closure
+                const layerName = active;
                 const applyColor = () => {
                     origApp.layerManager.setColor(layerName, picker.value);
-                    // Farbpunkt im Ribbon aktualisieren
-                    const dot = document.getElementById('ribbon-layer-color-dot');
-                    if (dot) dot.style.background = picker.value;
                     origApp.renderer?.render();
                     console.log(`[Layer] Farbe geändert: ${layerName} → ${picker.value}`);
                 };
                 picker.oninput = applyColor;
                 picker.onchange = applyColor;
-                
-                // showPicker() ist die moderne Chromium API (seit Chrome 99)
-                // Fallback auf .click() für ältere Browser
+
                 try {
                     picker.showPicker();
-                    console.log('[Layer] Color Picker geöffnet via showPicker()');
                 } catch(e) {
-                    console.log('[Layer] showPicker() fehlgeschlagen, Fallback auf click()');
                     picker.click();
                 }
             });
-            
-            // Ribbon: Farbpunkt klicken = Farbe ändern
-            document.getElementById('ribbon-layer-color-dot')?.addEventListener('click', () => {
-                document.getElementById('btn-layer-color')?.click();
-            });
-            
+
             // Ribbon: Neuer Layer
             document.getElementById('btn-layer-add')?.addEventListener('click', () => {
                 const name = prompt('Neuer Layer-Name:');
@@ -1832,24 +1845,21 @@
                     origApp.showToast(`Layer "${name}" angelegt`, 'success');
                 }
             });
-            
+
             // Ribbon: Layer löschen
             document.getElementById('btn-layer-delete')?.addEventListener('click', () => {
-                const sel = document.getElementById('ribbon-layer-select');
-                if (!sel) return;
-                const name = sel.value;
-                if (name === '0') { origApp.showToast('Layer 0 kann nicht gelöscht werden', 'warning'); return; }
-                if (confirm(`Layer "${name}" löschen?`) && origApp.layerManager.removeLayer(name)) {
-                    origApp.showToast(`Layer "${name}" gelöscht`, 'success');
+                const active = origApp.layerManager.activeLayer;
+                if (active === '0') { origApp.showToast('Layer 0 kann nicht gelöscht werden', 'warning'); return; }
+                if (confirm(`Layer "${active}" löschen?`) && origApp.layerManager.removeLayer(active)) {
+                    origApp.showToast(`Layer "${active}" gelöscht`, 'success');
                 }
             });
-            
+
             // Ribbon: Als aktuell setzen
             document.getElementById('btn-layer-set-current')?.addEventListener('click', () => {
-                const sel = document.getElementById('ribbon-layer-select');
-                if (sel) {
-                    origApp.layerManager.setActive(sel.value);
-                    origApp.showToast(`Aktiver Layer: ${sel.value}`, 'success');
+                const active = origApp.layerManager.activeLayer;
+                if (active) {
+                    origApp.showToast(`Aktiver Layer: ${active}`, 'success');
                 }
             });
             

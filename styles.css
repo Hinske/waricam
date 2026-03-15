@@ -1510,24 +1510,130 @@ html, body {
    LAYER UI — Ribbon Dropdown + Status Bar + Mini Buttons
    ═══════════════════════════════════════════════════════════════ */
 
-/* Ribbon Layer Dropdown — hell (AutoCAD-Stil) */
-.layer-dropdown {
+/* Custom Layer Dropdown — hell (AutoCAD-Stil) */
+.layer-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+}
+.layer-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     background: #f0f0f0;
     color: #222;
     border: 1px solid #aaa;
     border-radius: 2px;
-    padding: 2px 4px;
+    padding: 2px 6px;
     font-size: 12px;
     font-family: 'Segoe UI', sans-serif;
     cursor: pointer;
+    height: 22px;
+    box-sizing: border-box;
+    user-select: none;
 }
-.layer-dropdown:focus {
+.layer-dropdown-trigger:hover {
     border-color: #0078d4;
-    outline: none;
 }
-.layer-dropdown option {
-    background: #fff;
+.layer-dd-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid #888;
+    flex-shrink: 0;
+}
+.layer-dd-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.layer-dd-arrow {
+    font-size: 10px;
+    color: #666;
+    flex-shrink: 0;
+}
+.layer-dropdown-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    min-width: 180px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #f8f8f8;
+    border: 1px solid #aaa;
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 9999;
+}
+.layer-dropdown-panel.open {
+    display: block;
+}
+.layer-dropdown-panel--up {
+    top: auto;
+    bottom: 100%;
+    border-top: 1px solid #aaa;
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
+}
+.layer-dd-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Segoe UI', sans-serif;
     color: #222;
+    user-select: none;
+}
+.layer-dd-row:hover {
+    background: #d0e8ff;
+}
+.layer-dd-row.active {
+    background: #c0d8f0;
+    font-weight: 600;
+}
+.layer-dd-row.dimmed {
+    opacity: 0.45;
+}
+.layer-dd-vis {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 1;
+}
+.layer-dd-vis:hover {
+    background: #b0d0f0;
+}
+.layer-dd-row-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid #999;
+    flex-shrink: 0;
+}
+.layer-dd-row-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Status-Bar Dropdown — etwas kleiner */
+.layer-dropdown-wrap--status .layer-dropdown-trigger {
+    font-size: 11px;
+    height: 20px;
+    padding: 1px 4px;
+    min-width: 100px;
 }
 
 /* Ribbon Mini Buttons (Layer-Toolbar) — hell */
@@ -1552,14 +1658,7 @@ html, body {
     color: #fff;
 }
 
-/* Layer Color Dot (im Ribbon) */
-.layer-color-dot {
-    cursor: pointer;
-    transition: border-color 0.15s;
-}
-.layer-color-dot:hover {
-    border-color: #0078d4 !important;
-}
+/* Layer Color Dot (Legacy, Farbe jetzt im Dropdown-Trigger) */
 
 /* Ribbon Inline Row — für Layer-Buttons */
 .ribbon-inline-row {
@@ -1579,29 +1678,7 @@ html, body {
     color: #aaa;
     font-size: 11px;
 }
-.status-layer-select {
-    background: #f0f0f0;
-    color: #222;
-    border: 1px solid #888;
-    border-radius: 2px;
-    padding: 1px 4px;
-    font-size: 11px;
-    font-family: 'Segoe UI', sans-serif;
-    cursor: pointer;
-    min-width: 100px;
-}
-.status-layer-select:focus {
-    border-color: #0078d4;
-    outline: none;
-}
-.status-layer-color {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    border: 1px solid #888;
-    background: #fff;
-}
+/* Status-Bar Layer-Color Dot (Legacy, jetzt im Dropdown-Trigger) */
 
 
 /* ═══════════════════════════════════════════════════════════════
