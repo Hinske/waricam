@@ -23,6 +23,7 @@
 
 const http = require('http');
 const https = require('https');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -362,54 +363,66 @@ function requestHandler(req, res) {
 
 const tlsCreds = loadTLSCredentials();
 
-let server;
 let protocol;
 
-if (tlsCreds) {
-    // HTTPS-Server
-    server = https.createServer(tlsCreds, requestHandler);
-    protocol = 'https';
+function startServer() {
+    const dxfWarning = () => {
+        if (!fs.existsSync(DXF_ROOT)) {
+            console.warn(`[CeraCUT Server] WARNUNG: DXF-Root "${DXF_ROOT}" existiert nicht!`);
+        }
+    };
 
-    // HTTP → HTTPS Redirect auf Port 80 (falls verfügbar)
-    const redirectPort = PORT === 443 ? 80 : PORT + 1000;
-    try {
-        const redirectServer = http.createServer((req, res) => {
+    if (tlsCreds) {
+        // Dual-Protocol auf einem Port (net.Server sniffing).
+        // Byte 0x16 = TLS ClientHello → HTTPS, sonst HTTP → Redirect.
+        const httpsServer = https.createServer(tlsCreds, requestHandler);
+        const httpRedirect = http.createServer((req, res) => {
             const host = (req.headers.host || '').replace(/:\d+$/, '');
-            const target = `https://${host}:${PORT}${req.url}`;
-            res.writeHead(301, { Location: target });
+            res.writeHead(301, { Location: `https://${host}:${PORT}${req.url}` });
             res.end();
         });
-        redirectServer.listen(redirectPort, () => {
-            console.log(`[CeraCUT Server] HTTP→HTTPS Redirect auf Port ${redirectPort}`);
+
+        // Interne Server ohne Port starten (erhalten Sockets vom net.Server)
+        httpsServer.listen(0, '127.0.0.1');
+        httpRedirect.listen(0, '127.0.0.1');
+
+        const gateway = net.createServer({ pauseOnConnect: true }, socket => {
+            // Erstes Byte lesen um Protokoll zu erkennen
+            socket.once('readable', () => {
+                const chunk = socket.read(1);
+                if (!chunk || chunk.length === 0) { socket.destroy(); return; }
+                // Byte zurückschieben
+                socket.unshift(chunk);
+                // TLS ClientHello beginnt mit 0x16 (22)
+                const target = (chunk[0] === 0x16) ? httpsServer : httpRedirect;
+                target.emit('connection', socket);
+                socket.resume();
+            });
+            socket.on('error', () => {});
         });
-        redirectServer.on('error', () => {
-            // Port belegt — kein Redirect, kein Problem
+
+        gateway.listen(PORT, () => {
+            console.log(`[CeraCUT Server] Gestartet auf Port ${PORT} (HTTP+HTTPS dual-protocol)`);
+            console.log(`[CeraCUT Server]   https://localhost:${PORT}  → App (FSAPI verfügbar)`);
+            console.log(`[CeraCUT Server]   http://localhost:${PORT}   → Redirect → HTTPS`);
+            console.log(`[CeraCUT Server] Statische Dateien: ${STATIC_ROOT}`);
+            console.log(`[CeraCUT Server] DXF-Root: ${DXF_ROOT}`);
+            dxfWarning();
         });
-    } catch {
-        // Redirect optional — ignorieren
+        protocol = 'https';
+
+    } else {
+        // HTTP-only Fallback
+        const server = http.createServer(requestHandler);
+        server.listen(PORT, () => {
+            console.log(`[CeraCUT Server] Gestartet: http://localhost:${PORT}`);
+            console.log(`[CeraCUT Server] Statische Dateien: ${STATIC_ROOT}`);
+            console.log(`[CeraCUT Server] DXF-Root: ${DXF_ROOT}`);
+            console.warn(`[CeraCUT Server] WARNUNG: Nur HTTP — FSAPI funktioniert NICHT im Browser!`);
+            dxfWarning();
+        });
+        protocol = 'http';
     }
-} else {
-    // HTTP-Server (Fallback)
-    server = http.createServer(requestHandler);
-    protocol = 'http';
 }
 
-server.listen(PORT, () => {
-    console.log(`[CeraCUT Server] Gestartet: ${protocol}://localhost:${PORT}`);
-    console.log(`[CeraCUT Server] Statische Dateien: ${STATIC_ROOT}`);
-    console.log(`[CeraCUT Server] DXF-Root: ${DXF_ROOT}`);
-
-    if (protocol === 'https') {
-        console.log(`[CeraCUT Server] HTTPS aktiv — File System Access API verfügbar`);
-    } else {
-        console.warn(`[CeraCUT Server] WARNUNG: Nur HTTP — File System Access API wird im Browser NICHT funktionieren!`);
-        console.warn(`[CeraCUT Server] Starte ohne NO_HTTPS=1 für automatische Zertifikat-Generierung.`);
-    }
-
-    // Prüfen ob DXF_ROOT existiert
-    if (!fs.existsSync(DXF_ROOT)) {
-        console.warn(`[CeraCUT Server] WARNUNG: DXF-Root "${DXF_ROOT}" existiert nicht!`);
-        console.warn(`[CeraCUT Server] Server-DXF-Browse wird nicht funktionieren.`);
-        console.warn(`[CeraCUT Server] Setze DXF_ROOT auf ein gültiges Verzeichnis.`);
-    }
-});
+startServer();
