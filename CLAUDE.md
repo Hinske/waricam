@@ -62,7 +62,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
 | **CAMContour** | `cam-contour.js` | **V4.9** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.15** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
+| **Renderer** | `canvas-renderer.js` | **V3.16** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.4** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -131,7 +131,7 @@ ceraCUT/
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
 │   ├── cam-contour.js                 ← Kontur-Klasse V4.9 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.15 (Lead-Differenzierung)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.16 (Trackpad-Navigation)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.4 (Multi-Head)
@@ -368,7 +368,7 @@ CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
   dxf-parser: V3.8 (20260312-textglyphs)
   dxf-writer: V1.2 (20260315-bugfix35)
   cam-contour: V4.9 (20260315-bugfix35)
-  canvas-renderer: V3.15 (20260315-bugfix35)
+  canvas-renderer: V3.16 (20260315-trackpad)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.4 (20260315-bugfix35)
   drawing-tools: V2.5 (20260315-bugfix35)

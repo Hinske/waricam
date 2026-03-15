@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.15 - Canvas Renderer
+ * CeraCUT V3.16 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.16: Notebook-Navigation — Trackpad-Pan (Zwei-Finger), Pinch-to-Zoom, Space+Drag Pan
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
  * V3.12: Dimension Rendering Integration
  * V3.10: Grip Editing System (Vertex, Midpoint, Center, Quadrant)
@@ -9,7 +10,7 @@
  * V3.11: Image Underlay Rendering
  * V3.5: Ghost-Preview + Window-Selection Rendering
  * V3.4: Drawing-Overlay + SnapManager-Rendering
- * Last Modified: 2026-03-11 MEZ
+ * Last Modified: 2026-03-15 MEZ
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -188,29 +189,72 @@ class CanvasRenderer {
     }
 
     initEventListeners() {
+        // V3.16: Trackpad-Navigation — Wheel-Event unterscheidet Pan vs Zoom
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
 
-            const zoomIntensity = 0.1;
-            const delta = -e.deltaY;
-            const factor = delta > 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+            // Pinch-to-Zoom (ctrlKey=true, Browser-Standard für Trackpad-Pinch)
+            // ODER reines Mausrad (deltaX===0, nur vertikale Y-Achse)
+            const isZoom = e.ctrlKey || e.deltaX === 0;
 
-            const worldBefore = this.screenToWorld(mouseX, mouseY);
-            this.scale *= factor;
-            this.scale = Math.max(0.01, Math.min(1000, this.scale));
-            const worldAfter = this.screenToWorld(mouseX, mouseY);
+            if (isZoom) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
 
-            this.offsetX += (worldAfter.x - worldBefore.x) * this.scale;
-            this.offsetY -= (worldAfter.y - worldBefore.y) * this.scale;
+                // Pinch-to-Zoom hat feinere deltaY-Werte → geringere Intensität
+                const zoomIntensity = e.ctrlKey ? 0.01 : 0.1;
+                const delta = -e.deltaY;
+                const factor = delta > 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+
+                const worldBefore = this.screenToWorld(mouseX, mouseY);
+                this.scale *= factor;
+                this.scale = Math.max(0.01, Math.min(1000, this.scale));
+                const worldAfter = this.screenToWorld(mouseX, mouseY);
+
+                this.offsetX += (worldAfter.x - worldBefore.x) * this.scale;
+                this.offsetY -= (worldAfter.y - worldBefore.y) * this.scale;
+            } else {
+                // Zwei-Finger-Scroll auf Trackpad (deltaX !== 0) → Pan
+                this.offsetX -= e.deltaX;
+                this.offsetY -= e.deltaY;
+            }
 
             this.render();
         });
 
         let isPanning = false;
         let lastX, lastY;
+
+        // V3.16: Space+Drag Pan (Photoshop/Figma-Stil)
+        this._isSpaceDown = false;
+        this._isSpacePanning = false;
+
+        const spaceKeyDown = (e) => {
+            if (e.key !== ' ' || e.repeat) return;
+            // Nur Space-Pan wenn kein Tool aktiv und cmd-input leer
+            const toolMgr = this.app?.drawingTools || this.app?.toolManager;
+            const isToolActive = toolMgr?.isToolActive?.();
+            const cmdInput = document.getElementById('cmd-input');
+            const cmdHasText = cmdInput && cmdInput.value.trim().length > 0;
+            if (isToolActive || cmdHasText) return;
+            this._isSpaceDown = true;
+            this._isSpacePanning = true;
+            this.canvas.style.cursor = 'grab';
+            e.preventDefault();
+        };
+        const spaceKeyUp = (e) => {
+            if (e.key !== ' ') return;
+            if (!this._isSpaceDown) return;
+            this._isSpaceDown = false;
+            // Cursor erst zurücksetzen wenn nicht mehr in Drag
+            if (!isPanning) {
+                this._isSpacePanning = false;
+                this.canvas.style.cursor = 'default';
+            }
+        };
+        document.addEventListener('keydown', spaceKeyDown);
+        document.addEventListener('keyup', spaceKeyUp);
 
         // Startpunkt-Drag State
         let isDraggingStartPoint = false;
@@ -257,6 +301,15 @@ class CanvasRenderer {
                     this.canvas.style.cursor = 'grabbing';
                     return;
                 }
+            }
+
+            // V3.16: Space+Drag Pan
+            if (e.button === 0 && this._isSpaceDown) {
+                isPanning = true;
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+                this.canvas.style.cursor = 'grabbing';
+                return;
             }
 
             // V3.5: Pan mit Mittel-Taste, Shift+Links oder PanTool (Hand)
@@ -439,9 +492,15 @@ class CanvasRenderer {
             }
             if (isPanning) {
                 isPanning = false;
-                const _toolMgr2 = this.app?.drawingTools || this.app?.toolManager;
-                const _isPanTool2 = _toolMgr2?.activeTool?.isPanTool;
-                this.canvas.style.cursor = _isPanTool2 ? 'grab' : (this.app?.measureMode ? 'crosshair' : 'default');
+                // V3.16: Space-Pan Cursor-Handling
+                if (this._isSpaceDown) {
+                    this.canvas.style.cursor = 'grab';
+                } else {
+                    this._isSpacePanning = false;
+                    const _toolMgr2 = this.app?.drawingTools || this.app?.toolManager;
+                    const _isPanTool2 = _toolMgr2?.activeTool?.isPanTool;
+                    this.canvas.style.cursor = _isPanTool2 ? 'grab' : (this.app?.measureMode ? 'crosshair' : 'default');
+                }
             }
         });
 

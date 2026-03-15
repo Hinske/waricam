@@ -2076,10 +2076,13 @@ class CeraCutApp {
                 // V4.1: Enter/Space → cmd-input absenden oder Tool beenden
                 case 'Enter':
                 case ' ': {
+                    // V3.16: Space-Pan aktiv → nicht an cmd-input/Tool routen
+                    if (e.key === ' ' && this.renderer?._isSpacePanning) break;
+
                     const cmdInput2 = document.getElementById('cmd-input');
                     const cmdVal = cmdInput2?.value?.trim() || '';
                     const onCmdInput = e.target.id === 'cmd-input';
-                    
+
                     if (!onCmdInput && cmdVal !== '') {
                         // Text in cmd-input aber Fokus woanders → absenden
                         e.preventDefault();
