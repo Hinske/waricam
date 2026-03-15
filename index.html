@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CeraCAM V5.0 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260313-workspace">
-    <link rel="stylesheet" href="properties-panel-styles.css?v=20260219-phaseB">
+    <link rel="stylesheet" href="styles.css?v=20260315-ctxpanel">
+    <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
 </head>
 <body>
 <div class="app-container">
@@ -1134,42 +1134,7 @@
             </div>
         </div>
 
-        <!-- ── Properties Panel (Rechts) ── -->
-        <aside class="properties-panel" id="contour-panel">
-            <!-- Konturen-Liste -->
-            <div class="panel-header" id="btn-toggle-contours">
-                <span>Konturen</span>
-                <span class="panel-header-stats"><span id="panel-stat-total">0</span> / <span id="panel-stat-selected">0</span> sel</span>
-                <span class="collapse-icon">▼</span>
-            </div>
-            <div class="panel-section contour-panel-content" id="contour-panel-content">
-                <div class="contour-list-panel" id="contour-list-panel">
-                    <p class="empty-hint">Keine Konturen</p>
-                </div>
-            </div>
-
-            <!-- Schnittfolge -->
-            <div class="panel-header panel-header-toggle" data-panel="cut-order-section">
-                <span>Schnittfolge</span>
-                <span class="collapse-icon">▼</span>
-            </div>
-            <div class="panel-section" id="cut-order-section">
-                <div class="cut-order-list" id="cut-order-list">
-                    <p class="empty-hint">Keine Konturen</p>
-                </div>
-            </div>
-
-            <!-- Statistik -->
-            <div class="panel-header">
-                <span>Statistik</span>
-            </div>
-            <div class="panel-section panel-stats">
-                <div class="prop-row"><span class="prop-label">Konturen:</span><span id="stat-contours">0</span></div>
-                <div class="prop-row"><span class="prop-label">Außen:</span><span id="stat-outer">0</span></div>
-                <div class="prop-row"><span class="prop-label">Innen:</span><span id="stat-inner">0</span></div>
-                <div class="prop-row"><span class="prop-label">Gezeichnet:</span><span id="draw-entity-count">0</span></div>
-            </div>
-        </aside>
+        <!-- Properties Panel entfernt (V5.7: CAM-Eigenschaften via Kontextmenu) -->
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
@@ -1222,7 +1187,7 @@
      OVERLAYS & MODALS
      ═══════════════════════════════════════════════════════ -->
 
-<!-- Kontext-Menü (identisch wie vorher, gleiche data-actions) -->
+<!-- Kontur-Kontextmenu (V5.7: mit dynamischer CAM-Sektion) -->
 <div class="context-menu" id="context-menu">
     <div class="context-menu-item" data-action="set-startpoint">📍 Startpunkt hierher</div>
     <div class="context-menu-item" data-action="reverse-direction">↻ Richtung umkehren</div>
@@ -1239,6 +1204,8 @@
     <div class="context-menu-divider"></div>
     <div class="context-menu-item" data-action="duplicate">📋 Duplizieren</div>
     <div class="context-menu-item danger" data-action="delete">🗑️ Löschen</div>
+    <!-- V5.7: Dynamische CAM-Eigenschaften (Step 4) -->
+    <div id="ctx-cam-properties"></div>
 </div>
 
 <!-- V5.2: Canvas-Kontextmenü (Rechtsklick auf leere Fläche) -->
@@ -1436,7 +1403,7 @@
 <script src="js/measure-tool.js?v=20260220-meas3"></script>
 <script src="js/cnc-reader.js?v=20260219-v13"></script>
 <script src="js/svg-parser.js?v=20260219-v10"></script>
-<script src="js/properties-panel.js?v=20260219-phaseB"></script>
+<script src="js/properties-panel.js?v=20260315-ctxmenu"></script>
 <script src="js/nesting.js?v=20260309"></script>
 <script src="js/toolpath-simulator.js?v=20260309"></script>
 <script src="js/cost-calculator.js?v=20260309"></script>
@@ -1444,7 +1411,7 @@
 <script src="js/bridge-cutting.js?v=20260309"></script>
 <script src="js/quality-zones.js?v=20260309"></script>
 <script src="js/project-manager.js?v=20260313-v10"></script>
-<script src="js/app.js?v=20260313-workspace"></script>
+<script src="js/app.js?v=20260315-ctxpanel"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>

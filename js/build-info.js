@@ -4,9 +4,9 @@
  */
 
 const WARICAM_BUILD = {
-    version: '5.6',
-    build: '20260313-workspace',
-    date: '2026-03-13',
+    version: '5.7',
+    build: '20260315-ctxpanel',
+    date: '2026-03-15',
     time: '12:00 MEZ',
 
     modules: {
@@ -27,9 +27,9 @@ const WARICAM_BUILD = {
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.1', build: '20260311-utf8circle' },
-        'app':                { version: '5.6', build: '20260313-workspace' },
+        'app':                { version: '5.7', build: '20260315-ctxpanel' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
-        'properties-panel':   { version: '1.1', build: '20260219-phaseB' },
+        'properties-panel':   { version: '1.2', build: '20260315-ctxmenu' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.0', build: '20260309' },
         'toolpath-simulator': { version: '1.0', build: '20260309' },
@@ -152,7 +152,11 @@ const WARICAM_BUILD = {
         'V5.6: Auto-Save (.bak.dxf) in regelmässigen Abständen (60s)',
         'V5.6: CNC-Unterordner automatisch im Workspace erstellt',
         'V5.6: IndexedDB Handle-Persistenz über Browser-Sitzungen',
-        'V5.6: CNC-Export direkt in Workspace/CNC/ Ordner'
+        'V5.6: CNC-Export direkt in Workspace/CNC/ Ordner',
+        'V5.7: Properties Panel Sidebar entfernt → CAM-Eigenschaften im Kontextmenu (Step 4)',
+        'V5.7: Kontextmenu mit dynamischer CAM-Sektion (Quality, Piercing, Lead-In, Kerf)',
+        'V5.7: Kontextmenu-Überlauf-Korrektur (Bildschirmrand-Check)',
+        'V5.7: Null-safe DOM-Zugriffe nach Panel-Entfernung'
     ],
     
     print() {

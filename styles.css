@@ -741,27 +741,7 @@ html, body {
    PROPERTIES PANEL (RIGHT)
    ═══════════════════════════════════════════════════════════════ */
 
-.properties-panel {
-    width: 240px;
-    background: var(--panel-bg);
-    border-left: 1px solid var(--panel-border);
-    display: flex;
-    flex-direction: column;
-    font-size: 11px;
-    overflow-y: auto;
-    flex-shrink: 0;
-    transition: width 0.2s;
-}
-
-.properties-panel.collapsed {
-    width: 32px;
-    min-width: 32px;
-    overflow: hidden;
-}
-
-.properties-panel.collapsed .panel-section,
-.properties-panel.collapsed .panel-stats,
-.properties-panel.collapsed .panel-header-stats { display: none; }
+/* Properties-Panel Sidebar entfernt (V5.7: CAM-Eigenschaften via Kontextmenu) */
 
 .panel-header {
     background: var(--panel-header-bg);
@@ -1088,6 +1068,7 @@ html, body {
 }
 
 .context-menu.visible { display: block; }
+.context-menu { max-height: 80vh; overflow-y: auto; }
 
 .context-menu-item {
     padding: 5px 14px;
@@ -1521,13 +1502,7 @@ html, body {
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 1024px) {
-    .properties-panel { width: 200px; }
-}
-
-@media (max-width: 768px) {
-    .properties-panel { display: none; }
-}
+/* Properties-Panel Media-Queries entfernt (V5.7) */
 
 
 /* ═══════════════════════════════════════════════════════════════

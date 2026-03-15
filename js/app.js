@@ -107,6 +107,9 @@ class WaricamApp {
         this.drawingTools = null;  // Alias für toolManager (Backward-Kompatibilität)
         this.toolManager = null;
         
+        // V5.7: Properties Panel (Kontextmenu-Modus)
+        this.propertiesPanel = new PropertiesPanel({ app: this });
+
         // V3.8: Layer-Management + DXF-Writer
         this.layerManager = new LayerManager();
         this.layerManager.onChange = () => this._updateLayerUI();
@@ -822,17 +825,47 @@ class WaricamApp {
         const isReference = contour.isReference;
         const isCuttable = (contour.isClosed || contour.cuttingMode === 'slit') && !isReference;
         
-        menu.querySelector('[data-action="set-startpoint"]').style.display = 
+        menu.querySelector('[data-action="set-startpoint"]').style.display =
             isCuttable ? 'flex' : 'none';
-        menu.querySelector('[data-action="reverse-direction"]').style.display = 
+        menu.querySelector('[data-action="reverse-direction"]').style.display =
             isCuttable ? 'flex' : 'none';
-        menu.querySelector('[data-action="add-microjoint"]').style.display = 
+        menu.querySelector('[data-action="add-microjoint"]').style.display =
             (contour.isClosed && !isReference) ? 'flex' : 'none';
+
+        // V5.7: CAM-Properties im Kontextmenu (nur Step 4)
+        const camContainer = document.getElementById('ctx-cam-properties');
+        if (camContainer) {
+            if (this.currentStep === 4 && !isReference) {
+                // Sicherstellen, dass die rechts-geklickte Kontur selektiert ist
+                if (!contour.isSelected) {
+                    this.contours.forEach(c => { c.isSelected = false; });
+                    contour.isSelected = true;
+                }
+                camContainer.innerHTML = this.propertiesPanel.generateContextMenuHTML();
+                this.propertiesPanel.bindEvents(camContainer);
+            } else {
+                camContainer.innerHTML = '';
+            }
+        }
+
+        // Menue-Position korrigieren (nicht ueber Bildschirmrand)
+        requestAnimationFrame(() => {
+            const rect = menu.getBoundingClientRect();
+            if (rect.bottom > window.innerHeight) {
+                menu.style.top = `${Math.max(4, window.innerHeight - rect.height - 4)}px`;
+            }
+            if (rect.right > window.innerWidth) {
+                menu.style.left = `${Math.max(4, window.innerWidth - rect.width - 4)}px`;
+            }
+        });
     }
     
     hideContextMenu() {
         const menu = document.getElementById('context-menu');
         menu?.classList.remove('visible');
+        // V5.7: CAM-Properties aufräumen
+        const camContainer = document.getElementById('ctx-cam-properties');
+        if (camContainer) camContainer.innerHTML = '';
         this.contextMenuContour = null;
         this.contextMenuPoint = null;
     }
@@ -1781,7 +1814,7 @@ class WaricamApp {
     bindContourPanelEvents() {
         document.getElementById('btn-toggle-contours')?.addEventListener('click', () => {
             const panel = document.getElementById('contour-panel');
-            panel.classList.toggle('collapsed');
+            panel?.classList.toggle('collapsed');
         });
         
         document.getElementById('btn-select-all')?.addEventListener('click', () => {
@@ -1805,8 +1838,10 @@ class WaricamApp {
         
         if (!this.contours || this.contours.length === 0) {
             listEl.innerHTML = '<p class="empty-hint">Keine Datei geladen</p>';
-            document.getElementById('panel-stat-total').textContent = '0';
-            document.getElementById('panel-stat-selected').textContent = '0';
+            const elTotal = document.getElementById('panel-stat-total');
+            const elSel = document.getElementById('panel-stat-selected');
+            if (elTotal) elTotal.textContent = '0';
+            if (elSel) elSel.textContent = '0';
             return;
         }
         
@@ -1847,9 +1882,11 @@ class WaricamApp {
         
         listEl.innerHTML = html;
         
-        // Stats
-        document.getElementById('panel-stat-total').textContent = this.contours.length;
-        document.getElementById('panel-stat-selected').textContent = this.contours.filter(c => c.isSelected).length;
+        // Stats (Panel entfernt V5.7 — null-safe)
+        const elTotal = document.getElementById('panel-stat-total');
+        const elSel = document.getElementById('panel-stat-selected');
+        if (elTotal) elTotal.textContent = this.contours.length;
+        if (elSel) elSel.textContent = this.contours.filter(c => c.isSelected).length;
         
         // Click Events
         listEl.querySelectorAll('.contour-item-panel').forEach(item => {
@@ -2711,9 +2748,12 @@ class WaricamApp {
     }
     
     updateStats(result) {
-        document.getElementById('stat-contours').textContent = result?.totalEntities || this.contours.length;
-        document.getElementById('stat-outer').textContent = result?.outerContours || 0;
-        document.getElementById('stat-inner').textContent = result?.innerContours || 0;
+        const el1 = document.getElementById('stat-contours');
+        const el2 = document.getElementById('stat-outer');
+        const el3 = document.getElementById('stat-inner');
+        if (el1) el1.textContent = result?.totalEntities || this.contours.length;
+        if (el2) el2.textContent = result?.outerContours || 0;
+        if (el3) el3.textContent = result?.innerContours || 0;
     }
     
     // ════════════════════════════════════════════════════════════════

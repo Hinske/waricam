@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-03-11
-> **Version:** V5.6
-> **Build:** 20260313-workspace
+> **Letzte Aktualisierung:** 2026-03-15
+> **Version:** V5.7
+> **Build:** 20260315-ctxpanel
 
 ---
 
@@ -55,7 +55,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.6** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager |
+| **App** | `app.js` | **V5.7** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu |
 | **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.3** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.7** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
@@ -78,7 +78,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **DXF Writer** | `dxf-writer.js` | **V1.1** | DXF R12 (AC1009) Export, UTF-8 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
-| **Properties Panel** | `properties-panel.js` | V1.1 | Kontur-Eigenschaften, Piercing, Lead-In, Area-Class |
+| **Properties Panel** | `properties-panel.js` | **V1.2** | Kontur-Eigenschaften im Kontextmenu, Piercing, Lead-In, Area-Class, Batch-Editing |
 | **Text Tool** | `text-tool.js` | — | Text-Entities (opentype.js) |
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
 | **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
@@ -91,7 +91,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
 | **Quality Zones** | `quality-zones.js` | **V1.0** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
-| **Build-Info** | `build-info.js` | **V5.6** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V5.7** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
@@ -118,9 +118,9 @@ waterjet_v2/
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.6
+│   ├── build-info.js                  ← Versions-Banner V5.7
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.6 (Print, FSAPI-Save, ProjectManager)
+│   ├── app.js                         ← Hauptanwendung V5.7 (Print, FSAPI-Save, CAM-Kontextmenu)
 │   ├── dxf-parser.js                  ← DXF Parser V3.7 (Deque-Chaining, Adaptive Grid)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
@@ -143,7 +143,7 @@ waterjet_v2/
 │   ├── dxf-writer.js                 ← DXF R12 Export V1.1 (UTF-8, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import
-│   ├── properties-panel.js            ← Eigenschaften-Panel V1.1
+│   ├── properties-panel.js            ← Eigenschaften-Panel V1.2 (Kontextmenu-Modus)
 │   ├── text-tool.js                   ← Text-Entities (opentype.js)
 │   ├── image-underlay.js             ← Hintergrund-Bilder
 │   ├── dimension-tool.js             ← Bemassung
@@ -356,7 +356,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-WARICAM/CeraCAM V5.6 - Build 20260313-workspace
+WARICAM/CeraCAM V5.7 - Build 20260315-ctxpanel
 [BUILD] Modules:
   dxf-parser: V3.7 (20260311-deque)
   dxf-writer: V1.1 (20260311-utf8circle)
@@ -374,6 +374,8 @@ WARICAM/CeraCAM V5.6 - Build 20260313-workspace
   quality-zones: V1.0 (20260309)
   advanced-tools: V1.3 (20260311-offset)
   project-manager: V1.0 (20260313-workspace)
+  properties-panel: V1.2 (20260315-ctxmenu)
+  app: V5.7 (20260315-ctxpanel)
   ...
 ```
 
@@ -416,3 +418,62 @@ Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refac
 * **True-Shape Nesting:** Erweiterung des aktuellen BLF-Algorithmus (Bounding-Box) zu formtreuem Verschachteln, sodass kleine Bauteile in die Restgitter-Ausschnitte (Holes) großer Bauteile platziert werden können.
 * **Tip-Up Avoidance (Kollisionsvermeidung):** Erweiterung des `toolpath-simulator.js` und der Lead-Routings. Der Schneidkopf soll im Eilgang (G00) intelligent um bereits geschnittene Teile herumgeführt werden, um Kollisionen mit aufgestellten Bauteilen im Wasserbecken zu vermeiden.
 * **PDF-Rüstblatt (Setup Sheet):** Generierung eines Export-Dokuments für den Maschinenbediener mit allen relevanten Job-Daten (Nullpunkt-Position, Brutto-Plattengröße, geschätzte Laufzeit, Anzahl der Piercings).
+
+---
+
+## Workflow Orchestration
+
+### 1. Plan Node Default
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
+### 3. Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
+### 4. Verification Before Done
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+---
+
+## Task Management
+
+1. **Plan First:** Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan:** Check in before starting implementation
+3. **Track Progress:** Mark items complete as you go
+4. **Explain Changes:** High-level summary at each step
+5. **Document Results:** Add review section to `tasks/todo.md`
+6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
+
+---
+
+## Core Principles
+
+- **Simplicity First:** Make every change as simple as possible. Impact minimal code.
+- **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact:** Changes should only touch what's necessary. Avoid introducing bugs.

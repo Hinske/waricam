@@ -1,26 +1,27 @@
 /* ════════════════════════════════════════════════════════════════
-   PROPERTIES PANEL V1.0 — AutoCAD Eigenschaften-Panel
-   Append this block to the END of styles.css
+   PROPERTIES PANEL V1.1 — CAM-Eigenschaften im Kontextmenu
+   Refactored: 2026-03-13 (Sidebar → Kontextmenu-Sektion)
    ════════════════════════════════════════════════════════════════ */
 
-#properties-content {
-    max-height: 320px;
-    overflow-y: auto;
+/* ── Kontextmenu CAM-Sektion ── */
+.ctx-cam-section {
+    padding: 2px 0;
+    min-width: 220px;
 }
 
-.pp-group {
-    padding: 3px 6px;
+.ctx-cam-section .pp-group {
+    padding: 3px 10px;
     border-bottom: 1px solid var(--panel-border);
 }
 
-.pp-group:last-child {
+.ctx-cam-section .pp-group:last-child {
     border-bottom: none;
 }
 
 .pp-row {
     display: flex;
     align-items: center;
-    min-height: 19px;
+    min-height: 20px;
     gap: 4px;
 }
 
@@ -35,7 +36,7 @@
 .pp-key {
     font-size: 10px;
     color: var(--panel-text-muted);
-    min-width: 70px;
+    min-width: 65px;
     flex-shrink: 0;
 }
 
@@ -104,7 +105,7 @@
     font-style: italic;
 }
 
-/* B.3 Auto-Lead Button */
+/* Auto-Lead Button */
 .pp-btn {
     padding: 2px 7px;
     background: #1a4a6e;
