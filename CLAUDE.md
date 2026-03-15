@@ -19,6 +19,10 @@ npm run dev
 npm run serve
 # oder: npx serve .
 
+# Versions-Sync: build-info.js → CLAUDE.md
+node scripts/sync-versions.js          # Aktualisieren
+node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
+
 # Testing
 open test-parser.html        # DXF-Parser Tests im Browser
 open dxf-test.html           # DXF Multi-File Test Tool
@@ -51,39 +55,39 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ---
 
-## Module & Versionen (Stand 2026-03-11)
+## Module & Versionen (Stand 2026-03-15)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
 | **App** | `app.js` | **V5.7** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu |
-| **Geometry** | `geometry.js` | V2.9 | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
+| **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.3** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
-| **DXF-Parser** | `dxf-parser.js` | **V3.7** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, Center/Radius-Passthrough |
+| **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
 | **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
 | **Renderer** | `canvas-renderer.js` | **V3.13** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.3** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
-| **Pipeline** | `waricam-pipeline.js` | V3.1 | Topologie (disc/hole/reference/slit), Kerf-Offset |
+| **Pipeline** | `waricam-pipeline.js` | **V3.1** | Topologie (disc/hole/reference/slit), Kerf-Offset |
 | **Drawing Tools** | `drawing-tools.js` | **V2.4** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.3** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
-| **Tool Manager** | `tool-manager.js` | V2.2 | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
-| **Command Line** | `command-line.js` | V1.0 | AutoCAD-style Prompt, Koordinaten-Parser, History |
+| **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
+| **Command Line** | `command-line.js` | **V1.0** | AutoCAD-style Prompt, Koordinaten-Parser, History |
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
-| **Snap Manager** | `snap-manager.js` | V1.2 | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
-| **Layer Manager** | `layer-manager.js` | V1.0 | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
+| **Snap Manager** | `snap-manager.js` | **V1.2** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
+| **Layer Manager** | `layer-manager.js` | **V1.0** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
 | **DXF Writer** | `dxf-writer.js` | **V1.1** | DXF R12 (AC1009) Export, UTF-8 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
 | **Properties Panel** | `properties-panel.js` | **V1.2** | Kontur-Eigenschaften im Kontextmenu, Piercing, Lead-In, Area-Class, Batch-Editing |
-| **Text Tool** | `text-tool.js` | — | Text-Entities (opentype.js) |
+| **Text Tool** | `text-tool.js` | **V1.2** | Text-Entities, Glyph-Import via opentype.js |
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
 | **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
-| **Debug Monitor** | `debug-monitor.js` | V1.0 | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
+| **Debug Monitor** | `debug-monitor.js` | **V1.0** | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
 | **Nesting** | `nesting.js` | **V1.0** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
 | **Toolpath Simulator** | `toolpath-simulator.js` | **V1.0** | Pfad-Verifikation, Animation, Kollisionsmatrix |
 | **Cost Calculator** | `cost-calculator.js` | **V1.0** | Kosten-/Zeitkalkulation mit CeraJet-Integration |
@@ -121,9 +125,9 @@ waterjet_v2/
 │   ├── build-info.js                  ← Versions-Banner V5.7
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
 │   ├── app.js                         ← Hauptanwendung V5.7 (Print, FSAPI-Save, CAM-Kontextmenu)
-│   ├── dxf-parser.js                  ← DXF Parser V3.7 (Deque-Chaining, Adaptive Grid)
+│   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
-│   ├── geometry-ops.js                ← GeometryOps V2.2 (Intersection, Arabeske)
+│   ├── geometry-ops.js                ← GeometryOps V2.3 (Intersection, Arabeske, splitAndOverlap)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
 │   ├── cam-contour.js                 ← Kontur-Klasse V4.8 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
@@ -134,7 +138,7 @@ waterjet_v2/
 │   ├── command-line.js                ← Command-Line UI V1.0
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.2
-│   ├── drawing-tools.js              ← CAD-Tools V2.3 (AutoCAD-Aliases, Continuous)
+│   ├── drawing-tools.js              ← CAD-Tools V2.4 (AutoCAD-Aliases, BreakTool)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.3 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
@@ -358,13 +362,13 @@ Console-Ausgabe beim Laden:
 ```
 WARICAM/CeraCAM V5.7 - Build 20260315-ctxpanel
 [BUILD] Modules:
-  dxf-parser: V3.7 (20260311-deque)
+  dxf-parser: V3.8 (20260312-textglyphs)
   dxf-writer: V1.1 (20260311-utf8circle)
   cam-contour: V4.8 (20260311-leadroute)
   canvas-renderer: V3.13 (20260311-leaddiff)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.3 (20260309-multihead)
-  drawing-tools: V2.3 (20260309-autocad)
+  drawing-tools: V2.4 (20260311-breaktool)
   dynamic-input: V1.0 (20260309-dynhud)
   nesting: V1.0 (20260309)
   toolpath-simulator: V1.0 (20260309)
