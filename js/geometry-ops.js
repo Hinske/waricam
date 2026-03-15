@@ -303,9 +303,11 @@ const GeometryOps = {
         // Halber Winkel zwischen den Segmenten
         const dot = u1x * u2x + u1y * u2y;
         const halfAngle = Math.acos(Math.max(-1, Math.min(1, dot))) / 2;
-        if (halfAngle < 1e-6 || Math.abs(halfAngle - Math.PI / 2) < 1e-6 && radius > 1e6) return null;
+        if (halfAngle < 1e-4 || Math.abs(halfAngle - Math.PI / 2) < 1e-6 && radius > 1e6) return null;
 
         // Abstand vom Corner zum Tangentenpunkt
+        const sinHalf = Math.sin(halfAngle);
+        if (sinHalf < 1e-8) return null; // Schutz gegen Division by Zero bei sin(halfAngle)
         const tanDist = radius / Math.tan(halfAngle);
         if (tanDist > len1 - 0.01 || tanDist > len2 - 0.01) return null; // Radius zu groß
 
@@ -317,7 +319,7 @@ const GeometryOps = {
         const bx = u1x + u2x, by = u1y + u2y;
         const bLen = Math.hypot(bx, by);
         if (bLen < 1e-10) return null;
-        const centerDist = radius / Math.sin(halfAngle);
+        const centerDist = radius / sinHalf;
         const center = {
             x: pCorner.x + (bx / bLen) * centerDist,
             y: pCorner.y + (by / bLen) * centerDist
@@ -816,7 +818,7 @@ const GeometryOps = {
 
         // Offset-Linien für jedes Segment berechnen
         const offsetSegs = [];
-        const segCount = isClosed ? n - 1 : n - 1;
+        const segCount = n - 1;
         for (let i = 0; i < segCount; i++) {
             const p1 = points[i], p2 = points[(i + 1) % n];
             const dx = p2.x - p1.x, dy = p2.y - p1.y;

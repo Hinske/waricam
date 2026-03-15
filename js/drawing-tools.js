@@ -99,6 +99,9 @@ class DrawingToolManager {
             'JOIN':    () => new JoinTool(this),
             'B':       () => new BreakTool(this),
             'BREAK':   () => new BreakTool(this),
+            // Navigation
+            'PAN':     () => new PanTool(this),
+            'H':       () => new PanTool(this),            // Hand
         };
 
         // CommandLine-Callbacks verknüpfen
@@ -155,7 +158,7 @@ class DrawingToolManager {
         }
 
         // V3.5-fix: Auto-Apply gezeichnete Entities bei Modification-Tool-Start
-        const isModTool = ['M','MOVE','COPY','R','ROTATE','MIRROR','S','SCALE','O','OFFSET','ERASE','DELETE'].includes(key);
+        const isModTool = ['M','MOVE','CO','COPY','R','RO','ROTATE','MI','MIRROR','S','SC','SCALE','O','OFFSET','E','ERASE','DELETE'].includes(key);
         if (isModTool && this.entities.length > 0) {
             this.commandLine?.log(`Auto-Apply: ${this.entities.length} gezeichnete Objekte werden übernommen`, 'info');
             this.applyEntities();
@@ -175,14 +178,15 @@ class DrawingToolManager {
         this.commandLine?.activate();
         this.activeTool.start();
 
-        // V2.3: Letzte Tool-Key merken für Continuous Mode
-        this._lastToolKey = key;
+        // V2.3: Letzte Tool-Key merken für Continuous Mode (nicht für PanTool)
+        if (!this.activeTool?.isPanTool) {
+            this._lastToolKey = key;
+            // V5.2: Letzte Funktion merken für Kontextmenü "Wiederholen"
+            if (this.app) this.app.lastToolShortcut = key;
+        }
 
-        // V5.2: Letzte Funktion merken für Kontextmenü "Wiederholen"
-        if (this.app) this.app.lastToolShortcut = key;
-
-        // Cursor: Crosshair für alle Tools
-        if (this.renderer) {
+        // Cursor: Crosshair für alle Tools (PanTool hat eigenen Cursor)
+        if (this.renderer && !this.activeTool?.isPanTool) {
             this.renderer.canvas.style.cursor = 'crosshair';
         }
 
@@ -761,7 +765,7 @@ class DrawingToolManager {
                     const mx = (ol.from.x + ol.to.x) / 2, my = (ol.from.y + ol.to.y) / 2;
                     ctx.save();
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
-                    const renderer = this.app?.renderer;
+                    const renderer = this.renderer || this.app?.renderer;
                     if (renderer) {
                         const sx = renderer.offsetX + mx * scale, sy = renderer.offsetY + my * scale;
                         ctx.font = '11px monospace';
@@ -1008,7 +1012,7 @@ class DrawingToolManager {
                 return {
                     type: 'LWPOLYLINE',
                     points: entity.points.map(p => ({ x: p.x, y: p.y })),
-                    isClosed: entity.closed || false,
+                    isClosed: entity.closed || entity.isClosed || false,
                     layer: entity.layer || 'DRAW'
                 };
 
@@ -3628,5 +3632,46 @@ class BreakTool extends BaseTool {
         if (this.state === 'select') {
             this.cancel();
         }
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// PAN TOOL (Verschiebe-Hand, Navigation)
+// ════════════════════════════════════════════════════════════════
+
+class PanTool extends BaseTool {
+    constructor(manager) {
+        super(manager);
+        this.isPanTool = true;  // Flag für Renderer
+    }
+
+    start() {
+        this.cmd?.setPrompt('PAN', 'Ansicht verschieben — Ziehen oder ESC');
+        if (this.manager.renderer) {
+            this.manager.renderer.canvas.style.cursor = 'grab';
+        }
+    }
+
+    handleClick(point) {
+        // Klicks ignorieren — Pan wird über Drag im Renderer gehandhabt
+    }
+
+    handleMouseMove(point) {
+        // Nichts — Cursor bleibt Hand
+    }
+
+    cancel() {
+        if (this.manager.renderer) {
+            this.manager.renderer.canvas.style.cursor = this.manager.drawMode ? 'crosshair' : 'default';
+        }
+        this.manager.rubberBand = null;
+        this.manager.ghostContours = null;
+        this.manager.activeTool = null;
+        this.manager.renderer?.render();
+    }
+
+    finish() {
+        this.cancel();
     }
 }

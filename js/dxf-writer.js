@@ -125,7 +125,7 @@ class DXFWriter {
 
         // Codepage: UTF-8 für Umlaute in Layer-Namen
         this._write(9, '$DWGCODEPAGE');
-        this._write(3, 'UTF-8');
+        this._write(3, 'ANSI_1252');
 
         // Einfügepunkt
         this._write(9, '$INSBASE');
@@ -174,8 +174,9 @@ class DXFWriter {
         for (const layer of layers) {
             this._write(0, 'LAYER');
             this._write(2, layer.name);
-            this._write(70, layer.locked ? '4' : '0');  // 4 = frozen/locked
-            this._write(62, hexToACI(layer.color).toString());  // ACI Farbe
+            this._write(70, layer.locked ? '4' : '0');  // 4 = locked (DXF R2000+)
+            const aci = (typeof hexToACI === 'function') ? hexToACI(layer.color) : 7;
+            this._write(62, aci.toString());  // ACI Farbe
             this._write(6, this._mapLineType(layer.lineType));
             stats.layers++;
         }
@@ -261,9 +262,15 @@ class DXFWriter {
         this._write(66, '1');     // Vertices folgen
         this._write(70, isClosed ? '1' : '0');  // 1 = geschlossen
 
-        // Punkte — bei geschlossenen Polylinien den letzten Punkt weglassen
-        // (er ist identisch mit dem ersten, DXF schließt über Flag 70=1)
-        const count = isClosed ? points.length - 1 : points.length;
+        // Punkte — bei geschlossenen Polylinien den letzten Punkt nur weglassen
+        // wenn er tatsächlich mit dem ersten identisch ist (DXF schließt über Flag 70=1)
+        let count = points.length;
+        if (isClosed && points.length > 1) {
+            const first = points[0], last = points[points.length - 1];
+            if (Math.abs(first.x - last.x) < 0.001 && Math.abs(first.y - last.y) < 0.001) {
+                count = points.length - 1;
+            }
+        }
         for (let i = 0; i < count; i++) {
             this._write(0, 'VERTEX');
             this._write(8, layer);

@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-15
-> **Version:** V5.7
-> **Build:** 20260315-ctxpanel
+> **Version:** V5.9
+> **Build:** 20260315-bugfix35
 
 ---
 
@@ -48,7 +48,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | Feld | Wert |
 |------|------|
 | Name | WARICAM / CeraCAM |
-| Version | **V5.6** |
+| Version | **V5.9** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -59,27 +59,27 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.7** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu |
+| **App** | `app.js` | **V5.9** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu |
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
-| **GeometryOps** | `geometry-ops.js` | **V2.3** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
+| **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
-| **CAMContour** | `cam-contour.js` | **V4.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
+| **CAMContour** | `cam-contour.js` | **V4.9** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.13** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
-| **Postprozessor** | `sinumerik-postprocessor.js` | **V1.3** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
+| **Renderer** | `canvas-renderer.js` | **V3.15** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung |
+| **Postprozessor** | `sinumerik-postprocessor.js` | **V1.4** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
-| **Arc-Fitting** | `arc-fitting.js` | V3.0 | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
-| **Pipeline** | `waricam-pipeline.js` | **V3.1** | Topologie (disc/hole/reference/slit), Kerf-Offset |
-| **Drawing Tools** | `drawing-tools.js` | **V2.4** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
+| **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
+| **Pipeline** | `waricam-pipeline.js` | **V3.2** | Topologie (disc/hole/reference/slit), Kerf-Offset |
+| **Drawing Tools** | `drawing-tools.js` | **V2.5** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
-| **Advanced Tools** | `advanced-tools.js` | **V1.3** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
+| **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
 | **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
-| **Command Line** | `command-line.js` | **V1.0** | AutoCAD-style Prompt, Koordinaten-Parser, History |
+| **Command Line** | `command-line.js` | **V1.1** | AutoCAD-style Prompt, Koordinaten-Parser, History |
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
-| **Snap Manager** | `snap-manager.js` | **V1.2** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
+| **Snap Manager** | `snap-manager.js` | **V1.3** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
 | **Layer Manager** | `layer-manager.js` | **V1.0** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
-| **DXF Writer** | `dxf-writer.js` | **V1.1** | DXF R12 (AC1009) Export, UTF-8 Encoding, Kreis-Validierung |
+| **DXF Writer** | `dxf-writer.js` | **V1.2** | DXF R12 (AC1009) Export, ANSI_1252 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
 | **Properties Panel** | `properties-panel.js` | **V1.2** | Kontur-Eigenschaften im Kontextmenu, Piercing, Lead-In, Area-Class, Batch-Editing |
@@ -88,14 +88,14 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
 | **Debug Monitor** | `debug-monitor.js` | **V1.0** | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
-| **Nesting** | `nesting.js` | **V1.0** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
+| **Nesting** | `nesting.js` | **V1.1** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
 | **Toolpath Simulator** | `toolpath-simulator.js` | **V1.0** | Pfad-Verifikation, Animation, Kollisionsmatrix |
-| **Cost Calculator** | `cost-calculator.js` | **V1.0** | Kosten-/Zeitkalkulation mit CeraJet-Integration |
+| **Cost Calculator** | `cost-calculator.js` | **V1.1** | Kosten-/Zeitkalkulation mit CeraJet-Integration |
 | **Machine Profiles** | `machine-profiles.js` | **V1.0** | Maschinenpark-Verwaltung, PP-Profile, localStorage |
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
-| **Quality Zones** | `quality-zones.js` | **V1.0** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
+| **Quality Zones** | `quality-zones.js` | **V1.1** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
-| **Build-Info** | `build-info.js` | **V5.7** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V5.9** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
@@ -122,16 +122,16 @@ waterjet_v2/
 ├── styles.css                         ← Dark Theme (WARICAM Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.7
+│   ├── build-info.js                  ← Versions-Banner V5.9
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.7 (Print, FSAPI-Save, CAM-Kontextmenu)
+│   ├── app.js                         ← Hauptanwendung V5.9 (Print, FSAPI-Save, CAM-Kontextmenu)
 │   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.3 (Intersection, Arabeske, splitAndOverlap)
 │   ├── waricam-pipeline.js            ← Pipeline V3.1
 │   ├── cam-contour.js                 ← Kontur-Klasse V4.8 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.13 (Lead-Differenzierung)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.14 (Lead-Differenzierung)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.0
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.3 (Multi-Head)
@@ -144,7 +144,7 @@ waterjet_v2/
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.0
-│   ├── dxf-writer.js                 ← DXF R12 Export V1.1 (UTF-8, Kreis-Validierung)
+│   ├── dxf-writer.js                 ← DXF R12 Export V1.2 (ANSI_1252, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import
 │   ├── properties-panel.js            ← Eigenschaften-Panel V1.2 (Kontextmenu-Modus)
@@ -243,6 +243,7 @@ Canvas-Click →
 | J | JoinTool |
 | B | BreakTool |
 | OBREAK | OverlapBreakTool (Split + tangentiale Überlappung) |
+| H / PAN | PanTool (Verschiebe-Hand) |
 | F8 | Ortho Toggle |
 | F3 | Messmodus |
 | ESC | Escape-Kaskade: Tool → Measure → Startpoint → Selection |
@@ -360,26 +361,26 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-WARICAM/CeraCAM V5.7 - Build 20260315-ctxpanel
+WARICAM/CeraCAM V5.9 - Build 20260315-bugfix35
 [BUILD] Modules:
   dxf-parser: V3.8 (20260312-textglyphs)
-  dxf-writer: V1.1 (20260311-utf8circle)
-  cam-contour: V4.8 (20260311-leadroute)
-  canvas-renderer: V3.13 (20260311-leaddiff)
+  dxf-writer: V1.2 (20260315-bugfix35)
+  cam-contour: V4.9 (20260315-bugfix35)
+  canvas-renderer: V3.15 (20260315-bugfix35)
   undo-manager: V1.1 (20260309-wizard)
-  sinumerik-pp: V1.3 (20260309-multihead)
-  drawing-tools: V2.4 (20260311-breaktool)
+  sinumerik-pp: V1.4 (20260315-bugfix35)
+  drawing-tools: V2.5 (20260315-bugfix35)
   dynamic-input: V1.0 (20260309-dynhud)
-  nesting: V1.0 (20260309)
+  nesting: V1.1 (20260315-bugfix35)
   toolpath-simulator: V1.0 (20260309)
-  cost-calculator: V1.0 (20260309)
+  cost-calculator: V1.1 (20260315-bugfix35)
   machine-profiles: V1.0 (20260309)
   bridge-cutting: V1.0 (20260309)
-  quality-zones: V1.0 (20260309)
-  advanced-tools: V1.3 (20260311-offset)
+  quality-zones: V1.1 (20260315-bugfix35)
+  advanced-tools: V1.4 (20260315-bugfix35)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.2 (20260315-ctxmenu)
-  app: V5.7 (20260315-ctxpanel)
+  app: V5.9 (20260315-bugfix35)
   ...
 ```
 

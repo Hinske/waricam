@@ -13,7 +13,7 @@ const WaricamPipeline = {
 
     autoProcess(contours, config = {}) {
         console.log('[Pipeline V3.1] autoProcess starting...');
-        this.kerfWidth = config.kerfWidth || 0.8;
+        this.kerfWidth = config.kerfWidth ?? 0.8;
         this.healingStats = null;
         this.preProcessStats = null;
 
@@ -84,7 +84,7 @@ const WaricamPipeline = {
 
     async process(dxfData, config = {}) {
         console.log('[Pipeline V3.1] process starting...');
-        this.kerfWidth = config.kerfWidth || 1.0;
+        this.kerfWidth = config.kerfWidth ?? 0.8;
 
         let contours = [];
         if (dxfData.contours) contours = dxfData.contours;
@@ -402,7 +402,8 @@ const WaricamPipeline = {
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
             const xi = polygon[i].x, yi = polygon[i].y;
             const xj = polygon[j].x, yj = polygon[j].y;
-            if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+            const dyij = yj - yi;
+            if (((yi > y) !== (yj > y)) && dyij !== 0 && (x < (xj - xi) * (y - yi) / dyij + xi)) {
                 inside = !inside;
             }
         }

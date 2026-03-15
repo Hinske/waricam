@@ -1373,7 +1373,7 @@
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260219-dm10"></script>
-<script src="js/build-info.js?v=20260315-ctxpanel"></script>
+<script src="js/build-info.js?v=20260315-intarsia"></script>
 <script src="js/constants.js?v=20260215-2200"></script>
 <script src="js/geometry.js?v=20260215-2200"></script>
 <script src="js/arc-fitting.js?v=20260215-2200"></script>
@@ -2149,7 +2149,11 @@
                 }
 
                 chk?.addEventListener('change', () => setIntarsiaEnabled(chk.checked));
-                gapInput?.addEventListener('input', updateIntarsiaInfo);
+                gapInput?.addEventListener('input', () => {
+                    updateIntarsiaInfo();
+                    origApp.settings.intarsiaGap = parseFloat(gapInput.value) || 1.6;
+                    origApp.renderer?.render();
+                });
 
                 // Intarsien-Export Button
                 exportBtn?.addEventListener('click', () => {
@@ -2160,15 +2164,22 @@
                     }
                 });
 
-                // NEG/POS Vorschau-Buttons (Phase 2: Canvas-Preview)
+                // NEG/POS Vorschau-Buttons — Toggle: nochmal klicken = deaktivieren
                 previewBtns.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const view = btn.dataset.view; // 'pos' | 'neg'
-                        previewBtns.forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        origApp.settings.intarsiaPreview = view;
+                        if (origApp.settings.intarsiaPreview === view) {
+                            // Nochmal geklickt → deaktivieren
+                            origApp.settings.intarsiaPreview = null;
+                            previewBtns.forEach(b => b.classList.remove('active'));
+                            console.log('[Intarsia V5.2] Vorschau: AUS');
+                        } else {
+                            previewBtns.forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            origApp.settings.intarsiaPreview = view;
+                            console.log(`[Intarsia V5.2] Vorschau: ${view.toUpperCase()}`);
+                        }
                         origApp.renderer?.render();
-                        console.log(`[Intarsia V5.2] Vorschau: ${view.toUpperCase()}`);
                     });
                 });
 
@@ -2464,7 +2475,7 @@
              */
             function totalLengthAction() {
                 const contours = origApp.contours || [];
-                const selected = contours.filter(c => c.selected);
+                const selected = contours.filter(c => c.isSelected);
                 const target = selected.length > 0 ? selected : contours;
                 const isAll = selected.length === 0;
                 const label = isAll ? 'ALLE' : `${selected.length} selektierte`;
@@ -3004,60 +3015,7 @@
                 console.log('%c[CeraCAM Shim] Linien-Flyout aktiviert (3 Modi)', 'color: #0078d4');
             }
 
-            // ═══ V5.2: Intarsien-Modus UI Bindings ═══
-            const intarsiaToggle = document.getElementById('intarsia-mode');
-            const intarsiaGap = document.getElementById('intarsia-gap');
-            const intarsiaExport = document.getElementById('btn-intarsia-export');
-            const intarsiaInfo = document.getElementById('intarsia-info');
-            const intarsiaPreviews = document.querySelectorAll('.intarsia-preview-btn');
-
-            if (intarsiaToggle) {
-                intarsiaToggle.addEventListener('change', () => {
-                    const on = intarsiaToggle.checked;
-                    origApp.settings.intarsiaMode = on;
-                    if (intarsiaGap) intarsiaGap.disabled = !on;
-                    if (intarsiaExport) intarsiaExport.disabled = !on;
-                    intarsiaPreviews.forEach(b => b.disabled = !on);
-                    console.log(`[Intarsia V5.2] Modus: ${on ? 'AN' : 'AUS'}`);
-                });
-            }
-
-            if (intarsiaGap) {
-                intarsiaGap.addEventListener('change', () => {
-                    const gap = parseFloat(intarsiaGap.value) || 1.6;
-                    origApp.settings.intarsiaGap = gap;
-                    const kerf2 = (origApp.settings.kerfWidth || 0.8) * 2;
-                    if (intarsiaInfo) {
-                        if (Math.abs(gap - kerf2) < 0.01) {
-                            intarsiaInfo.textContent = '2×Kerf = Standard';
-                            intarsiaInfo.style.color = '#0a0';
-                        } else {
-                            const offset = ((gap - kerf2) / 2).toFixed(2);
-                            intarsiaInfo.textContent = `Offset: ±${offset} mm/Seite`;
-                            intarsiaInfo.style.color = '#f0a030';
-                        }
-                    }
-                });
-            }
-
-            if (intarsiaExport) {
-                intarsiaExport.addEventListener('click', () => {
-                    if (origApp.exportIntarsia) origApp.exportIntarsia();
-                });
-            }
-
-            intarsiaPreviews.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const view = btn.dataset.view; // 'pos' | 'neg'
-                    origApp.settings.intarsiaPreview = view;
-                    intarsiaPreviews.forEach(b => b.style.background = '');
-                    btn.style.background = '#094771';
-                    console.log(`[Intarsia V5.2] Preview: ${view}`);
-                    // Phase 2: Canvas-Rendering der Vorschau
-                });
-            });
-
-            console.log('%c[CeraCAM Shim] Intarsien-Modus UI aktiviert', 'color: #f0a030');
+            // ═══ V5.2: Intarsien-Modus UI Bindings — entfernt (bereits als IIFE in Zeile ~2117) ═══
 
             // ════════════════════════════════════════════════════════════════
             // PHASE B: Piercing, Dynamic Lead, Flächenklassen, Single-Mode, Favoriten
@@ -3261,6 +3219,8 @@
                             }
                         };
                         document.addEventListener('keydown', escHandler);
+                        // Original-Handler sichern für spätere Wiederherstellung
+                        origApp.renderer._savedOnContourClick = origApp.renderer.onContourClick;
                         // onContourClick: Klick auf Kontur setzt Startpunkt
                         origApp.renderer.onContourClick = (contour, worldPos, shiftKey) => {
                             if (!singleLeadActive) return;
@@ -3298,7 +3258,8 @@
                             console.log(`[Phase B.5] Fahne manuell gesetzt: Kontur #${contour.id}, Index ${newIdx}`);
                         };
                     } else {
-                        origApp.renderer.onContourClick = null;
+                        origApp.renderer.onContourClick = origApp.renderer._savedOnContourClick || null;
+                        delete origApp.renderer._savedOnContourClick;
                     }
                     origApp.renderer?.render();
                     console.log(`[Phase B.5] Single-Mode: ${singleLeadActive ? 'AN' : 'AUS'}`);
@@ -3387,7 +3348,7 @@
                 if (typeof ToolpathSimulator === 'undefined') return;
                 const app = window.app;
                 if (!app?.contours?.length) return;
-                const canvas = document.getElementById('main-canvas');
+                const canvas = document.getElementById('canvas');
                 ToolpathSimulator.startAnimation(canvas, app.contours, app.cutOrder, 5);
             });
             document.getElementById('btn-verify')?.addEventListener('click', () => {

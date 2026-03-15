@@ -16,9 +16,9 @@ class CamContour {
         this.points = points || [];
         this.name = options.name || `Contour_${CamContour.nextId++}`;
         this.cuttingMode = options.cuttingMode || null;  // 'disc' | 'hole' | null
-        this.kerfWidth = options.kerfWidth || 0.8;
+        this.kerfWidth = options.kerfWidth ?? 0.8;
         this.kerfSide = 'left';
-        this.quality = options.quality || 2;
+        this.quality = options.quality ?? 2;
         this.isClosed = this._detectClosed();
         this.layer = options.layer || '';
         this.isReference = options.isReference || false;
@@ -26,18 +26,18 @@ class CamContour {
 
         // ═══ LEAD-IN Parameter (IGEMS-konform) ═══
         this.leadInType = options.leadInType || 'arc';       // 'arc' | 'linear' | 'tangent' | 'on_geometry'
-        this.leadInLength = options.leadInLength || 4.0;
-        this.leadInRadius = options.leadInRadius || 2.0;
-        this.leadInAngle = options.leadInAngle || 90;
+        this.leadInLength = options.leadInLength ?? 4.0;
+        this.leadInRadius = options.leadInRadius ?? 2.0;
+        this.leadInAngle = options.leadInAngle ?? 90;
 
         // ═══ LEAD-OUT Parameter ═══
         this.leadOutType = options.leadOutType || 'arc';
-        this.leadOutLength = options.leadOutLength || 4.0;
-        this.leadOutRadius = options.leadOutRadius || 2.0;
-        this.leadOutAngle = options.leadOutAngle || 90;
+        this.leadOutLength = options.leadOutLength ?? 4.0;
+        this.leadOutRadius = options.leadOutRadius ?? 2.0;
+        this.leadOutAngle = options.leadOutAngle ?? 90;
 
         // ═══ OVERCUT (kann auch negativ sein) ═══
-        this.overcutLength = options.overcutLength || 1.0;
+        this.overcutLength = options.overcutLength ?? 1.0;
 
         // ═══ PIERCING (B.1 — IGEMS 6 Typen) ═══
         // Werte: 'auto'|'blind'|'pierce_linear'|'stationary'|'circular'|'drilling'|'air_start'
@@ -143,7 +143,7 @@ class CamContour {
         }
 
         const Area_Trial = Math.abs(Geometry.getSignedArea(trialOffset));
-        if (isNaN(Area_Trial) || Area_Trial === 0) {
+        if (isNaN(Area_Trial) || Area_Trial < 1e-10) {
             this.compensationSkipped = true;
             return cacheResult({ points: this.points, flipped: false });
         }
@@ -325,7 +325,7 @@ class CamContour {
         const dx = centroid.x - exit.x, dy = centroid.y - exit.y;
         const dist = Math.hypot(dx, dy);
         // Maximal halber Weg zum Zentrum
-        const t = dist > 0.001 ? Math.min(1.0, (dist * 0.5) / dist) : 0;
+        const t = dist > 0.001 ? 0.5 : 0; // Halber Weg zum Zentrum
         const endPoint = {
             x: exit.x + dx * t,
             y: exit.y + dy * t
@@ -382,9 +382,10 @@ class CamContour {
         const normal = this._getWasteSideNormal(entry, tangent);
 
         // DYNAMIC LEAD (B.2): effektive Länge berechnen
+        // DYNAMIC LEAD (B.2): temporär effektive Länge setzen, nach Berechnung wiederherstellen
+        const _origLeadInLength = this.leadInLength;
         if (this.leadInDynamic) {
-            const dynLen = this._calcDynamicLeadLength(entry, tangent, normal, pts);
-            this.leadInLength = dynLen;  // temporär setzen — wird nach getLeadInPath() nicht gecacht
+            this.leadInLength = this._calcDynamicLeadLength(entry, tangent, normal, pts);
         }
 
         // CORNER DETECTION: An scharfen Ecken (>90°) Arc zu Linear degradieren
@@ -436,6 +437,11 @@ class CamContour {
                 leadPath.isFallbackCenterPierce = true;
                 console.log(`[CamContour V4.5] Center-Pierce Fallback: ${this.name} (kein Lead passt)`);
             }
+        }
+
+        // DYNAMIC LEAD: User-Wert wiederherstellen (wurde nur temporär geändert)
+        if (this.leadInDynamic) {
+            this.leadInLength = _origLeadInLength;
         }
 
         this._cachedLeadInPath = leadPath;
@@ -638,11 +644,11 @@ class CamContour {
         // Alt-Parameter einsetzen (V4.6: neue Property-Namen)
         this.leadInType = this.altLeadType;
         this.leadInLength = this.altLeadInLength;
-        this.leadInRadius = 0;  // IGEMS Blind Lead: kein Radius
+        this.leadInRadius = 0;  // IGEMS Blind Lead: kein Radius — arc wird unten zu linear degradiert
         this.leadInAngle = this.altLeadInAngle;
 
         let altPath;
-        if (this.altLeadType === 'arc' && this.altLeadInLength > 0) {
+        if (this.altLeadType === 'arc' && this.altLeadInLength > 0 && this.leadInRadius > 0) {
             altPath = this._arcLeadInWithFallback(entry, tangent, normal, contourPts);
         } else {
             altPath = this._calcLinearLeadIn(entry, tangent, normal);
@@ -1722,8 +1728,7 @@ class CamContour {
             altLeadInAngle:   this.altLeadInAngle,
             altLeadOutLength: this.altLeadOutLength,
             altOvercutLength: this.altOvercutLength,
-            // B.1 Piercing
-            piercingType:            this.piercingType,
+            // B.1 Piercing (piercingType bereits oben gesetzt)
             piercingStationaryTime:  this.piercingStationaryTime,
             piercingCircularRadius:  this.piercingCircularRadius,
             piercingCircularTime:    this.piercingCircularTime,

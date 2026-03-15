@@ -144,9 +144,10 @@ class FilletTool extends BaseTool {
 
         // Fillet berechnen und als Preview zeigen
         var pts = hovered.points;
-        var pPrev = pts[cornerIdx - 1 >= 0 ? cornerIdx - 1 : pts.length - 2];
+        var isClosed = hovered.isClosed;
+        var pPrev = pts[cornerIdx - 1 >= 0 ? cornerIdx - 1 : (isClosed ? pts.length - 2 : 0)];
         var pCorner = pts[cornerIdx];
-        var pNext = pts[cornerIdx + 1 < pts.length ? cornerIdx + 1 : 1];
+        var pNext = pts[cornerIdx + 1 < pts.length ? cornerIdx + 1 : (isClosed ? 1 : pts.length - 1)];
 
         if (this.radius === 0) {
             var isect = GeometryOps.lineLineIntersection(pPrev, pCorner, pCorner, pNext);
@@ -208,9 +209,10 @@ class FilletTool extends BaseTool {
             return;
         }
 
-        var pPrev = pts[cornerIdx - 1 >= 0 ? cornerIdx - 1 : pts.length - 2];
+        var isClosed = contour.isClosed;
+        var pPrev = pts[cornerIdx - 1 >= 0 ? cornerIdx - 1 : (isClosed ? pts.length - 2 : 0)];
         var pCorner = pts[cornerIdx];
-        var pNext = pts[cornerIdx + 1 < pts.length ? cornerIdx + 1 : 1];
+        var pNext = pts[cornerIdx + 1 < pts.length ? cornerIdx + 1 : (isClosed ? 1 : pts.length - 1)];
 
         if (this.radius === 0) {
             var isect = GeometryOps.lineLineIntersection(pPrev, pCorner, pCorner, pNext);
@@ -524,7 +526,7 @@ class TrimTool extends BaseTool {
                     var idx = contours.indexOf(newContours[i]);
                     if (idx !== -1) contours.splice(idx, 1);
                 }
-                contours.splice(Math.min(targetIndex, contours.length), 0, clicked);
+                contours.splice(Math.min(Math.max(0, targetIndex), contours.length), 0, clicked);
                 rerender();
             }
         );
@@ -753,7 +755,9 @@ class ChamferTool extends BaseTool {
         if (this.state === 'pick2') {
             if (clicked !== this.seg1Contour) { this.cmd?.log('Gleiche Kontur nötig', 'error'); return; }
             var diff = Math.abs(this.seg1Index - hit.segmentIndex);
-            if (diff !== 1) { this.cmd?.log('Benachbarte Segmente nötig', 'error'); this.state = 'pick1'; return; }
+            var maxSeg = clicked.isClosed ? clicked.points.length - 2 : clicked.points.length - 2;
+            var isWrapAround = clicked.isClosed && ((this.seg1Index === 0 && hit.segmentIndex === maxSeg) || (hit.segmentIndex === 0 && this.seg1Index === maxSeg));
+            if (diff !== 1 && !isWrapAround) { this.cmd?.log('Benachbarte Segmente nötig', 'error'); this.state = 'pick1'; return; }
 
             var cornerIdx = Math.max(this.seg1Index, hit.segmentIndex);
             var pts = clicked.points;
@@ -839,6 +843,7 @@ class ZeroFilletTool extends BaseTool {
             if (diff !== 1) { this.cmd?.log('Benachbarte Segmente nötig (oder andere Kontur wählen)', 'error'); this.state = 'pick1'; return; }
             var cornerIdx = Math.max(this.seg1Index, hit.segmentIndex);
             var pts = clicked.points;
+            if (cornerIdx < 1 || cornerIdx + 1 >= pts.length) { this.cmd?.log('Eckpunkt am Rand — nicht möglich', 'error'); this.state = 'pick1'; return; }
             var pPrev = pts[cornerIdx-1]; var pCorner = pts[cornerIdx]; var pNext = pts[cornerIdx+1];
             var isect = GeometryOps.lineLineIntersection(pPrev, pCorner, pCorner, pNext);
             if (!isect) { this.cmd?.log('Parallel — kein Schnittpunkt', 'error'); return; }
@@ -1028,7 +1033,7 @@ class NgonTool extends BaseTool {
         return false;
     }
     handleClick(point) {
-        if (this.state === 'sides') { this.state = 'center'; this.cmd?.setPrompt('N-GON ' + this.sides + ' — Zentrum:'); }
+        if (this.state === 'sides') { this.state = 'center'; this.cmd?.setPrompt('N-GON ' + this.sides + ' — Zentrum:'); return; }
         if (this.state === 'center') { this.center = {x:point.x, y:point.y}; this.state = 'radius'; this.cmd?.setPrompt('N-GON — Radius:'); return; }
         if (this.state === 'radius' && this.center) {
             var r = GeometryOps.dist(this.center, point); if (r < 0.01) return;

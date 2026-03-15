@@ -296,7 +296,7 @@ class SinumerikPostprocessor {
     // ════════════════════════════════════════════════════════════════
 
     _generatePartSPF(planName, tafelName, cuttable) {
-        const totalArea = cuttable.reduce((sum, c) => sum + (c.getArea?.() || 0), 0);
+        const totalArea = cuttable.reduce((sum, c) => sum + Math.abs(c.getArea?.() || 0), 0);
         const lines = [];
 
         lines.push(`%_N_PART1_SPF`);
@@ -305,7 +305,7 @@ class SinumerikPostprocessor {
         lines.push(`MSG(" BTIDENTNR  : ${planName}")`);
         lines.push(`;KOMMISSION : ${tafelName}`);
         lines.push(`;FLAECHE    : ${totalArea.toFixed(0)}.000`);
-        lines.push(`R995=${cuttable.length.toFixed(2)}`);
+        lines.push(`R995=${cuttable.length}`);
         lines.push(`;KEINE AUFTRAGSDATEN`);
 
         // Koordinaten-Transformation
@@ -453,7 +453,7 @@ class SinumerikPostprocessor {
 
         // ── Kontur-Punkte (G01/G02/G03) ──
         const contourSegments = this._processContourPoints(pts);
-        for (let i = 1; i < contourSegments.length; i++) {
+        for (let i = 0; i < contourSegments.length; i++) {
             const seg = contourSegments[i];
             if (seg.type === 'line') {
                 lines.push(`N${this._lineNum++} G01 X${this._fc(seg.x)} Y${this._fc(seg.y)}`);
@@ -482,6 +482,11 @@ class SinumerikPostprocessor {
         const leadOut = contour.getLeadOutPath?.();
         if (leadOut?.points?.length >= 2) {
             const leadOutSegments = this._processLeadPath(leadOut);
+            if (!leadOutSegments.length) {
+                // Fallback: Kerf abwählen am letzten Konturpunkt
+                const fallbackPt = overcut?.endPoint || pts[pts.length - 1];
+                if (fallbackPt) lines.push(`N${this._lineNum++} G40 G01 X${this._fc(fallbackPt.x)} Y${this._fc(fallbackPt.y)}`);
+            } else {
             const lastSeg = leadOutSegments[leadOutSegments.length - 1];
 
             for (let i = 0; i < leadOutSegments.length - 1; i++) {
@@ -501,9 +506,10 @@ class SinumerikPostprocessor {
                 const arcCmd = lastSeg.clockwise ? 'G02' : 'G03';
                 lines.push(`N${this._lineNum++} G40 ${arcCmd} X${this._fc(lastSeg.x)} Y${this._fc(lastSeg.y)} I${this._fc(lastSeg.i)} J${this._fc(lastSeg.j)}`);
             }
+            } // Ende: leadOutSegments.length > 0
         } else {
-            const lastPt = overcut?.endPoint || pts[pts.length - 1];
-            lines.push(`N${this._lineNum++} G40 G01 X${this._fc(lastPt.x)} Y${this._fc(lastPt.y)}`);
+            const lastPt = overcut?.endPoint || (pts.length > 0 ? pts[pts.length - 1] : null);
+            if (lastPt) lines.push(`N${this._lineNum++} G40 G01 X${this._fc(lastPt.x)} Y${this._fc(lastPt.y)}`);
         }
 
         // L205: Jet-Off
@@ -676,7 +682,7 @@ class SinumerikPostprocessor {
     _getSpeedFactor(contour) {
         if (!contour.isClosed) return null;
 
-        const area = contour.getArea?.() || 0;
+        const area = Math.abs(contour.getArea?.() || 0);
         if (area < 0.01) return null;
         const effectiveRadius = Math.sqrt(area / Math.PI);
 
@@ -736,6 +742,7 @@ class SinumerikPostprocessor {
     // ════════════════════════════════════════════════════════════════
 
     _fc(value) {
+        if (value == null || isNaN(value)) return '0.000';
         return value.toFixed(this.coordDecimals);
     }
 

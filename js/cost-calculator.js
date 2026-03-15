@@ -145,7 +145,8 @@ const CostCalculator = (() => {
 
         // Fallback: Konservative Schätzwerte (mm/min) für 10mm Stahl
         const fallbackFeeds = [29.5, 38.5, 53.8, 85.4, 119.6];
-        return fallbackFeeds[quality] ?? fallbackFeeds[3];
+        const qi = Math.max(0, Math.min(4, (quality ?? 2) - 1));
+        return fallbackFeeds[qi];
     }
 
     /**
@@ -346,10 +347,10 @@ const CostCalculator = (() => {
         // ── Materialausnutzung ──
         // Disc-Konturen = Nutzfläche, Holes = Abfall innerhalb Discs
         const discArea = contourDetails
-            .filter(d => orderedContours[d.index]?.cuttingMode === 'disc')
+            .filter(d => (d.contour ?? orderedContours[d.index])?.cuttingMode === 'disc')
             .reduce((s, d) => s + d.area, 0);
         const holeArea = contourDetails
-            .filter(d => orderedContours[d.index]?.cuttingMode === 'hole')
+            .filter(d => (d.contour ?? orderedContours[d.index])?.cuttingMode === 'hole')
             .reduce((s, d) => s + d.area, 0);
         const usedArea = discArea - holeArea;       // mm² Netto-Nutzfläche
         const wasteArea = sheetAreaMm2 - usedArea;  // mm² Abfall

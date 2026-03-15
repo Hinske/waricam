@@ -262,7 +262,7 @@ const QualityZones = {
 
             const radius = this._curvatureRadius(points[i - 1], points[i], points[i + 1]);
 
-            if (radius < cfg.smallRadius && radius > cfg.minSegmentLength) {
+            if (radius < cfg.smallRadius && radius >= cfg.minSegmentLength) {
                 if (regionStart === null) {
                     regionStart = i - 1;
                     minRadius = radius;
@@ -345,12 +345,14 @@ const QualityZones = {
 
                     if (zone.type === this.ZONE_START) {
                         // Lineare Rampe von rampStartSpeed nach rampEndSpeed
-                        const t = (d - zone.startParam) / (zone.endParam - zone.startParam);
+                        const zoneLen = zone.endParam - zone.startParam;
+                        const t = zoneLen > 1e-10 ? (d - zone.startParam) / zoneLen : 1.0;
                         zoneFactor = cfg.rampStartSpeed + t * (cfg.rampEndSpeed - cfg.rampStartSpeed);
                     } else if (zone.type === this.ZONE_END) {
                         // Lineare Rampe von 1.0 nach rampDownEndSpeed
-                        const t = (d - zone.startParam) / (zone.endParam - zone.startParam);
-                        zoneFactor = 1.0 + t * (cfg.rampDownEndSpeed - 1.0);
+                        const zoneLen = zone.endParam - zone.startParam;
+                        const t = zoneLen > 1e-10 ? (d - zone.startParam) / zoneLen : 1.0;
+                        zoneFactor = 1.0 - t * (1.0 - cfg.rampDownEndSpeed);
                     } else {
                         zoneFactor = zone.speedFactor;
                     }
@@ -428,10 +430,12 @@ const QualityZones = {
                     let zoneFactor;
 
                     if (zone.type === this.ZONE_START) {
-                        const t = (segMid - zone.startParam) / (zone.endParam - zone.startParam);
+                        const zoneLen = zone.endParam - zone.startParam;
+                        const t = zoneLen > 1e-10 ? (segMid - zone.startParam) / zoneLen : 1.0;
                         zoneFactor = cfg.rampStartSpeed + t * (cfg.rampEndSpeed - cfg.rampStartSpeed);
                     } else if (zone.type === this.ZONE_END) {
-                        const t = (segMid - zone.startParam) / (zone.endParam - zone.startParam);
+                        const zoneLen = zone.endParam - zone.startParam;
+                        const t = zoneLen > 1e-10 ? (segMid - zone.startParam) / zoneLen : 1.0;
                         zoneFactor = 1.0 + t * (cfg.rampDownEndSpeed - 1.0);
                     } else {
                         zoneFactor = zone.speedFactor;

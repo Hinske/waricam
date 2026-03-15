@@ -285,7 +285,7 @@ const NestingEngine = (() => {
      * Polygon in CCW-Reihenfolge bringen
      */
     function _ensureCCW(polygon) {
-        if (_signedArea(polygon) > 0) {
+        if (_signedArea(polygon) < 0) {
             return [...polygon].reverse();
         }
         return polygon;
@@ -314,8 +314,8 @@ const NestingEngine = (() => {
         return {
             minX: m - partBBox.minX,
             minY: m - partBBox.minY,
-            maxX: m + usableW - partBBox.maxX + partBBox.minX - partW + (partBBox.maxX - partBBox.minX),
-            maxY: m + usableH - partBBox.maxY + partBBox.minY - partH + (partBBox.maxY - partBBox.minY)
+            maxX: m + usableW - partW,
+            maxY: m + usableH - partH
         };
     }
 
@@ -521,7 +521,7 @@ const NestingEngine = (() => {
     function _collidesWithPlaced(testBBox, partPoints, position, placedParts, spacing) {
         for (const placed of placedParts) {
             // Schneller BBox-Check mit Spacing
-            if (_bboxOverlap(testBBox, placed.bbox, spacing)) {
+            if (_bboxOverlap(testBBox, placed.bbox, 0)) {
                 // Genauerer Check: Polygon-Überlappung
                 if (_polygonsOverlap(partPoints, position, placed.points, placed.position)) {
                     return true;

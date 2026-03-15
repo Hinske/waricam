@@ -602,7 +602,7 @@ class SnapManager {
                 // V1.2: Quadrant-Punkte innerhalb des Bogens
                 const qAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
                 for (const qa of qAngles) {
-                    if (this._isAngleInArc(qa, arcDef.startAngle, arcDef.endAngle)) {
+                    if (arcDef.startAngle != null && arcDef.endAngle != null && this._isAngleInArc(qa, arcDef.startAngle, arcDef.endAngle)) {
                         quadrants.push({
                             x: entity.center.x + entity.radius * Math.cos(qa),
                             y: entity.center.y + entity.radius * Math.sin(qa)
@@ -1025,6 +1025,7 @@ class SnapManager {
         if (chord < 1e-10) return null;
 
         const sagitta = Math.abs(bulge) * chord / 2;
+        if (sagitta < 1e-10) return null; // Degenerierter Bogen (bulge ≈ 0)
         const r = (chord * chord / 4 + sagitta * sagitta) / (2 * sagitta);
 
         const mx = (p1.x + p2.x) / 2;

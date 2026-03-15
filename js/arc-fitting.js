@@ -144,7 +144,7 @@ const ArcFitting = {
     if (depth > maxDepth || endIdx - startIdx < 1) {
       // Max. Tiefe oder zu kurz: Linien
       const result = [];
-      for (let i = startIdx; i < endIdx; i++) {
+      for (let i = startIdx; i < endIdx && i + 1 < points.length; i++) {
         result.push({
           type: 'line',
           start: { x: points[i].x, y: points[i].y },
@@ -380,6 +380,18 @@ const ArcFitting = {
       if (len > 0.0001) {
         tx /= len;
         ty /= len;
+      } else {
+        // Duplikat-Punkt: Tangente vom nächsten/vorherigen nicht-identischen Punkt ableiten
+        tx = 1; ty = 0;
+        for (let j = 1; j < points.length; j++) {
+          const ni = Math.min(i + j, points.length - 1);
+          const pi = Math.max(i - j, 0);
+          const dxn = points[ni].x - points[i].x, dyn = points[ni].y - points[i].y;
+          const dxp = points[i].x - points[pi].x, dyp = points[i].y - points[pi].y;
+          const ln = Math.hypot(dxn, dyn), lp = Math.hypot(dxp, dyp);
+          if (ln > 0.0001) { tx = dxn / ln; ty = dyn / ln; break; }
+          if (lp > 0.0001) { tx = dxp / lp; ty = dyp / lp; break; }
+        }
       }
 
       result.push({
@@ -719,9 +731,15 @@ const ArcFittingUtils = {
       if (seg.type === 'line') {
         totalLength += Math.hypot(seg.end.x - seg.start.x, seg.end.y - seg.start.y);
       } else if (seg.radius) {
-        // Bogenlänge approximieren
+        // Bogenlänge: Richtung (CW/CCW) berücksichtigen
         let span = Math.abs(seg.endAngle - seg.startAngle);
-        if (span > Math.PI) span = 2 * Math.PI - span;
+        if (seg.clockwise) {
+          // CW: wenn span < PI, ist es der Major-Arc → korrigieren
+          if (span < Math.PI) span = 2 * Math.PI - span;
+        } else {
+          // CCW: Minor-Arc
+          if (span > Math.PI) span = 2 * Math.PI - span;
+        }
         totalLength += span * seg.radius;
       }
     }

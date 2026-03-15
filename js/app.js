@@ -53,7 +53,7 @@ class WaricamApp {
             microjointCount: 2,
             // V3.14: Material
             materialThickness: 10.0,
-            kerfWidth: 0.8,   // fest 0.80mm (Düsen-Ø)
+            // kerfWidth bereits oben gesetzt (0.8mm, Düsen-Ø)
             // V3.14: Innen-Lead "= Außen" Flag
             internalLeadLikeExternal: true,
             // V4.5: Alternativ-Lead (intern automatisch)
@@ -179,7 +179,8 @@ class WaricamApp {
         if (spinner) {
             spinner.style.display = show ? 'flex' : 'none';
             if (show) {
-                document.getElementById('spinner-subtext').textContent = subtext;
+                const subtextEl = document.getElementById('spinner-subtext');
+                if (subtextEl) subtextEl.textContent = subtext;
             }
         }
     }
@@ -825,12 +826,12 @@ class WaricamApp {
         const isReference = contour.isReference;
         const isCuttable = (contour.isClosed || contour.cuttingMode === 'slit') && !isReference;
         
-        menu.querySelector('[data-action="set-startpoint"]').style.display =
-            isCuttable ? 'flex' : 'none';
-        menu.querySelector('[data-action="reverse-direction"]').style.display =
-            isCuttable ? 'flex' : 'none';
-        menu.querySelector('[data-action="add-microjoint"]').style.display =
-            (contour.isClosed && !isReference) ? 'flex' : 'none';
+        const startpointItem = menu.querySelector('[data-action="set-startpoint"]');
+        if (startpointItem) startpointItem.style.display = isCuttable ? 'flex' : 'none';
+        const reverseItem = menu.querySelector('[data-action="reverse-direction"]');
+        if (reverseItem) reverseItem.style.display = isCuttable ? 'flex' : 'none';
+        const microjointItem = menu.querySelector('[data-action="add-microjoint"]');
+        if (microjointItem) microjointItem.style.display = (contour.isClosed && !isReference) ? 'flex' : 'none';
 
         // V5.7: CAM-Properties im Kontextmenu (nur Step 4)
         const camContainer = document.getElementById('ctx-cam-properties');
@@ -928,7 +929,7 @@ class WaricamApp {
             case 'set-reference': {
                 const cmd = new PropertyChangeCommand(contour, 'isReference', !contour.isReference, rerender);
                 this.undoManager.execute(cmd);
-                this.showToast(!contour.isReference ? '🚫 Als Referenz markiert' : 'Referenz aufgehoben', 'success');
+                this.showToast(contour.isReference ? '🚫 Als Referenz markiert' : 'Referenz aufgehoben', 'success');
                 return;
             }
                 
@@ -1010,7 +1011,7 @@ class WaricamApp {
 
         // Paste Verfügbarkeit
         const pasteItem = menu.querySelector('[data-canvas-action="paste"]');
-        if (pasteItem) pasteItem.style.opacity = this.undoManager?.clipboard?.length ? '1' : '0.4';
+        if (pasteItem) pasteItem.style.opacity = this.clipboardManager?.clipboard?.length ? '1' : '0.4';
 
         // Position
         menu.style.left = `${screenX}px`;
@@ -1036,7 +1037,7 @@ class WaricamApp {
                 break;
 
             case 'paste':
-                this.undoManager?.paste?.(this);
+                this.clipboardManager?.paste?.(this);
                 break;
 
             case 'select-all':
@@ -1802,9 +1803,12 @@ class WaricamApp {
             }
         });
         
-        document.getElementById('order-stat-count').textContent = this.cutOrder.length;
-        document.getElementById('order-stat-length').textContent = `${totalLength.toFixed(1)} mm`;
-        document.getElementById('order-stat-travel').textContent = `${travelLength.toFixed(1)} mm`;
+        const elCount = document.getElementById('order-stat-count');
+        const elLength = document.getElementById('order-stat-length');
+        const elTravel = document.getElementById('order-stat-travel');
+        if (elCount) elCount.textContent = this.cutOrder.length;
+        if (elLength) elLength.textContent = `${totalLength.toFixed(1)} mm`;
+        if (elTravel) elTravel.textContent = `${travelLength.toFixed(1)} mm`;
     }
     
     // ════════════════════════════════════════════════════════════════
@@ -1963,7 +1967,8 @@ class WaricamApp {
         
         if (!this.measureStart) {
             this.measureStart = { x: point.x, y: point.y };
-            document.getElementById('measure-info').style.display = 'flex';
+            const measureInfoEl = document.getElementById('measure-info');
+            if (measureInfoEl) measureInfoEl.style.display = 'flex';
         } else {
             const p1 = this.measureStart;
             const p2 = { x: point.x, y: point.y };
@@ -1977,7 +1982,8 @@ class WaricamApp {
             this.measureStart = null;
             
             this.showToast(`📏 ${distance.toFixed(2)} mm`, 'success');
-            document.getElementById('measure-info').style.display = 'none';
+            const measureInfoHide = document.getElementById('measure-info');
+            if (measureInfoHide) measureInfoHide.style.display = 'none';
         }
         
         this.renderer.render();
@@ -2448,29 +2454,29 @@ class WaricamApp {
                     console.warn('[App] showOpenFilePicker fehlgeschlagen, Fallback:', err);
                 }
             }
-            fileInput.click();
+            fileInput?.click();
         };
-        uploadArea.addEventListener('click', openFile);
-        dropZone.addEventListener('click', openFile);
+        uploadArea?.addEventListener('click', openFile);
+        dropZone?.addEventListener('click', openFile);
         document.getElementById('start-hint')?.addEventListener('click', openFile);
         document.getElementById('qa-open')?.addEventListener('click', openFile);
 
-        fileInput.addEventListener('change', (e) => {
+        fileInput?.addEventListener('change', (e) => {
             if (e.target.files[0]) this.loadFile(e.target.files[0]);
         });
 
-        canvasArea.addEventListener('dragover', (e) => {
+        canvasArea?.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('visible');
+            dropZone?.classList.add('visible');
         });
 
-        canvasArea.addEventListener('dragleave', (e) => {
+        canvasArea?.addEventListener('dragleave', (e) => {
             if (!canvasArea.contains(e.relatedTarget)) {
-                dropZone.classList.remove('visible');
+                dropZone?.classList.remove('visible');
             }
         });
 
-        canvasArea.addEventListener('drop', (e) => {
+        canvasArea?.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('visible');
             if (e.dataTransfer?.files[0]) {
@@ -2632,7 +2638,7 @@ class WaricamApp {
     
     applyLayerSelection() {
         const checkboxes = document.querySelectorAll('#layer-list input[type="checkbox"]');
-        const allContours = this.dxfResult.contours || [];
+        const allContours = this.dxfResult?.contours || [];
         
         if (checkboxes.length === 0) {
             // Kein layer-list vorhanden → alle Layer durchlassen
@@ -3633,11 +3639,12 @@ class WaricamApp {
             technologyParams
         };
 
-        // ─── NEG Export (Aussparung) — normale cuttingModes (disc→G42) ───
+        // ─── NEG Export (Aussparung) — normale cuttingModes (disc→G42) + Gap-Offset ───
         // Disc-Konturen + G42 = Kerf nach außen = Loch wird größer = Aussparung
-        console.log('[Intarsia V5.2] Generiere NEG (Aussparung, normale Modes)...');
+        console.log('[Intarsia V5.2] Generiere NEG (Aussparung, normale Modes + Gap-Offset)...');
+        const negContours = this._createIntarsiaContours('neg');
         const ppNeg = new SinumerikPostprocessor();
-        const negResult = ppNeg.generate(this.contours, this.cutOrder, {
+        const negResult = ppNeg.generate(negContours, this.cutOrder, {
             ...commonSettings,
             planName: baseName + '_NEG'
         });
@@ -3699,6 +3706,11 @@ class WaricamApp {
         const intVals = this._getInternalLeadValuesFromUI();
         const altVals = this._getAlternativeLeadValuesFromUI();
 
+        // Fugen-Offset berechnen: additionalOffset = (gap - 2*kerf) / 2
+        const kerf = this.settings.kerfWidth || 0.8;
+        const gap = parseFloat(document.getElementById('intarsia-gap')?.value) || (kerf * 2);
+        const additionalOffset = (gap - 2 * kerf) / 2;
+
         return this.contours.map((c, idx) => {
             // Referenz unverändert durchreichen
             if (c.isReference) return c;
@@ -3722,6 +3734,11 @@ class WaricamApp {
                 // slit bleibt slit
             }
 
+            // Fugen-Offset anwenden (für POS und NEG)
+            if (Math.abs(additionalOffset) >= 0.01 && clone.isClosed && clone.cuttingMode !== 'slit') {
+                this._applyIntarsiaOffset(clone, additionalOffset);
+            }
+
             // Leads neu berechnen passend zum (ggf. invertierten) cuttingMode
             // hole → Innen-Lead (Pierce außen), disc → Außen-Lead (Pierce innen)
             const leadVals = Object.assign({},
@@ -3730,9 +3747,51 @@ class WaricamApp {
             );
             this._applyLeadToContour(clone, leadVals);
 
-            console.log(`[Intarsia V5.2] Kontur ${idx}: ${c.cuttingMode}→${clone.cuttingMode} (nesting=${clone.nestingLevel})`);
+            console.log(`[Intarsia V5.2] Kontur ${idx}: ${c.cuttingMode}→${clone.cuttingMode} offset=${additionalOffset.toFixed(2)}mm`);
             return clone;
         });
+    }
+
+    /**
+     * Wendet den Intarsien-Fugen-Offset auf eine geklonte Kontur an.
+     * Nutzt getKerfOffsetPolyline() mit temporär modifiziertem kerfWidth.
+     *
+     * Positiver Offset = Konturen weiter vom Teil-Zentrum (größere Fuge)
+     * Negativer Offset = Konturen näher zum Teil-Zentrum (engere Fuge)
+     */
+    _applyIntarsiaOffset(clone, additionalOffset) {
+        const origKerfWidth = clone.kerfWidth;
+        const origKerfFlipped = clone.kerfFlipped;
+
+        // getKerfOffsetPolyline() nutzt kerfWidth/2 als Distanz,
+        // also kerfWidth = |additionalOffset| * 2
+        clone.kerfWidth = Math.abs(additionalOffset) * 2;
+
+        // Bei negativem Offset: Richtung umkehren (näher zum Zentrum)
+        if (additionalOffset < 0) {
+            clone.kerfFlipped = !clone.kerfFlipped;
+        }
+
+        // Cache invalidieren damit neu berechnet wird
+        clone._cachedKerfPolyline = null;
+        clone._cacheKey = null;
+
+        const offsetResult = clone.getKerfOffsetPolyline();
+        if (offsetResult?.points?.length > 2 && !clone.compensationSkipped) {
+            clone.points = offsetResult.points.map(p => ({ x: p.x, y: p.y }));
+        }
+
+        // Originale Werte wiederherstellen
+        clone.kerfWidth = origKerfWidth;
+        clone.kerfFlipped = origKerfFlipped;
+        clone.compensationSkipped = false;
+
+        // Cache invalidieren nach Punkt-Änderung
+        clone._cachedKerfPolyline = null;
+        clone._cacheKey = null;
+        clone._cachedLeadInPath = null;
+        clone._cachedLeadOutPath = null;
+        clone._cachedOvercutPath = null;
     }
 
     /**

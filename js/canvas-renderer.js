@@ -258,8 +258,10 @@ class CanvasRenderer {
                 }
             }
 
-            // V3.5: Pan mit Mittel-Taste oder Shift+Links
-            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+            // V3.5: Pan mit Mittel-Taste, Shift+Links oder PanTool (Hand)
+            const _toolMgr = this.app?.drawingTools || this.app?.toolManager;
+            const _isPanTool = _toolMgr?.activeTool?.isPanTool;
+            if (e.button === 1 || (e.button === 0 && e.shiftKey) || (e.button === 0 && _isPanTool)) {
                 isPanning = true;
                 lastX = e.offsetX;
                 lastY = e.offsetY;
@@ -332,8 +334,18 @@ class CanvasRenderer {
                 needsRender = true;
             }
 
+            // Panning zuerst — Hover-Detection und Snap überspringen für Performance
+            if (isPanning) {
+                this.offsetX += e.offsetX - lastX;
+                this.offsetY += e.offsetY - lastY;
+                lastX = e.offsetX;
+                lastY = e.offsetY;
+                this.render();
+                return;
+            }
+
             // V3.10: Grip-Hover — nur prüfen wenn Selektion existiert
-            if (!isDraggingGrip && !isPanning && !isWindowSelecting && this._grips.length > 0) {
+            if (!isDraggingGrip && !isWindowSelecting && this._grips.length > 0) {
                 const toolMgr = this.app?.drawingTools || this.app?.toolManager;
                 if (!toolMgr?.isToolActive?.() && !this.app?.measureMode) {
                     const prevHover = this._hoveredGrip;
@@ -347,7 +359,7 @@ class CanvasRenderer {
             if (needsRender) this.render();
 
             // V5.2: Cursor-Feedback im Anschuss-/Reihenfolge-Modus
-            if ((this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge') && !isDraggingStartPoint && !isPanning) {
+            if ((this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge') && !isDraggingStartPoint) {
                 const overStart = this._hitTestStartTriangle(worldPos);
                 this.canvas.style.cursor = overStart ? 'grab' : 'default';
             }
@@ -356,14 +368,6 @@ class CanvasRenderer {
 
             if (this.onMouseMove) {
                 this.onMouseMove(worldPos.x, worldPos.y, snapPoint, e.clientX, e.clientY);
-            }
-
-            if (isPanning) {
-                this.offsetX += e.offsetX - lastX;
-                this.offsetY += e.offsetY - lastY;
-                lastX = e.offsetX;
-                lastY = e.offsetY;
-                this.render();
             }
 
             if (this.app?.measureMode && this.app?.measureStart) {
@@ -429,7 +433,9 @@ class CanvasRenderer {
             }
             if (isPanning) {
                 isPanning = false;
-                this.canvas.style.cursor = this.app?.measureMode ? 'crosshair' : 'default';
+                const _toolMgr2 = this.app?.drawingTools || this.app?.toolManager;
+                const _isPanTool2 = _toolMgr2?.activeTool?.isPanTool;
+                this.canvas.style.cursor = _isPanTool2 ? 'grab' : (this.app?.measureMode ? 'crosshair' : 'default');
             }
         });
 
@@ -709,6 +715,35 @@ class CanvasRenderer {
             const layerName = contour.layer || '0';
             const layerDef = this.app?.layerManager?.getLayer(layerName);
             let displayColor = layerDef?.color || this.colors.disc;
+
+            // V5.7: Intarsia-Preview — Konturfarbe + Fugen-Offset-Linien
+            const intarsiaPreview = this.app?.settings?.intarsiaPreview;
+            const isCamMode = (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge');
+            if (intarsiaPreview && contour.isClosed && isCamMode) {
+                const posColor = '#ff8c00'; // Orange = Einleger (POS)
+                const negColor = '#2196f3'; // Blau = Aussparung (NEG)
+                displayColor = (intarsiaPreview === 'pos') ? posColor : negColor;
+
+                // Fugen-Offset-Linien zeichnen (POS innen, NEG außen)
+                const kerf = this.app?.settings?.kerfWidth || 0.8;
+                const gap = this.app?.settings?.intarsiaGap ?? (kerf * 2);
+                const addOffset = (gap - 2 * kerf) / 2;
+                if (Math.abs(addOffset) >= 0.01 && points.length >= 3) {
+                    try {
+                        const off1 = Geometry.offsetPolygon(points, addOffset, true);
+                        const off2 = Geometry.offsetPolygon(points, -addOffset, true);
+                        ctx.globalAlpha = 0.5;
+                        ctx.setLineDash([4 / this.scale, 3 / this.scale]);
+                        if (off1?.length > 2) this.drawPath(ctx, off1, posColor, baseWidth * 0.7);
+                        if (off2?.length > 2) this.drawPath(ctx, off2, negColor, baseWidth * 0.7);
+                        ctx.setLineDash([]);
+                        ctx.globalAlpha = 1;
+                    } catch (e) {
+                        console.warn('[Intarsia Preview] Offset-Fehler:', e.message);
+                    }
+                }
+            }
+
             if (isHovered) displayColor = this.colors.hovered;
             if (isSelected) displayColor = this.colors.selected;
             this.drawPath(ctx, points, displayColor, baseWidth);
@@ -1609,7 +1644,7 @@ class CanvasRenderer {
             }
 
             // Segment-Anzahl (bei geschlossener Kontur: letzter Punkt = erster)
-            const segCount = contour.isClosed ? pts.length - 1 : pts.length - 1;
+            const segCount = pts.length - 1;
             const vertCount = contour.isClosed ? pts.length - 1 : pts.length;
 
             // Max-Grips-Limit: Bei >80 Vertices nur Vertex-Grips, keine Midpoints

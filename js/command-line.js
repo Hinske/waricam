@@ -75,7 +75,7 @@ class CommandLine {
     /** Tool deaktivieren — Standard-Prompt */
     deactivate() {
         this.active = false;
-        this.inputEl.value = '';
+        if (this.inputEl) this.inputEl.value = '';
         this.containerEl?.classList.remove('active');
         this.setPrompt('Befehl (L C N A P | M CO RO MI SC E O X J B | REC PL ...)');
     }
@@ -218,7 +218,8 @@ class CommandLine {
             const cls = entry.type === 'input' ? 'cmd-input-echo' :
                         entry.type === 'error' ? 'cmd-error' :
                         entry.type === 'success' ? 'cmd-success' : 'cmd-info';
-            return `<div class="${cls}">${entry.message}</div>`;
+            const safe = entry.message.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return `<div class="${cls}">${safe}</div>`;
         }).join('');
 
         // Auto-scroll
