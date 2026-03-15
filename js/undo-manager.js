@@ -312,6 +312,11 @@ class TransformContoursCommand extends BaseCommand {
             c._cachedOvercutPath = null;
             c._cacheKey = null;
         }
+        // Neue Punkte nach Transformation sichern (für redo)
+        this._newPointsMap = new Map();
+        for (const c of this.contours) {
+            this._newPointsMap.set(c, c.points.map(p => ({ x: p.x, y: p.y })));
+        }
         this.onChanged?.();
     }
 
@@ -331,13 +336,10 @@ class TransformContoursCommand extends BaseCommand {
     }
 
     redo() {
-        // Transformation erneut anwenden — braucht gespeicherte neue Punkte
-        // Einfachster Ansatz: newPoints speichern nach erstem execute
+        // Transformation erneut anwenden — gespeicherte neue Punkte verwenden
         if (!this._newPointsMap) {
-            this._newPointsMap = new Map();
-            for (const c of this.contours) {
-                this._newPointsMap.set(c, c.points.map(p => ({ x: p.x, y: p.y })));
-            }
+            console.warn('[UndoManager] redo() ohne gespeicherte newPoints — übersprungen');
+            return;
         }
         for (const c of this.contours) {
             const newPts = this._newPointsMap.get(c);

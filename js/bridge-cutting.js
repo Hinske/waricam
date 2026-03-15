@@ -83,7 +83,7 @@ const BridgeCutting = (() => {
         }
 
         // Fallback: letztes Segment
-        return { segIndex: distances.length - 2, param: 1.0 };
+        return { segIndex: Math.max(0, distances.length - 2), param: 1.0 };
     }
 
     /**
