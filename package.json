@@ -1,11 +1,11 @@
 {
   "name": "ceracut",
-  "version": "2.7.0",
-  "description": "CAM Software für CNC-Wasserstrahlschneiden",
+  "version": "5.9.0",
+  "description": "CAM Software für CNC-Wasserstrahlschneiden — DXF → Sinumerik 840D",
   "main": "index.html",
   "scripts": {
-    "serve": "node ../server.js",
-    "dev": "PORT=3000 node ../server.js"
+    "serve": "node server.js",
+    "dev": "PORT=3000 node server.js"
   },
   "keywords": [
     "cam",

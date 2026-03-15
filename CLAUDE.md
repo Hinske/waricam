@@ -25,10 +25,6 @@ npm run serve
 node scripts/sync-versions.js          # Aktualisieren
 node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
-# Testing
-open test-parser.html        # DXF-Parser Tests im Browser
-open dxf-test.html           # DXF Multi-File Test Tool
-node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 ```
 
 **Hinweis:** Vanilla JS/HTML5 Canvas — kein Build-Tool, kein Framework, keine Linting/Minification.
@@ -41,7 +37,6 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 |--------------|------|
 | Lokal (Windows) | `G:\Meine Ablage\Cerasell\Projekte\CAM Software\ceraCUT\` |
 | Server (Linux) | `/home/CNC/ceraCUT/` |
-| Sync-Methode | Syncthing (automatisch, bidirektional) |
 
 ---
 
@@ -132,24 +127,24 @@ ceraCUT/
 │   ├── app.js                         ← Hauptanwendung V5.9 (Print, FSAPI-Save, CAM-Kontextmenu)
 │   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
-│   ├── geometry-ops.js                ← GeometryOps V2.3 (Intersection, Arabeske, splitAndOverlap)
-│   ├── ceracut-pipeline.js            ← Pipeline V3.1
-│   ├── cam-contour.js                 ← Kontur-Klasse V4.8 (Lead-Routing)
+│   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
+│   ├── ceracut-pipeline.js            ← Pipeline V3.2
+│   ├── cam-contour.js                 ← Kontur-Klasse V4.9 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.14 (Lead-Differenzierung)
-│   ├── arc-fitting.js                 ← Arc Fitting V3.0
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.15 (Lead-Differenzierung)
+│   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
-│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.3 (Multi-Head)
-│   ├── command-line.js                ← Command-Line UI V1.0
+│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.4 (Multi-Head)
+│   ├── command-line.js                ← Command-Line UI V1.1
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
-│   ├── snap-manager.js               ← Snap-System V1.2
-│   ├── drawing-tools.js              ← CAD-Tools V2.4 (AutoCAD-Aliases, BreakTool)
+│   ├── snap-manager.js               ← Snap-System V1.3
+│   ├── drawing-tools.js              ← CAD-Tools V2.5 (AutoCAD-Aliases, BreakTool)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
-│   ├── advanced-tools.js              ← Tier 5 Tools V1.3 (Fillet/Trim/Extend/Offset/Chamfer)
+│   ├── advanced-tools.js              ← Tier 5 Tools V1.4 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.0
-│   ├── dxf-writer.js                 ← DXF R12 Export V1.2 (ANSI_1252, Kreis-Validierung)
+│   ├── dxf-writer.js                 ← DXF R12 Export V1.2 (UTF-8, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import
 │   ├── properties-panel.js            ← Eigenschaften-Panel V1.2 (Kontextmenu-Modus)
@@ -158,16 +153,16 @@ ceraCUT/
 │   ├── dimension-tool.js             ← Bemassung
 │   ├── measure-tool.js               ← Messmodus
 │   ├── debug-monitor.js              ← Debug-Overlay (Strg+Shift+D)
-│   ├── nesting.js                    ← Nesting Engine V1.0
+│   ├── nesting.js                    ← Nesting Engine V1.1
 │   ├── toolpath-simulator.js         ← Toolpath Simulator V1.0
-│   ├── cost-calculator.js            ← Kalkulation V1.0
+│   ├── cost-calculator.js            ← Kalkulation V1.1
 │   ├── machine-profiles.js           ← Maschinenpark V1.0
 │   ├── bridge-cutting.js             ← Haltestege V1.0
-│   ├── quality-zones.js              ← Qualitaetszonen V1.0
+│   ├── quality-zones.js              ← Qualitaetszonen V1.1
 │   ├── project-manager.js            ← Workspace-Verwaltung V1.0 (FSAPI, Auto-Save)
 │   ├── dxf-browser.js                ← Server-DXF-Browse Modal V1.0
-│   ├── opentype.min.js               ← Font-Rendering Library
-│   └── package.json                   ← Node.js Metadaten
+│   └── opentype.min.js               ← Font-Rendering Library
+├── package.json                       ← Node.js Metadaten
 ├── certs/                             ← TLS-Zertifikate (auto-generiert, nicht in Git)
 ├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
@@ -391,7 +386,7 @@ CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
   ...
 ```
 
-**Fehlt diese Ausgabe?** → Syncthing hat nicht synchronisiert!
+**Fehlt diese Ausgabe?** → Alte Version im Cache! `?v=` Parameter pruefen.
 
 ---
 
@@ -413,7 +408,7 @@ Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refac
   Faengt NaN-Bugs dort ab wo sie entstehen — ohne TypeScript-Migration.
 * **Modul-Ladereihenfolge dokumentieren:** Die 35+ Script-Tags in `index.html` haben implizite
   Abhaengigkeiten. Kommentarblock in der Script-Sektion soll die Abhaengigkeitskette explizit
-  machen. Bundler-Migration nur evaluieren wenn Syncthing-Workflow es erlaubt.
+  machen. Bundler-Migration bei Bedarf evaluieren.
 * **DXF-Parser Stress-Tests:** Grosse Praxis-DXFs (>5000 Entities) als Test-Suite in `Examples/`
   sammeln. Parser-Performance ist seit V3.7 (Deque) gut, aber Regressionen sollen auffallen.
 

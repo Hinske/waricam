@@ -151,7 +151,6 @@ ceraCUT/
 
 - **Frontend:** Vanilla JavaScript, HTML5 Canvas — kein Framework, kein Build-Tool
 - **Server:** Node.js (HTTP/HTTPS Dual-Protocol, Auto-TLS)
-- **Sync:** Syncthing (bidirektional zwischen Entwicklung und CNC-Rechner)
 - **Postprozessor:** Sinumerik 840D (MPF/SPF)
 
 ---
