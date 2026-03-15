@@ -18,6 +18,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const BUILD_INFO = path.join(ROOT, 'js', 'build-info.js');
 const CLAUDE_MD = path.join(ROOT, 'CLAUDE.md');
+const INDEX_HTML = path.join(ROOT, 'index.html');
 
 // ── build-info.js laden ──
 function loadBuildInfo() {
@@ -220,6 +221,52 @@ function syncClaudeMd(info, checkOnly) {
     return 0;
 }
 
+// ── index.html synchronisieren ──
+function syncIndexHtml(info, checkOnly) {
+    let html = fs.readFileSync(INDEX_HTML, 'utf-8');
+    const original = html;
+    let changes = [];
+
+    // <title>CeraCAM Vx.y — Wasserstrahl CAM</title>
+    html = html.replace(
+        /(<title>CeraCAM V)[\d.]+( — Wasserstrahl CAM<\/title>)/,
+        `$1${info.version}$2`
+    );
+
+    // Header-Zeile: "Keine Datei geladen" — CeraCAM Vx.y
+    html = html.replace(
+        /(— CeraCAM V)[\d.]+/,
+        `$1${info.version}`
+    );
+
+    // Cache-Busting: build-info.js
+    html = html.replace(
+        /(build-info\.js\?v=)[\w-]+/,
+        `$1${info.build}`
+    );
+
+    if (html === original) {
+        console.log('[sync-versions] ✅ index.html ist aktuell');
+        return 0;
+    }
+
+    // Diff zählen
+    const origLines = original.split('\n');
+    const newLines = html.split('\n');
+    for (let i = 0; i < origLines.length; i++) {
+        if (origLines[i] !== newLines[i]) changes.push(`  index.html:${i + 1}`);
+    }
+
+    if (checkOnly) {
+        console.log(`[sync-versions] ❌ index.html hat Abweichungen (${changes.length} Zeilen)`);
+        return 1;
+    }
+
+    fs.writeFileSync(INDEX_HTML, html, 'utf-8');
+    console.log(`[sync-versions] ✅ index.html aktualisiert (${changes.length} Zeilen)`);
+    return 0;
+}
+
 // ── Main ──
 const checkOnly = process.argv.includes('--check');
 const info = loadBuildInfo();
@@ -230,5 +277,6 @@ if (!info.version || !info.build) {
 }
 
 console.log(`[sync-versions] build-info.js: V${info.version} (${info.build}), ${Object.keys(info.modules).length} Module`);
-const exitCode = syncClaudeMd(info, checkOnly);
-process.exit(exitCode);
+const rc1 = syncClaudeMd(info, checkOnly);
+const rc2 = syncIndexHtml(info, checkOnly);
+process.exit(rc1 || rc2);
