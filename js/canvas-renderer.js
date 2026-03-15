@@ -815,6 +815,44 @@ class CanvasRenderer {
             if (isSelected) displayColor = this.colors.selected;
             this.drawPath(ctx, points, displayColor, baseWidth);
 
+            // V6.0: Disc-Füllung — halbtransparente Fläche für Teile (CAM-Modi)
+            if (contour.cuttingMode === 'disc' && isCamMode && points.length >= 3) {
+                ctx.save();
+                ctx.beginPath();
+                const p0 = this.worldToScreen(points[0].x, points[0].y);
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < points.length; i++) {
+                    const p = this.worldToScreen(points[i].x, points[i].y);
+                    ctx.lineTo(p.x, p.y);
+                }
+                ctx.closePath();
+
+                // Holes (nestingLevel 1) innerhalb dieser Disc aussparen
+                for (const other of (this.app?.contours || [])) {
+                    if (other === contour || !other.isClosed || other.isReference) continue;
+                    if (other.cuttingMode !== 'hole') continue;
+                    if (other.points?.length < 3) continue;
+                    // Schnell-Check: liegt der erste Punkt des Holes in dieser Disc?
+                    const tp = other.points[0];
+                    if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon?.(tp, points)) {
+                        // Hole-Pfad in Gegenrichtung → wird ausgespart (even-odd)
+                        const hp = other.points;
+                        const h0 = this.worldToScreen(hp[hp.length - 1].x, hp[hp.length - 1].y);
+                        ctx.moveTo(h0.x, h0.y);
+                        for (let j = hp.length - 2; j >= 0; j--) {
+                            const h = this.worldToScreen(hp[j].x, hp[j].y);
+                            ctx.lineTo(h.x, h.y);
+                        }
+                        ctx.closePath();
+                    }
+                }
+
+                ctx.globalAlpha = 0.08;
+                ctx.fillStyle = this.colors.disc;
+                ctx.fill('evenodd');
+                ctx.restore();
+            }
+
             const markerPoints = kerfPoints || points;
 
             // V3.10: Anschussfahnen nur in CAM-Modi (nicht im CAD-Zeichenmodus)

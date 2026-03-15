@@ -3509,7 +3509,7 @@ class CeraCutApp {
         c._cachedLeadOutPath = null;
         c._cachedOvercutPath = null;
         if (vals.preferCorners && c._rotationCount === 0) {
-            c.autoPlaceStartPoint?.();
+            c.autoPlaceStartPoint?.(this.contours);
         }
     }
     

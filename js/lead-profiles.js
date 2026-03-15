@@ -436,7 +436,7 @@ const LeadProfiles = (() => {
                     c._cachedLeadOutPath = null;
                     c._cachedOvercutPath = null;
                     if (c.preferCorners && c._rotationCount === 0) {
-                        c.autoPlaceStartPoint?.();
+                        c.autoPlaceStartPoint?.(contours);
                     }
                     details.push(`${c.name}: Small-Hole (Ø${diameter.toFixed(1)}mm < ${profile.smallHole.thresholdDiameter}mm)`);
                     applied++;
@@ -446,14 +446,14 @@ const LeadProfiles = (() => {
 
             // Hole → int-Profil
             if (c.cuttingMode === 'hole') {
-                _applyProfileSection(c, profile.int, profile.alt);
+                _applyProfileSection(c, profile.int, profile.alt, contours);
                 details.push(`${c.name}: Innen-Profil`);
                 applied++;
                 return;
             }
 
             // Disc → ext-Profil
-            _applyProfileSection(c, profile.ext, profile.alt);
+            _applyProfileSection(c, profile.ext, profile.alt, contours);
             details.push(`${c.name}: Außen-Profil`);
             applied++;
         });
@@ -465,7 +465,7 @@ const LeadProfiles = (() => {
     /**
      * Profil-Sektion auf eine Kontur anwenden
      */
-    function _applyProfileSection(c, section, alt) {
+    function _applyProfileSection(c, section, alt, allContours) {
         if (!section) return;
         c.leadInType = section.leadInType;
         c.leadInLength = section.leadInLength;
@@ -500,7 +500,7 @@ const LeadProfiles = (() => {
         c._cachedLeadOutPath = null;
         c._cachedOvercutPath = null;
         if (c.preferCorners && c._rotationCount === 0) {
-            c.autoPlaceStartPoint?.();
+            c.autoPlaceStartPoint?.(allContours);
         }
     }
 

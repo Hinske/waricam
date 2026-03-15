@@ -60,10 +60,10 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
-| **CAMContour** | `cam-contour.js` | **V5.0** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
+| **CAMContour** | `cam-contour.js` | **V5.1** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Clearance-Scored Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
 | **Lead Profiles** | `lead-profiles.js` | **V1.0** | 7 Built-in Profile, Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.16** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation |
+| **Renderer** | `canvas-renderer.js` | **V3.17** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -130,10 +130,10 @@ ceraCUT/
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
-│   ├── cam-contour.js                 ← Kontur-Klasse V5.0 (leadManualOverride)
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.1 (Clearance-Scored Leads)
 │   ├── lead-profiles.js               ← Lead-Profile V1.0 (7 Built-in, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.16 (Trackpad-Navigation)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.17 (Disc-Füllung)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.4 (Multi-Head)
@@ -377,8 +377,8 @@ CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
 [BUILD] Modules:
   dxf-parser: V3.8 (20260312-textglyphs)
   dxf-writer: V1.2 (20260315-bugfix35)
-  cam-contour: V4.9 (20260315-bugfix35)
-  canvas-renderer: V3.16 (20260315-trackpad)
+  cam-contour: V5.1 (20260315-clearance)
+  canvas-renderer: V3.17 (20260315-discfill)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.4 (20260315-bugfix35)
   drawing-tools: V2.5 (20260315-bugfix35)

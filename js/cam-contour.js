@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.0 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.1 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -9,6 +9,7 @@
  * V4.7: Multi-Kontur Collision Detection — Lead vs. ALLE Konturen
  * V4.8: Lead-Routing Strategien A (Rotation) + B (Dog-Leg), isRotated/isAlternative Flags
  * V5.0: leadManualOverride Property für Profil-Batch-Schutz
+ * V5.1: Clearance-Scored Lead Placement — beste Position statt erste kollisionsfreie
  * Last Modified: 2026-03-15 UTC
  */
 
@@ -1104,14 +1105,14 @@ class CamContour {
                     // Lead-In nach Rotation neu holen und als rotiert markieren
                     const rotatedLead = this.getLeadInPath();
                     if (rotatedLead) rotatedLead.isRotated = true;
-                    console.log(`[CamContour V4.8] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
+                    console.log(`[CamContour V5.1] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
                 } else {
                     // ── Strategy B: Dog-Leg Routing ──
                     const dogLeg = this._tryDogLegLeadIn(neighbors, safetyMargin);
                     if (dogLeg) {
                         this._cachedLeadInPath = dogLeg;
                         leadInModified = true;
-                        console.log(`[CamContour V4.8] Lead-Routing B: Dog-Leg für ${this.name}`);
+                        console.log(`[CamContour V5.1] Lead-Routing B: Dog-Leg für ${this.name}`);
                     } else {
                         // Kein Routing möglich → konventionelles Shortening
                         for (const nb of neighbors) {
@@ -1141,7 +1142,7 @@ class CamContour {
 
         const modified = leadInModified || leadOutModified;
         if (modified) {
-            console.log(`[CamContour V4.8] Multi-Collision: Lead angepasst für ${this.name}`);
+            console.log(`[CamContour V5.1] Multi-Collision: Lead angepasst für ${this.name}`);
         }
         return modified;
     }
@@ -1222,8 +1223,44 @@ class CamContour {
     }
 
     /**
+     * Berechnet den minimalen Abstand aller Lead-Punkte zu allen Nachbar-Konturen.
+     * Höherer Score = mehr Freiraum = bessere Position.
+     * @param {Array} leadPts - Lead-In Punkte
+     * @param {Array} neighbors - Nachbar-Konturen (aus _getNeighborContours)
+     * @param {number} margin - Safety-Margin
+     * @returns {number} Minimaler Abstand (Clearance-Score)
+     */
+    _calcClearanceScore(leadPts, neighbors, margin) {
+        let minDist = Infinity;
+
+        // Abstand zu allen Nachbar-Konturen
+        for (const p of leadPts) {
+            for (const nb of neighbors) {
+                for (let i = 0; i < nb.pts.length - 1; i++) {
+                    const d = this._pointToSegDist(p, nb.pts[i], nb.pts[i + 1]);
+                    if (d < minDist) minDist = d;
+                }
+            }
+        }
+
+        // Selbst-Kollision: Lead vs. eigene Kontur (Skip nahe Startpunkt)
+        const selfPts = this.getKerfOffsetPolyline()?.points || this.points;
+        const skipRadius = Math.max(this.leadInLength, this.leadInRadius) * 0.15;
+        const entry = leadPts[leadPts.length - 1]; // Letzter Punkt = Entry
+        for (let i = 0; i < selfPts.length - 1; i++) {
+            if (this._pointToSegDist(entry, selfPts[i], selfPts[i + 1]) < skipRadius) continue;
+            for (const p of leadPts) {
+                const d = this._pointToSegDist(p, selfPts[i], selfPts[i + 1]);
+                if (d < minDist) minDist = d;
+            }
+        }
+
+        return minDist;
+    }
+
+    /**
      * Strategy A: Startpunkt in 5°-Schritten rotieren.
-     * Sucht die erste Position mit kollisionsfreiem Lead-In.
+     * Wählt die Position mit dem höchsten Clearance-Score (meister Freiraum).
      * Prüft zuerst Ecken (bevorzugte Positionen), dann gleichverteilt.
      */
     _tryRotateStartPoint(allContours, neighbors, margin) {
@@ -1254,7 +1291,12 @@ class CamContour {
             if (!candidates.includes(i)) candidates.push(i);
         }
 
-        // Jeden Kandidaten testen
+        // Jeden Kandidaten testen — beste Position nach Clearance-Score wählen
+        let bestIdx = -1;
+        let bestScore = -Infinity;
+        let bestPoints = null;
+        let bestRotation = origRotation;
+
         for (const idx of candidates) {
             // Punkte rotieren
             const rotated = [];
@@ -1263,22 +1305,36 @@ class CamContour {
             }
             rotated.push({ x: rotated[0].x, y: rotated[0].y });
             this.points = rotated;
-            this._rotationCount++;
+            this._rotationCount = origRotation + idx; // Eindeutiger Cache-Key
             this.invalidate();
 
-            // Lead-In an neuer Position generieren und testen
+            // Lead-In an neuer Position generieren und bewerten
             const testLead = this.getLeadInPath();
             if (testLead?.points?.length >= 2 && !testLead.isFallbackCenterPierce) {
-                const hasCollision = this._checkLeadAgainstNeighbors(testLead, neighbors, 'in', margin);
-                if (!hasCollision) {
-                    // Kollisionsfrei → Position beibehalten
-                    this.startPointIndex = 0;
-                    return true;
+                const score = this._calcClearanceScore(testLead.points, neighbors, margin);
+                // Corner-Bonus: Ecken bekommen 20% Bonus auf Score
+                const isCorner = corners.some(c => c.index === idx);
+                const adjustedScore = isCorner ? score * 1.2 : score;
+
+                if (adjustedScore > bestScore && score > margin) {
+                    bestScore = adjustedScore;
+                    bestIdx = idx;
+                    bestPoints = rotated.map(p => ({ x: p.x, y: p.y }));
+                    bestRotation = this._rotationCount;
                 }
             }
         }
 
-        // Keine kollisionsfreie Position gefunden → Original wiederherstellen
+        if (bestIdx >= 0) {
+            this.points = bestPoints;
+            this._rotationCount = bestRotation;
+            this.invalidate();
+            this.startPointIndex = 0;
+            console.log(`[CamContour V5.1] Clearance-Scored: idx=${bestIdx}, score=${bestScore.toFixed(1)}mm`);
+            return true;
+        }
+
+        // Keine Position mit ausreichendem Clearance → Original wiederherstellen
         this.points = origPoints;
         this._rotationCount = origRotation;
         this.invalidate();
@@ -1473,7 +1529,7 @@ class CamContour {
             }
         }
         if (totalModified > 0) {
-            console.log(`[CamContour V4.8] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
+            console.log(`[CamContour V5.1] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
         }
         return totalModified;
     }
@@ -1513,18 +1569,57 @@ class CamContour {
         this.invalidate();
     }
 
-    autoPlaceStartPoint() {
+    autoPlaceStartPoint(allContours) {
         if (!this.isClosed || !this.preferCorners) return;
 
         const corners = Geometry.findCorners(this.points, this.cornerAngleThreshold);
         if (corners.length === 0) return;
 
-        // Schärfste Ecke wählen
-        corners.sort((a, b) => b.angle - a.angle);
-        const best = corners[0];
+        // Ohne Nachbarn: wie bisher, schärfste Ecke
+        if (!allContours || allContours.length < 2) {
+            corners.sort((a, b) => b.angle - a.angle);
+            if (corners[0].index > 0) this.setStartPoint(corners[0].point);
+            return;
+        }
 
-        if (best.index > 0) {
-            this.setStartPoint(best.point);
+        // Mit Nachbarn: Clearance-Score pro Ecke berechnen
+        const neighbors = this._getNeighborContours(allContours, 0.5);
+        if (neighbors.length === 0) {
+            corners.sort((a, b) => b.angle - a.angle);
+            if (corners[0].index > 0) this.setStartPoint(corners[0].point);
+            return;
+        }
+
+        let bestCorner = null;
+        let bestScore = -Infinity;
+
+        // Originalzustand sichern
+        const origPoints = this.points.map(p => ({ x: p.x, y: p.y }));
+        const origRotation = this._rotationCount;
+
+        for (const corner of corners) {
+            // Temporär an diese Ecke setzen
+            if (corner.index > 0) this.setStartPoint(corner.point);
+
+            const testLead = this.getLeadInPath();
+            if (testLead?.points?.length >= 2) {
+                const clearance = this._calcClearanceScore(testLead.points, neighbors, 0.5);
+                // Score = Clearance + Corner-Sharpness-Bonus (max 10% der Clearance)
+                const score = clearance + (corner.angle / 180) * clearance * 0.1;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestCorner = corner;
+                }
+            }
+
+            // Zurücksetzen
+            this.points = origPoints.map(p => ({ x: p.x, y: p.y }));
+            this._rotationCount = origRotation;
+            this.invalidate();
+        }
+
+        if (bestCorner && bestCorner.index > 0) {
+            this.setStartPoint(bestCorner.point);
         }
     }
 

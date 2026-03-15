@@ -13,8 +13,8 @@ const CERACUT_BUILD = {
         'dxf-parser':         { version: '3.8', build: '20260312-textglyphs' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
-        'cam-contour':        { version: '5.0', build: '20260315-leadprofiles' },
-        'canvas-renderer':    { version: '3.16', build: '20260315-trackpad' },
+        'cam-contour':        { version: '5.1', build: '20260315-clearance' },
+        'canvas-renderer':    { version: '3.17', build: '20260315-discfill' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -202,7 +202,8 @@ const CERACUT_BUILD = {
         'V6.0: Wizard-Validierung — warnt bei fehlenden Konturen/Nullpunkt/Schneidmodus vor Schrittwechsel',
         'V6.0: DXF-Fehlermeldungen kategorisiert — Splines, Encoding, Komplexität mit Lösungshinweisen',
         'V6.0: Export-Validierung — prüft ob G-Code tatsächlich erzeugt wurde (nicht leer)',
-        'V6.0: Toolpath-Preview — 2D-Visualisierung im Vorschau-Modal (Eilgang, Konturen, Reihenfolge, Legende)'
+        'V6.0: Toolpath-Preview — 2D-Visualisierung im Vorschau-Modal (Eilgang, Konturen, Reihenfolge, Legende)',
+        'V6.0: Disc-Fuellung — halbtransparente Flaeche fuer Teile in CAM-Modi, Holes werden ausgespart (even-odd)'
     ],
     
     print() {
