@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-15
-> **Version:** V6.0
-> **Build:** 20260315-leadprofiles
+> **Version:** V6.1
+> **Build:** 20260315-intarsia20
 
 ---
 
@@ -73,7 +73,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | — | CAM-spezifische Werkzeuge |
 | **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
-| **Command Line** | `command-line.js` | **V1.1** | AutoCAD-style Prompt, Koordinaten-Parser, History |
+| **Command Line** | `command-line.js` | **V1.2** | AutoCAD-style Prompt, Koordinaten-Parser, History |
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
 | **Snap Manager** | `snap-manager.js` | **V1.3** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
 | **Layer Manager** | `layer-manager.js` | **V1.0** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
@@ -95,7 +95,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
 | **DXF Browser** | `dxf-browser.js` | **V1.1** | Server-DXF-Browse Modal, Breadcrumb-Navigation, Pfad-Persistenz (localStorage) |
 | **Server** | `server.js` | **V1.2** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API, Dual-Protocol (HTTP+HTTPS auf einem Port) |
-| **Build-Info** | `build-info.js` | **V5.9** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V6.1** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
 ---
@@ -123,21 +123,21 @@ ceraCUT/
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V6.0
+│   ├── build-info.js                  ← Versions-Banner V6.1
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V6.0 (Lead-Profiles, Batch-Engine)
+│   ├── app.js                         ← Hauptanwendung V6.1 (Lead-Profiles, Intarsien V2.0)
 │   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
 │   ├── cam-contour.js                 ← Kontur-Klasse V5.1 (Clearance-Scored Leads)
-│   ├── lead-profiles.js               ← Lead-Profile V1.0 (7 Built-in, Batch-Engine)
+│   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.17 (Disc-Füllung)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.18 (Intarsien-Overlay)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
-│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.4 (Multi-Head)
-│   ├── command-line.js                ← Command-Line UI V1.1
+│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.5 (Safety-Guards)
+│   ├── command-line.js                ← Command-Line UI V1.2
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
 │   ├── drawing-tools.js              ← CAD-Tools V2.5 (AutoCAD-Aliases, BreakTool)
@@ -373,16 +373,30 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
+CeraCUT/CeraCUT V6.1 - Build 20260315-intarsia20
 [BUILD] Modules:
   dxf-parser: V3.8 (20260312-textglyphs)
-  dxf-writer: V1.2 (20260315-bugfix35)
+  geometry: V2.9 (20260128-0645)
+  pipeline: V3.2 (20260315-bugfix35)
   cam-contour: V5.1 (20260315-clearance)
-  canvas-renderer: V3.17 (20260315-discfill)
+  canvas-renderer: V3.18 (20260315-intarsia20)
   undo-manager: V1.1 (20260309-wizard)
-  sinumerik-pp: V1.4 (20260315-bugfix35)
+  sinumerik-pp: V1.5 (20260315-safety)
+  command-line: V1.2 (20260315-ux)
+  snap-manager: V1.3 (20260315-bugfix35)
+  geometry-ops: V2.4 (20260315-bugfix35)
   drawing-tools: V2.5 (20260315-bugfix35)
+  drawing-tools-ext: V1.1 (20260311-overlapbreak)
   dynamic-input: V1.0 (20260309-dynhud)
+  tool-manager: V2.2 (20260216-0015)
+  layer-manager: V1.0 (20260215-2200)
+  text-tool: V1.2 (20260312-textimport)
+  dxf-writer: V1.2 (20260315-bugfix35)
+  lead-profiles: V1.1 (20260315-intarsia20)
+  app: V6.1 (20260315-intarsia20)
+  project-manager: V1.0 (20260313-workspace)
+  properties-panel: V1.2 (20260315-ctxmenu)
+  debug-monitor: V1.0 (20260219-dm10)
   nesting: V1.1 (20260315-bugfix35)
   toolpath-simulator: V1.0 (20260309)
   cost-calculator: V1.1 (20260315-bugfix35)
@@ -390,10 +404,7 @@ CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
   bridge-cutting: V1.0 (20260309)
   quality-zones: V1.1 (20260315-bugfix35)
   advanced-tools: V1.4 (20260315-bugfix35)
-  project-manager: V1.0 (20260313-workspace)
-  properties-panel: V1.2 (20260315-ctxmenu)
-  app: V5.9 (20260315-bugfix35)
-  ...
+  arc-fitting: V3.1 (20260315-bugfix35)
 ```
 
 **Fehlt diese Ausgabe?** → Alte Version im Cache! `?v=` Parameter pruefen.
