@@ -125,6 +125,11 @@ class CeraCutApp {
             this.projectManager = new ProjectManager(this);
         }
 
+        // V5.9: DXF Browser (Server-Netzlaufwerk)
+        if (typeof DXFBrowser !== 'undefined') {
+            this.dxfBrowser = new DXFBrowser(this);
+        }
+
         // V3.11: Image Underlay Manager
         this.imageUnderlayManager = new ImageUnderlayManager(this);
         
@@ -2465,6 +2470,11 @@ class CeraCutApp {
             if (e.target.files[0]) this.loadFile(e.target.files[0]);
         });
 
+        // Server-DXF-Browse Button
+        document.getElementById('btn-server-dxf')?.addEventListener('click', () => {
+            this.dxfBrowser?.open();
+        });
+
         canvasArea?.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone?.classList.add('visible');
@@ -2502,43 +2512,53 @@ class CeraCutApp {
             this.showToast('Bitte eine DXF-Datei auswählen', 'error');
             return;
         }
-        
-        this.dxfFileName = file.name;
-        this.loadedFileName = file.name;  // V3.8: Für DXF-Speichern
-        this.currentProjectName = file.name;
-        this.isDirty = false;
-        this.outputFileName = file.name.replace(/\.dxf$/i, '.cnc');
-        
+
         const reader = new FileReader();
-        
+
         reader.onerror = () => {
             this.showToast('Datei konnte nicht gelesen werden', 'error');
         };
-        
+
         reader.onload = (e) => {
             console.timeEnd('[PERF] FileReader.readAsText');
-            this.dxfContent = e.target.result;
-            console.log('[PERF] DXF content size:', (this.dxfContent.length / 1024).toFixed(1), 'KB');
-            this.parseDXF();
-            
-            const fileStatusEl = document.getElementById('file-status');
-            if (fileStatusEl) fileStatusEl.innerHTML = `
-                <div class="file-loaded">
-                    <span class="icon">📄</span>
-                    <span class="name">${sanitizeHTML(file.name)}</span>
-                    <span class="size">${(file.size / 1024).toFixed(1)} KB</span>
-                </div>
-            `;
-            
-            document.getElementById('current-filename').textContent = `📄 ${file.name}`;
-            const planInput = document.getElementById('planname-input');
-            if (planInput) planInput.value = file.name.replace(/\.dxf$/i, '').toUpperCase();
-            
-            this.showToast(`${file.name} geladen`, 'success');
+            this.loadDXFContent(file.name, e.target.result, (file.size / 1024).toFixed(1));
         };
-        
+
         console.time('[PERF] FileReader.readAsText');
         reader.readAsText(file, 'ISO-8859-1');
+    }
+
+    /**
+     * Lädt DXF-Content aus beliebiger Quelle (File, Server-Browse, etc.)
+     * @param {string} filename - Dateiname (z.B. "Teil.dxf")
+     * @param {string} content - DXF-Dateiinhalt als String
+     * @param {string} sizeKB - Dateigröße in KB (für Anzeige)
+     */
+    loadDXFContent(filename, content, sizeKB) {
+        this.dxfFileName = filename;
+        this.loadedFileName = filename;
+        this.currentProjectName = filename;
+        this.isDirty = false;
+        this.outputFileName = filename.replace(/\.dxf$/i, '.cnc');
+
+        this.dxfContent = content;
+        console.log('[PERF] DXF content size:', (content.length / 1024).toFixed(1), 'KB');
+        this.parseDXF();
+
+        const fileStatusEl = document.getElementById('file-status');
+        if (fileStatusEl) fileStatusEl.innerHTML = `
+            <div class="file-loaded">
+                <span class="icon">📄</span>
+                <span class="name">${sanitizeHTML(filename)}</span>
+                <span class="size">${sizeKB} KB</span>
+            </div>
+        `;
+
+        document.getElementById('current-filename').textContent = `📄 ${filename}`;
+        const planInput = document.getElementById('planname-input');
+        if (planInput) planInput.value = filename.replace(/\.dxf$/i, '').toUpperCase();
+
+        this.showToast(`${filename} geladen`, 'success');
     }
     
     parseDXF() {

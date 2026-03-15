@@ -4,8 +4,8 @@
   "description": "CAM Software für CNC-Wasserstrahlschneiden",
   "main": "index.html",
   "scripts": {
-    "serve": "npx serve .",
-    "dev": "npx serve . -p 3000"
+    "serve": "node ../server.js",
+    "dev": "PORT=3000 node ../server.js"
   },
   "keywords": [
     "cam",

@@ -85,6 +85,11 @@
                     <span class="label">SVG</span>
                 </div>
                 <input type="file" id="svg-import-input" accept=".svg" hidden>
+                <!-- Server DXF-Browse -->
+                <div class="ribbon-btn-lg" id="btn-server-dxf" title="DXF vom Server-Netzlaufwerk laden">
+                    <div class="icon"><svg viewBox="0 0 32 32" fill="none"><rect x="4" y="6" width="24" height="8" rx="2" stroke="#4fc3f7" stroke-width="2" fill="none"/><circle cx="22" cy="10" r="1.5" fill="#4fc3f7"/><rect x="4" y="18" width="24" height="8" rx="2" stroke="#4fc3f7" stroke-width="2" fill="none"/><circle cx="22" cy="22" r="1.5" fill="#4fc3f7"/><line x1="16" y1="14" x2="16" y2="18" stroke="#4fc3f7" stroke-width="1.5"/></svg></div>
+                    <span class="label">Server</span>
+                </div>
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-btn-sm" id="btn-new-file" title="Neue Datei">
                         <div class="icon"><svg viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" stroke="#555" stroke-width="1.2" fill="none"/><line x1="6" y1="8" x2="10" y2="8" stroke="#0a0" stroke-width="1.2"/></svg></div>
@@ -1411,7 +1416,8 @@
 <script src="js/bridge-cutting.js?v=20260309"></script>
 <script src="js/quality-zones.js?v=20260309"></script>
 <script src="js/project-manager.js?v=20260313-v10"></script>
-<script src="js/app.js?v=20260315-ctxpanel"></script>
+<script src="js/dxf-browser.js?v=20260315-v10"></script>
+<script src="js/app.js?v=20260315-server"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>

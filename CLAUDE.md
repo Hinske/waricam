@@ -13,11 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development-Server starten (Port 3000)
 npm run dev
-# oder: npx serve . -p 3000
+# oder: PORT=3000 node server.js
 
 # Produktions-Server (Port 5000)
 npm run serve
-# oder: npx serve .
+# oder: node server.js
 
 # Versions-Sync: build-info.js → CLAUDE.md
 node scripts/sync-versions.js          # Aktualisieren
@@ -95,6 +95,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
 | **Quality Zones** | `quality-zones.js` | **V1.1** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
+| **DXF Browser** | `dxf-browser.js` | **V1.0** | Server-DXF-Browse Modal, Breadcrumb-Navigation, API-Fallback |
+| **Server** | `server.js` | **V1.0** | Node.js HTTP-Server, statische Dateien, DXF-Browse-API (/api/dxf/*) |
 | **Build-Info** | `build-info.js` | **V5.9** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
@@ -118,6 +120,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 ```
 ceraCUT/
+├── server.js                          ← Node.js HTTP-Server + DXF-Browse-API V1.0
 ├── index.html                         ← UI (Wizard, Export-Modal, Ribbon, Command-Line)
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
@@ -160,6 +163,7 @@ ceraCUT/
 │   ├── bridge-cutting.js             ← Haltestege V1.0
 │   ├── quality-zones.js              ← Qualitaetszonen V1.0
 │   ├── project-manager.js            ← Workspace-Verwaltung V1.0 (FSAPI, Auto-Save)
+│   ├── dxf-browser.js                ← Server-DXF-Browse Modal V1.0
 │   ├── opentype.min.js               ← Font-Rendering Library
 │   └── package.json                   ← Node.js Metadaten
 ├── fonts/                             ← Font-Dateien (nicht in Git)

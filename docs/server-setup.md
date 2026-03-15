@@ -6,9 +6,11 @@ Alle Clients im Netzwerk greifen per Browser zu — kein Install noetig.
 ```
 Dev-Rechner → git push → GitHub → git pull → CNC-Server (Debian)
                                                   ↓
-                                          serve . -p 5000
+                                          node server.js
                                                   ↓
                               Windows/Linux-Clients → http://cnc-ip:5000
+                                                  ↓
+                                          /mnt/dxf → DXF-Browse API
 ```
 
 ---
@@ -40,18 +42,33 @@ git clone git@github.com:Hinske/ceraCUT.git
 
 ---
 
-## 3. Webserver installieren
+## 3. Webserver starten
 
-```bash
-npm install -g serve
-```
+Kein `npm install` noetig — `server.js` nutzt nur Node.js built-in Module.
 
 Testen:
 
 ```bash
 cd /home/CNC/ceraCUT
-serve . -p 5000
+node server.js
 # → Browser: http://localhost:5000
+# → DXF-Browse API: http://localhost:5000/api/dxf/list
+```
+
+DXF-Netzlaufwerk mounten (optional, fuer Server-Browse):
+
+```bash
+# Windows-Freigabe mounten
+apt install -y cifs-utils
+mkdir -p /mnt/dxf
+mount -t cifs //server/dxf /mnt/dxf -o username=user,password=pass,iocharset=utf8
+# → Permanent: Eintrag in /etc/fstab
+```
+
+DXF_ROOT konfigurieren (default: `/mnt/dxf`):
+
+```bash
+DXF_ROOT=/pfad/zu/dxf node server.js
 ```
 
 ---
@@ -68,10 +85,11 @@ After=network.target
 Type=simple
 User=CNC
 WorkingDirectory=/home/CNC/ceraCUT
-ExecStart=/usr/local/bin/serve . -p 5000 -s
+ExecStart=/usr/bin/node /home/CNC/ceraCUT/server.js
 Restart=always
 RestartSec=3
 Environment=NODE_ENV=production
+Environment=DXF_ROOT=/mnt/dxf
 
 [Install]
 WantedBy=multi-user.target
