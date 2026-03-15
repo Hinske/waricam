@@ -403,7 +403,7 @@ const CeraCutPipeline = {
             const xi = polygon[i].x, yi = polygon[i].y;
             const xj = polygon[j].x, yj = polygon[j].y;
             const dyij = yj - yi;
-            if (((yi > y) !== (yj > y)) && dyij !== 0 && (x < (xj - xi) * (y - yi) / dyij + xi)) {
+            if (((yi > y) !== (yj > y)) && Math.abs(dyij) > 1e-12 && (x < (xj - xi) * (y - yi) / dyij + xi)) {
                 inside = !inside;
             }
         }

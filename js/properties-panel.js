@@ -290,12 +290,25 @@ class PropertiesPanel {
     // PRIVATE: Property-Aenderungen mit Undo
     // ════════════════════════════════════════════════════════════════
 
+    // Lead-Properties die den leadManualOverride-Flag auslösen
+    static LEAD_PROPERTIES = new Set([
+        'leadInType', 'leadInLength', 'leadInRadius', 'leadInAngle',
+        'leadOutLength', 'overcutLength', 'piercingType',
+        'piercingStationaryTime', 'piercingCircularRadius', 'piercingCircularTime',
+        'leadInDynamic', 'leadInLengthMin', 'leadInLengthMax'
+    ]);
+
     _setProperty(contourIndex, property, newValue) {
         const contour = this.app?.contours?.[contourIndex];
         if (!contour) return;
         if (contour[property] === newValue) return;
 
-        console.log(`[PropertiesPanel V1.1] ${contour.name}: ${property} ${contour[property]} \u2192 ${newValue}`);
+        console.log(`[PropertiesPanel V1.2] ${contour.name}: ${property} ${contour[property]} \u2192 ${newValue}`);
+
+        // V5.0: Lead-Änderung im Properties-Panel → Manual Override setzen
+        if (PropertiesPanel.LEAD_PROPERTIES.has(property)) {
+            contour.leadManualOverride = true;
+        }
 
         const app = this.app;
         const rerender = () => {

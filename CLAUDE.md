@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-15
-> **Version:** V5.9
-> **Build:** 20260315-bugfix36
+> **Version:** V6.0
+> **Build:** 20260315-leadprofiles
 
 ---
 
@@ -45,7 +45,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | Feld | Wert |
 |------|------|
 | Name | CeraCUT / CeraCUT |
-| Version | **V5.9** |
+| Version | **V6.0** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -56,14 +56,15 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V5.9** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu |
+| **App** | `app.js` | **V6.0** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles |
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
-| **CAMContour** | `cam-contour.js` | **V4.9** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone() |
+| **CAMContour** | `cam-contour.js` | **V5.0** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
+| **Lead Profiles** | `lead-profiles.js` | **V1.0** | 7 Built-in Profile, Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
 | **Renderer** | `canvas-renderer.js` | **V3.16** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation |
-| **Postprozessor** | `sinumerik-postprocessor.js` | **V1.4** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
+| **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.2** | Topologie (disc/hole/reference/slit), Kerf-Offset |
@@ -122,14 +123,15 @@ ceraCUT/
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V5.9
+│   ├── build-info.js                  ← Versions-Banner V6.0
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults (V2.7)
-│   ├── app.js                         ← Hauptanwendung V5.9 (Print, FSAPI-Save, CAM-Kontextmenu)
+│   ├── app.js                         ← Hauptanwendung V6.0 (Lead-Profiles, Batch-Engine)
 │   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
-│   ├── cam-contour.js                 ← Kontur-Klasse V4.9 (Lead-Routing)
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.0 (leadManualOverride)
+│   ├── lead-profiles.js               ← Lead-Profile V1.0 (7 Built-in, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
 │   ├── canvas-renderer.js             ← Canvas Rendering V3.16 (Trackpad-Navigation)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
@@ -318,6 +320,13 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 5. `CLAUDE.md` → Modul-Tabelle aktualisieren bei Versions-Bumps
 6. System-Anweisungen liegen in `.claude/` (nicht in Git)
 
+**Tooltip-Pflege bei neuem Tool / geaendertem Shortcut:**
+1. `constants.js` → Eintrag in `TOOL_TOOLTIPS` hinzufuegen/aendern (label, tip, shortcut, group)
+2. Das genuegt — Tooltip auf dem Button und F1-Hilfe-Dialog werden automatisch generiert
+3. Allgemeine Shortcuts (Strg+X etc.) → `GENERAL_SHORTCUTS` in `constants.js`
+4. Maus/Trackpad-Hinweise → `MOUSE_SHORTCUTS` in `constants.js`
+5. Button in `index.html` braucht nur `data-tool="XX"` — kein `data-tip` von Hand setzen
+
 **Code-Stil:** Deutsch (Kommentare, Doku), Optional Chaining, kategorisierte Logs
 
 **Implementierung:** Phase 0 (Besprechen) → Phase 1 (Design) → Phase 2 (Code) → Phase 3 (Verifikation)
@@ -332,6 +341,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 | Import auf Undo-Stack | STRG+Z loescht alles | Import = Snapshot, NICHT Command |
 | forEach ohne Group | Jede Kontur einzeln undo-bar | `beginGroup()` / `endGroup()` |
 | FunctionCommand auf Stack.push | Execute wird nicht aufgerufen | Nur wenn Aktion BEREITS ausgefuehrt |
+| Neues Tool ohne Tooltip | Button hat keinen Hilfetext, fehlt im F1-Dialog | Eintrag in `TOOL_TOOLTIPS` (constants.js) |
 
 ---
 

@@ -8,6 +8,20 @@
 
 const Geometry = {
   /**
+   * Runtime-Guard: Prüft ob ein Wert endlich ist (nicht NaN, nicht Infinity).
+   * Gibt den Wert zurück wenn gültig, sonst den Fallback.
+   * @param {number} value - Zu prüfender Wert
+   * @param {number} [fallback=0] - Rückgabewert bei ungültigem Wert
+   * @param {string} [context=''] - Kontext für Warnung
+   * @returns {number}
+   */
+  assertFinite(value, fallback = 0, context = '') {
+      if (isFinite(value)) return value;
+      console.warn(`[Geometry] NaN/Infinity erkannt${context ? ' in ' + context : ''}: ${value} → ${fallback}`);
+      return fallback;
+  },
+
+  /**
    * Berechnet die vorzeichenbehaftete Fläche eines Polygons (Shoelace Formula)
    * @param {Array<{x: number, y: number}>} points - Polygon-Punkte
    * @returns {number} Signed Area (> 0 = CW, < 0 = CCW)

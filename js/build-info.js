@@ -4,20 +4,20 @@
  */
 
 const CERACUT_BUILD = {
-    version: '5.9',
-    build: '20260315-bugfix36',
+    version: '6.0',
+    build: '20260315-leadprofiles',
     date: '2026-03-15',
-    time: '22:00 MEZ',
+    time: '23:59 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.8', build: '20260312-textglyphs' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
-        'cam-contour':        { version: '4.9', build: '20260315-bugfix35' },
+        'cam-contour':        { version: '5.0', build: '20260315-leadprofiles' },
         'canvas-renderer':    { version: '3.16', build: '20260315-trackpad' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
-        'sinumerik-pp':       { version: '1.4', build: '20260315-bugfix35' },
-        'command-line':       { version: '1.1', build: '20260315-bugfix35' },
+        'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
+        'command-line':       { version: '1.2', build: '20260315-ux' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
         'drawing-tools':      { version: '2.5', build: '20260315-bugfix35' },
@@ -27,7 +27,8 @@ const CERACUT_BUILD = {
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
-        'app':                { version: '5.9', build: '20260315-bugfix35' },
+        'lead-profiles':      { version: '1.0', build: '20260315-leadprofiles' },
+        'app':                { version: '6.0', build: '20260315-leadprofiles' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.2', build: '20260315-ctxmenu' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -183,7 +184,25 @@ const CERACUT_BUILD = {
         'V5.9: Command-Line — XSS via innerHTML verhindert (HTML-Escaping)',
         'V5.9: Snap-Manager — Null-Check für ARC startAngle/endAngle',
         'V5.9: DXF-Writer — ANSI_1252 Codepage (R12-konform), Closed-Polyline Duplikat-Check',
-        'V5.9: Single-Mode — onContourClick wird gesichert/wiederhergestellt statt überschrieben'
+        'V5.9: Single-Mode — onContourClick wird gesichert/wiederhergestellt statt überschrieben',
+        'V5.10 UX: Grössere Klickziele (Buttons, Kontextmenü) für Trackpad-Bedienung',
+        'V5.10 UX: Custom CSS-Tooltips [data-tip] mit Beschreibung + Tastenkürzel auf allen Tool-Buttons',
+        'V5.10 UX: F1 Shortcut-Hilfe-Dialog (3-Spalten: Zeichnen, Bearbeiten, Allgemein + Maus)',
+        'V5.10 UX: Wizard-Step-Indikator im Tab-Strip (Badge + Step-Name)',
+        'V5.10 UX: Verständlicherer Command-Line Prompt + Start-Hint mit F1-Verweis',
+        'V6.0: Lead-Profiles V1.0 — 7 Built-in Profile (Material/Dicke), Benutzerdefinierte Profile (localStorage)',
+        'V6.0: Smart Batch Rules — Automatische Lead-Zuweisung (disc→ext, hole→int, smallHole→center, slit→on_geometry)',
+        'V6.0: Profil-Dropdown im CAM-Ribbon mit Abweichungs-Erkennung und Status-Anzeige',
+        'V6.0: leadManualOverride Flag — schützt manuell geänderte Konturen vor Batch-Re-Apply (cam-contour V5.0)',
+        'V6.0: Sinumerik PP V1.5 — Slit-Rückzug in Schnittrichtung (statt hardcoded X1.0), expliziter F-Code auf Kontur',
+        'V6.0: PP _fc() NaN/Infinity-Warnung statt stiller 0.000 — maskiert keine Rechenfehler mehr',
+        'V6.0: assertFinite() Guard im Geometrie-Kernel — NaN-Propagation frühzeitig abfangen',
+        'V6.0: Math.tan() Guard in computeFillet(), Area NaN-Check in Kerf-Offset, segLen-Guard in Overcut',
+        'V6.0: _pointInPolygon Epsilon-Check (1e-12 statt !== 0) — verhindert near-zero Division',
+        'V6.0: Wizard-Validierung — warnt bei fehlenden Konturen/Nullpunkt/Schneidmodus vor Schrittwechsel',
+        'V6.0: DXF-Fehlermeldungen kategorisiert — Splines, Encoding, Komplexität mit Lösungshinweisen',
+        'V6.0: Export-Validierung — prüft ob G-Code tatsächlich erzeugt wurde (nicht leer)',
+        'V6.0: Toolpath-Preview — 2D-Visualisierung im Vorschau-Modal (Eilgang, Konturen, Reihenfolge, Legende)'
     ],
     
     print() {

@@ -14,8 +14,8 @@
  * V3.1: Undo/Redo (Command Pattern), Clipboard (Copy/Cut/Paste)
  * V3.14: CAM-Tab Redesign — Außen/Innen-Lead, Material-Gruppe, Piercing-Typen, Speed-Info
  * V4.5: IGEMS 4-Slot Lead-System — Alternativ-Lead Fallback bei Kollision
- * Last Modified: 2026-02-17 UTC
- * Build: 20260217-cam45
+ * Last Modified: 2026-03-15 MEZ
+ * Build: 20260315-ux
  */
 
 // XSS Protection
@@ -160,6 +160,7 @@ class CeraCutApp {
         this.bindKeyboardEvents();
         this.bindContourPanelEvents();
         this.bindLeadLiveUpdates();
+        this._initLeadProfiles();   // V6.0: Lead-Profile
         this.bindMicrojointEvents();
         this.bindOrderEvents();
         this.bindTolerancePresets();  // Quick-Fix #5
@@ -2042,7 +2043,7 @@ class CeraCutApp {
             // V3.5: Command-Line Input hat eigene Handler — nur ESC/F-Tasten durchlassen
             const isCmdInput = e.target.id === 'cmd-input';
             if (!isCmdInput && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
-            if (isCmdInput && e.key !== 'Escape' && e.key !== 'F2' && e.key !== 'F3' && e.key !== 'F8') return;
+            if (isCmdInput && e.key !== 'Escape' && e.key !== 'F1' && e.key !== 'F2' && e.key !== 'F3' && e.key !== 'F8') return;
             
             const ctrl = e.ctrlKey || e.metaKey;
             const shift = e.shiftKey;
@@ -2118,6 +2119,12 @@ class CeraCutApp {
                     }
                     break;
                     
+                // V5.10: F1 = Shortcut-Hilfe
+                case 'F1':
+                    e.preventDefault();
+                    this.showShortcutDialog();
+                    break;
+
                 case 'Escape':
                     // V3.5: Tool abbrechen → Messmodus beenden → Selektion aufheben
                     if (this.toolManager?.isToolActive()) {
@@ -2362,17 +2369,46 @@ class CeraCutApp {
         if (step >= 4 && !this.contours.length) return false;
         return step <= this.currentStep + 1;
     }
-    
+
+    /** V6.0: Validierung beim Vorwärts-Navigieren — warnt bei fehlenden Voraussetzungen */
+    _validateStepTransition(fromStep, toStep) {
+        // Vorwärts-Validierung: Step 3→4 braucht geschlossene Konturen
+        if (toStep >= 4 && fromStep < 4) {
+            const closedCount = this.contours.filter(c => c.isClosed && !c.isReference).length;
+            if (closedCount === 0) {
+                this.showToast('Keine geschlossenen Konturen vorhanden — Schneiden erfordert geschlossene Formen', 'warning');
+                return false;
+            }
+            // Nullpunkt prüfen
+            if (!this.settings.origin && !this.contours.some(c => c.isReference)) {
+                this.showToast('Nullpunkt nicht gesetzt — bitte in Step 3 festlegen', 'warning');
+                // Warnung, aber kein Block — Bediener kann trotzdem weiter
+            }
+        }
+        // Step 4→5: Schneidparameter prüfen
+        if (toStep >= 5 && fromStep < 5) {
+            const unassigned = this.contours.filter(c => !c.isReference && c.isClosed && !c.cuttingMode);
+            if (unassigned.length > 0) {
+                this.showToast(`${unassigned.length} Kontur(en) ohne Schneidmodus (disc/hole) — Pipeline erneut ausführen`, 'warning');
+            }
+        }
+        return true;
+    }
+
     goToStep(step) {
         if (step < 1 || step > this.totalSteps) return;
         this.currentStep = step;
         this.updateStepUI();
         this.onStepEnter(step);
     }
-    
+
     nextStep() {
         if (this.currentStep >= 4 && !this.contours.length) {
             this.showToast('Bitte laden oder zeichnen Sie zuerst Konturen', 'warning');
+            return;
+        }
+        // V6.0: Validierung vor Schrittwechsel
+        if (!this._validateStepTransition(this.currentStep, this.currentStep + 1)) {
             return;
         }
         if (this.currentStep < this.totalSteps) {
@@ -2412,6 +2448,13 @@ class CeraCutApp {
         document.getElementById('btn-prev').disabled = this.currentStep === 1;
         document.getElementById('btn-next').textContent = this.currentStep === this.totalSteps ? '✓ Fertig' : 'Weiter →';
         
+        // Wizard-Indikator aktualisieren
+        const stepNames = ['', 'Datei laden', 'Referenz', 'Nullpunkt', 'Schneiden', 'Reihenfolge', 'Export'];
+        const badge = document.getElementById('wizard-step-badge');
+        const stepName = document.getElementById('wizard-step-name');
+        if (badge) badge.textContent = `${this.currentStep}/${this.totalSteps}`;
+        if (stepName) stepName.textContent = stepNames[this.currentStep] || '';
+
         // Start-Hint ausblenden sobald Konturen existieren oder Datei geladen
         const startHint = document.getElementById('start-hint');
         if (startHint && (this.fileLoaded || this.contours.length)) {
@@ -2419,6 +2462,67 @@ class CeraCutApp {
         }
     }
     
+    // ════════════════════════════════════════════════════════════════
+    // SHORTCUT DIALOG (F1)
+    // ════════════════════════════════════════════════════════════════
+
+    showShortcutDialog() {
+        const modal = document.getElementById('shortcut-modal');
+        if (!modal) return;
+
+        const body = document.getElementById('shortcut-modal-body');
+        if (body && typeof TOOL_TOOLTIPS !== 'undefined') {
+            const kbd = (k) => `<kbd style="background:#333;border:1px solid #555;border-radius:3px;padding:1px 6px;font-size:11px;font-family:Consolas,monospace;color:#fff;">${k}</kbd>`;
+            const row = (sc, lbl) => `<tr><td style="padding:3px 0;">${kbd(sc)}</td><td style="padding:3px 6px;color:#bbb;">${lbl}</td></tr>`;
+
+            // Gruppen aus TOOL_TOOLTIPS generieren
+            const groups = { draw: [], edit: [] };
+            for (const entry of Object.values(TOOL_TOOLTIPS)) {
+                if (groups[entry.group]) groups[entry.group].push(entry);
+            }
+
+            const drawRows = groups.draw.map(e => row(e.shortcut, e.label)).join('');
+            const editRows = groups.edit.map(e => row(e.shortcut, e.label)).join('');
+            const generalRows = (typeof GENERAL_SHORTCUTS !== 'undefined' ? GENERAL_SHORTCUTS : [])
+                .map(e => row(e.shortcut, e.label)).join('');
+            const mouseRows = (typeof MOUSE_SHORTCUTS !== 'undefined' ? MOUSE_SHORTCUTS : [])
+                .map(t => `<tr><td style="padding:3px 0;color:#bbb;" colspan="2">${t}</td></tr>`).join('');
+
+            body.innerHTML = `
+                <div>
+                    <h3 style="color:#4fc3f7;font-size:13px;margin:0 0 8px;">Zeichnen</h3>
+                    <table style="width:100%;border-collapse:collapse;">${drawRows}</table>
+                </div>
+                <div>
+                    <h3 style="color:#4fc3f7;font-size:13px;margin:0 0 8px;">Bearbeiten</h3>
+                    <table style="width:100%;border-collapse:collapse;">${editRows}</table>
+                </div>
+                <div>
+                    <h3 style="color:#4fc3f7;font-size:13px;margin:0 0 8px;">Allgemein</h3>
+                    <table style="width:100%;border-collapse:collapse;">${generalRows}</table>
+                    <h3 style="color:#4fc3f7;font-size:13px;margin:12px 0 8px;">Maus / Trackpad</h3>
+                    <table style="width:100%;border-collapse:collapse;">${mouseRows}</table>
+                </div>
+            `;
+        }
+
+        modal.style.display = 'flex';
+
+        // Close handlers
+        const closeBtn = document.getElementById('shortcut-modal-close');
+        const closeModal = () => { modal.style.display = 'none'; };
+        closeBtn?.addEventListener('click', closeModal, { once: true });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        }, { once: true });
+
+        // ESC closes
+        const escHandler = (e) => {
+            if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', escHandler); }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
     onStepEnter(step) {
         // Modi beenden
         if (this.measureMode) this.toggleMeasureMode();
@@ -2657,7 +2761,9 @@ class CeraCutApp {
                 
             } catch (error) {
                 console.error('[CeraCUT] Parse error:', error);
-                this.showToast(`Parse-Fehler: ${error.message}`, 'error');
+                // V6.0: Benutzerfreundliche Fehlermeldungen
+                const msg = this._classifyDXFError(error);
+                this.showToast(msg, 'error');
                 this.showParserSpinner(false);
                 return;
             }
@@ -2687,6 +2793,20 @@ class CeraCutApp {
         }, 50); // Kleine Verzögerung damit Spinner erscheint
     }
     
+    /** V6.0: DXF-Fehler in verständliche Meldungen übersetzen */
+    _classifyDXFError(error) {
+        const msg = error?.message || '';
+        if (msg.includes('undefined') || msg.includes('null'))
+            return 'DXF-Datei enthält fehlerhafte Geometrie — bitte in CAD prüfen und als R12/R14 DXF speichern';
+        if (msg.includes('SPLINE') || msg.includes('spline'))
+            return 'DXF enthält komplexe Splines — bitte in CAD zu Polylinien konvertieren (FLATTEN/EXPLODE)';
+        if (msg.includes('encoding') || msg.includes('Encoding'))
+            return 'DXF-Encoding nicht erkennbar — bitte als ASCII-DXF speichern (nicht binär)';
+        if (msg.includes('memory') || msg.includes('Maximum call'))
+            return 'DXF zu komplex — bitte vereinfachen (zu viele Entities) oder Toleranz erhöhen';
+        return `DXF-Fehler: ${msg.substring(0, 120)}${msg.length > 120 ? '...' : ''} — bitte als DXF R12/R14 exportieren und erneut laden`;
+    }
+
     applyLayerSelection() {
         const checkboxes = document.querySelectorAll('#layer-list input[type="checkbox"]');
         const allContours = this.dxfResult?.contours || [];
@@ -3464,6 +3584,7 @@ class CeraCutApp {
         });
 
         this.renderer?.render();
+        this._updateProfileStatus();
     }
     
     /** Backward-Compat: Falls updateLeadPreview() direkt aufgerufen wird */
@@ -3512,9 +3633,273 @@ class CeraCutApp {
     }
     
     // ════════════════════════════════════════════════════════════════
+    // LEAD PROFILES (V6.0)
+    // ════════════════════════════════════════════════════════════════
+
+    _initLeadProfiles() {
+        if (typeof LeadProfiles === 'undefined') return;
+        LeadProfiles.init();
+        this._populateProfileDropdown();
+
+        // Dropdown-Wechsel → Profil anwenden
+        document.getElementById('lead-profile-select')?.addEventListener('change', (e) => {
+            const id = e.target.value;
+            if (id) {
+                LeadProfiles.setActive(id);
+                this._applyProfile(id);
+            }
+        });
+
+        // Speichern-Button
+        document.getElementById('btn-lead-profile-save')?.addEventListener('click', () => {
+            this._saveCurrentAsProfile();
+        });
+
+        // Löschen-Button
+        document.getElementById('btn-lead-profile-delete')?.addEventListener('click', () => {
+            this._deleteCurrentProfile();
+        });
+
+        // Batch-Apply-Button
+        document.getElementById('btn-batch-apply')?.addEventListener('click', () => {
+            this._applyBatchRules();
+        });
+
+        console.log('[App V6.0] Lead-Profile initialisiert');
+    }
+
+    _populateProfileDropdown() {
+        const select = document.getElementById('lead-profile-select');
+        if (!select || typeof LeadProfiles === 'undefined') return;
+
+        const profiles = LeadProfiles.getAll();
+        const active = LeadProfiles.getActive();
+        const builtins = profiles.filter(p => p.isBuiltin);
+        const custom = profiles.filter(p => !p.isBuiltin);
+
+        let html = '<optgroup label="Standard">';
+        builtins.forEach(p => {
+            html += `<option value="${p.id}" ${p.id === active?.id ? 'selected' : ''}>${p.name}</option>`;
+        });
+        html += '</optgroup>';
+
+        if (custom.length > 0) {
+            html += '<optgroup label="Benutzerdefiniert">';
+            custom.forEach(p => {
+                html += `<option value="${p.id}" ${p.id === active?.id ? 'selected' : ''}>${p.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+
+        select.innerHTML = html;
+    }
+
+    _applyProfile(profileId) {
+        if (typeof LeadProfiles === 'undefined') return;
+        const profile = LeadProfiles.getById(profileId);
+        if (!profile) return;
+
+        // Snapshot für Undo
+        this._captureLeadSnapshot();
+
+        // Ext-Werte in UI-Felder schreiben
+        this._setLeadUIValues(profile.ext, 'ext');
+
+        // Int-like-ext prüfen: gleiche Werte → Checkbox an, sonst aus
+        const intSame = profile.ext.leadInType === profile.int.leadInType &&
+                        profile.ext.leadInLength === profile.int.leadInLength &&
+                        profile.ext.leadInRadius === profile.int.leadInRadius &&
+                        profile.ext.leadInAngle === profile.int.leadInAngle &&
+                        profile.ext.leadOutLength === profile.int.leadOutLength &&
+                        profile.ext.overcutLength === profile.int.overcutLength;
+
+        const intLikeExtCb = document.getElementById('int-like-ext');
+        if (intLikeExtCb) {
+            intLikeExtCb.checked = intSame;
+            this.settings.internalLeadLikeExternal = intSame;
+            // Int-Felder aktivieren/deaktivieren
+            document.querySelectorAll('.int-lead-field input, .int-lead-field select').forEach(el => {
+                el.disabled = intSame;
+            });
+        }
+
+        // Int-Werte setzen (auch wenn disabled — werden bei Bedarf gelesen)
+        this._setLeadUIValues(profile.int, 'int');
+
+        // Alt-Lead-Werte
+        if (profile.alt) {
+            const altEnabled = document.getElementById('alt-lead-enabled');
+            if (altEnabled) altEnabled.checked = profile.alt.altLeadEnabled;
+            this.settings.altLeadEnabled = profile.alt.altLeadEnabled;
+            const altFields = {
+                'alt-lead-type': profile.alt.altLeadType,
+                'alt-lead-in-length': profile.alt.altLeadInLength,
+                'alt-lead-in-angle': profile.alt.altLeadInAngle,
+                'alt-lead-out-length': profile.alt.altLeadOutLength,
+                'alt-overcut-length': profile.alt.altOvercutLength
+            };
+            for (const [id, val] of Object.entries(altFields)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+        }
+
+        // Werte auf Konturen anwenden
+        this._applyLeadValues();
+        this._commitLeadChanges();
+
+        this._updateProfileStatus();
+        console.log(`[App V6.0] Profil angewendet: ${profile.name}`);
+    }
+
+    _setLeadUIValues(section, type) {
+        if (!section) return;
+        if (type === 'ext') {
+            const fields = {
+                'lead-type': section.leadInType,
+                'lead-in-length': section.leadInLength,
+                'lead-in-radius': section.leadInRadius,
+                'lead-in-angle': section.leadInAngle,
+                'lead-out-length': section.leadOutLength,
+                'overcut-length': section.overcutLength,
+                'piercing-type': section.piercingType,
+                'piercing-stationary-time': section.piercingStationaryTime,
+                'piercing-circular-radius': section.piercingCircularRadius,
+                'piercing-circular-time': section.piercingCircularTime,
+                'dyn-lead-min': section.leadInLengthMin,
+                'dyn-lead-max': section.leadInLengthMax
+            };
+            for (const [id, val] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el && val !== undefined) el.value = val;
+            }
+            const prefCorners = document.getElementById('prefer-corners');
+            if (prefCorners) prefCorners.checked = section.preferCorners;
+            const dynLead = document.getElementById('dynamic-lead-ext');
+            if (dynLead) dynLead.checked = section.leadInDynamic;
+        } else {
+            const fields = {
+                'int-lead-type': section.leadInType,
+                'int-lead-in-length': section.leadInLength,
+                'int-lead-in-radius': section.leadInRadius,
+                'int-lead-in-angle': section.leadInAngle,
+                'int-lead-out-length': section.leadOutLength,
+                'int-overcut-length': section.overcutLength
+            };
+            for (const [id, val] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el && val !== undefined) el.value = val;
+            }
+        }
+    }
+
+    _updateProfileStatus() {
+        const statusEl = document.getElementById('lead-profile-status');
+        if (!statusEl || typeof LeadProfiles === 'undefined') return;
+
+        const profile = LeadProfiles.getActive();
+        if (!profile) {
+            statusEl.textContent = '';
+            return;
+        }
+
+        const extVals = this._getLeadValuesFromUI();
+        const intVals = this._getInternalLeadValuesFromUI();
+        const altVals = this._getAlternativeLeadValuesFromUI();
+
+        if (LeadProfiles.isModified(profile, extVals, intVals, altVals)) {
+            statusEl.textContent = `[${profile.name}] + angepasst`;
+            statusEl.style.color = '#f0a030';
+        } else {
+            statusEl.textContent = profile.name;
+            statusEl.style.color = '#888';
+        }
+    }
+
+    _saveCurrentAsProfile() {
+        if (typeof LeadProfiles === 'undefined') return;
+        const name = prompt('Profilname:');
+        if (!name || !name.trim()) return;
+
+        const extVals = this._getLeadValuesFromUI();
+        const intVals = this._getInternalLeadValuesFromUI();
+        const altVals = this._getAlternativeLeadValuesFromUI();
+
+        const data = {
+            ext: { ...extVals },
+            int: { ...intVals },
+            alt: { ...altVals },
+            smallHole: { thresholdDiameter: 8.0, strategy: 'center_pierce' },
+            slit: { leadInType: 'on_geometry', overcutLength: 0 }
+        };
+
+        const profile = LeadProfiles.saveCustom(name.trim(), data);
+        LeadProfiles.setActive(profile.id);
+        this._populateProfileDropdown();
+        this._updateProfileStatus();
+        this.showToast?.(`Profil "${name.trim()}" gespeichert`, 'success');
+    }
+
+    _deleteCurrentProfile() {
+        if (typeof LeadProfiles === 'undefined') return;
+        const profile = LeadProfiles.getActive();
+        if (!profile) return;
+        if (profile.isBuiltin) {
+            this.showToast?.('Standard-Profile können nicht gelöscht werden', 'warning');
+            return;
+        }
+        if (!confirm(`Profil "${profile.name}" löschen?`)) return;
+
+        LeadProfiles.deleteCustom(profile.id);
+        this._populateProfileDropdown();
+        this._updateProfileStatus();
+        this.showToast?.(`Profil "${profile.name}" gelöscht`, 'success');
+    }
+
+    _applyBatchRules() {
+        if (typeof LeadProfiles === 'undefined') return;
+        const profile = LeadProfiles.getActive();
+        if (!profile) return;
+
+        const targets = this.contours.filter(c => !c.isReference && (c.isClosed || c.cuttingMode === 'slit'));
+        if (targets.length === 0) {
+            this.showToast?.('Keine Konturen vorhanden', 'warning');
+            return;
+        }
+
+        // Snapshot für Undo
+        const snapshots = targets.map(c => ({ contour: c, old: this._readLeadFromContour(c) }));
+
+        // Batch-Apply
+        const result = LeadProfiles.applyBatchRules(this.contours, profile);
+
+        // Undo-Command
+        const app = this;
+        const cmd = new FunctionCommand(
+            `Lead-Profil Batch: "${profile.name}" (${result.applied} Konturen)`,
+            () => {
+                LeadProfiles.applyBatchRules(app.contours, profile);
+                app.renderer?.render();
+            },
+            () => {
+                snapshots.forEach(({ contour, old }) => app._applyLeadToContour(contour, old));
+                app.renderer?.render();
+            }
+        );
+        // Bereits ausgeführt, nur auf Stack legen
+        this.undoManager.undoStack.push(cmd);
+        this.undoManager.redoStack.length = 0;
+        this.undoManager._notifyStateChange();
+
+        this.renderer?.render();
+        this.showToast?.(`Profil "${profile.name}": ${result.applied} angewendet, ${result.skipped} übersprungen`, 'success');
+        console.log(`[App V6.0] Batch-Regeln:`, result.details);
+    }
+
+    // ════════════════════════════════════════════════════════════════
     // EXPORT
     // ════════════════════════════════════════════════════════════════
-    
+
     bindExportEvents() {
         document.getElementById('btn-export')?.addEventListener('click', () => this.exportGCode());
         document.getElementById('btn-preview')?.addEventListener('click', () => this.previewGCode());
@@ -3586,8 +3971,8 @@ class CeraCutApp {
             technologyParams
         });
 
-        if (!result) {
-            this.showToast('Export fehlgeschlagen — keine Daten', 'error');
+        if (!result || !result.code || result.code.trim().length === 0) {
+            this.showToast('Export fehlgeschlagen — kein G-Code erzeugt. Sind schneidbare Konturen vorhanden?', 'error');
             return;
         }
 
@@ -3893,23 +4278,45 @@ class CeraCutApp {
         modal.id = 'gcode-preview-modal';
         modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center';
         modal.innerHTML = `
-            <div style="background:#1e1e1e;border-radius:8px;width:80%;max-width:900px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+            <div style="background:#1e1e1e;border-radius:8px;width:90%;max-width:1200px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
                 <div style="padding:16px 20px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <span style="color:#fff;font-weight:600">📋 G-Code Vorschau</span>
+                        <span style="color:#fff;font-weight:600">G-Code Vorschau</span>
                         <span style="color:#888;margin-left:12px;font-size:13px">${stats.contours} Konturen · ${code.split('\n').length} Zeilen · ${(code.length/1024).toFixed(1)} KB</span>
                     </div>
                     <div>
-                        <button id="gcode-copy-btn" style="background:#0d6efd;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;margin-right:8px;font-size:13px">📋 Kopieren</button>
-                        <button id="gcode-close-btn" style="background:#444;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px">✕ Schließen</button>
+                        <button id="gcode-tab-path" style="background:#0d6efd;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;margin-right:4px;font-size:13px">Toolpath</button>
+                        <button id="gcode-tab-code" style="background:#333;color:#aaa;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;margin-right:8px;font-size:13px">G-Code</button>
+                        <button id="gcode-copy-btn" style="background:#555;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;margin-right:8px;font-size:13px">Kopieren</button>
+                        <button id="gcode-close-btn" style="background:#444;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px">Schliessen</button>
                     </div>
                 </div>
                 ${warningHtml}
-                <pre style="margin:0;padding:16px 20px;overflow:auto;flex:1;color:#d4d4d4;font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.5;white-space:pre">${this._escapeHtml(code)}</pre>
+                <div id="gcode-preview-content" style="flex:1;overflow:hidden;position:relative">
+                    <canvas id="gcode-toolpath-canvas" style="width:100%;height:100%;background:#111"></canvas>
+                    <pre id="gcode-text-view" style="display:none;margin:0;padding:16px 20px;overflow:auto;height:100%;color:#d4d4d4;font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.5;white-space:pre">${this._escapeHtml(code)}</pre>
+                </div>
             </div>
         `;
 
         document.body.appendChild(modal);
+
+        // Tab-Switching
+        const tabPath = modal.querySelector('#gcode-tab-path');
+        const tabCode = modal.querySelector('#gcode-tab-code');
+        const canvas = modal.querySelector('#gcode-toolpath-canvas');
+        const textView = modal.querySelector('#gcode-text-view');
+
+        tabPath.addEventListener('click', () => {
+            canvas.style.display = 'block'; textView.style.display = 'none';
+            tabPath.style.background = '#0d6efd'; tabPath.style.color = '#fff';
+            tabCode.style.background = '#333'; tabCode.style.color = '#aaa';
+        });
+        tabCode.addEventListener('click', () => {
+            canvas.style.display = 'none'; textView.style.display = 'block';
+            tabCode.style.background = '#0d6efd'; tabCode.style.color = '#fff';
+            tabPath.style.background = '#333'; tabPath.style.color = '#aaa';
+        });
 
         // Events
         modal.querySelector('#gcode-close-btn').addEventListener('click', () => modal.remove());
@@ -3925,6 +4332,141 @@ class CeraCutApp {
             if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); }
         };
         document.addEventListener('keydown', escHandler);
+
+        // V6.0: Toolpath zeichnen
+        requestAnimationFrame(() => this._renderToolpathPreview(canvas));
+    }
+
+    /** V6.0: 2D-Toolpath-Vorschau auf Canvas zeichnen */
+    _renderToolpathPreview(canvas) {
+        if (!canvas || !this.contours || !this.cutOrder) return;
+
+        const container = canvas.parentElement;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        // Bounding Box aller Konturen
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        const cuttable = this.cutOrder
+            .map(idx => this.contours[idx])
+            .filter(c => c && !c.isReference);
+
+        cuttable.forEach(c => {
+            if (!c.points) return;
+            c.points.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+        });
+
+        if (!isFinite(minX)) return;
+
+        const margin = 40;
+        const rangeX = maxX - minX || 1;
+        const rangeY = maxY - minY || 1;
+        const scale = Math.min((w - 2 * margin) / rangeX, (h - 2 * margin) / rangeY);
+        const offX = margin + ((w - 2 * margin) - rangeX * scale) / 2;
+        const offY = margin + ((h - 2 * margin) - rangeY * scale) / 2;
+
+        const tx = (x) => offX + (x - minX) * scale;
+        const ty = (y) => offY + (maxY - y) * scale; // Y invertiert
+
+        // Hintergrund
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, w, h);
+
+        // Referenz-Kontur (grau)
+        const ref = this.contours.find(c => c.isReference);
+        if (ref?.points?.length > 1) {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ref.points.forEach((p, i) => i === 0 ? ctx.moveTo(tx(p.x), ty(p.y)) : ctx.lineTo(tx(p.x), ty(p.y)));
+            if (ref.isClosed) ctx.closePath();
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Nullpunkt
+        if (this.settings.origin) {
+            const ox = tx(this.settings.origin.x);
+            const oy = ty(this.settings.origin.y);
+            ctx.strokeStyle = '#ff0';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(ox - 8, oy); ctx.lineTo(ox + 8, oy); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ox, oy - 8); ctx.lineTo(ox, oy + 8); ctx.stroke();
+        }
+
+        // Konturen nach Schneidreihenfolge zeichnen
+        const colors = {
+            disc: '#4fc3f7',  // Cyan
+            hole: '#81c784',  // Grün
+            slit: '#ffb74d'   // Orange
+        };
+
+        let prevEnd = null;
+        cuttable.forEach((c, orderIdx) => {
+            if (!c.points || c.points.length < 2) return;
+
+            const startPt = c.points[0];
+            const color = colors[c.cuttingMode] || '#888';
+
+            // Eilgang (G00) — gepunktete rote Linie
+            if (prevEnd) {
+                ctx.strokeStyle = '#ff444488';
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([2, 4]);
+                ctx.beginPath();
+                ctx.moveTo(tx(prevEnd.x), ty(prevEnd.y));
+                ctx.lineTo(tx(startPt.x), ty(startPt.y));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Kontur zeichnen
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            c.points.forEach((p, i) => i === 0 ? ctx.moveTo(tx(p.x), ty(p.y)) : ctx.lineTo(tx(p.x), ty(p.y)));
+            if (c.isClosed) ctx.closePath();
+            ctx.stroke();
+
+            // Startpunkt-Markierung (kleiner Kreis)
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(tx(startPt.x), ty(startPt.y), 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Reihenfolge-Nummer
+            ctx.fillStyle = '#fff8';
+            ctx.font = '10px sans-serif';
+            const bb = c.points.reduce((a, p) => ({
+                cx: a.cx + p.x / c.points.length,
+                cy: a.cy + p.y / c.points.length
+            }), { cx: 0, cy: 0 });
+            ctx.fillText(String(orderIdx + 1), tx(bb.cx) - 4, ty(bb.cy) + 4);
+
+            prevEnd = c.points[c.points.length - 1];
+        });
+
+        // Legende
+        ctx.font = '11px sans-serif';
+        let ly = h - 12;
+        ctx.fillStyle = '#4fc3f7'; ctx.fillText('— Disc (Aussen)', margin, ly);
+        ctx.fillStyle = '#81c784'; ctx.fillText('— Hole (Innen)', margin + 110, ly);
+        ctx.fillStyle = '#ffb74d'; ctx.fillText('— Slit', margin + 220, ly);
+        ctx.fillStyle = '#ff444488'; ctx.fillText('--- Eilgang (G00)', margin + 275, ly);
     }
 
     _escapeHtml(str) {
@@ -4322,5 +4864,22 @@ class CeraCutApp {
 
 // Init App
 document.addEventListener('DOMContentLoaded', () => {
+    // Tooltips aus zentraler Registry (TOOL_TOOLTIPS in constants.js) auf Buttons setzen
+    if (typeof TOOL_TOOLTIPS !== 'undefined') {
+        document.querySelectorAll('[data-tool]').forEach(el => {
+            const entry = TOOL_TOOLTIPS[el.dataset.tool];
+            if (entry) {
+                el.setAttribute('data-tip', entry.tip + '\nTaste: ' + entry.shortcut);
+                el.removeAttribute('title');
+            }
+        });
+        // Sonder-Buttons ohne data-tool
+        const measureBtn = document.getElementById('btn-measure-wrap');
+        if (measureBtn) {
+            measureBtn.setAttribute('data-tip', 'Abstaende und Winkel messen\nTaste: F3');
+            measureBtn.removeAttribute('title');
+        }
+    }
+
     window.app = new CeraCutApp();
 });

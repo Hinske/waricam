@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V4.9 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.0 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -8,7 +8,8 @@
  * V4.6: Alternativ-Lead Property-Rename (altLeadInLength/Angle/OutLength/Overcut)
  * V4.7: Multi-Kontur Collision Detection — Lead vs. ALLE Konturen
  * V4.8: Lead-Routing Strategien A (Rotation) + B (Dog-Leg), isRotated/isAlternative Flags
- * Last Modified: 2026-03-11 UTC
+ * V5.0: leadManualOverride Property für Profil-Batch-Schutz
+ * Last Modified: 2026-03-15 UTC
  */
 
 class CamContour {
@@ -67,6 +68,9 @@ class CamContour {
         this.altLeadInAngle   = options.altLeadInAngle || 5;
         this.altLeadOutLength = options.altLeadOutLength || 2.0;
         this.altOvercutLength = options.altOvercutLength || 2.0;
+
+        // ═══ LEAD MANUAL OVERRIDE (V5.0 — Batch-Schutz) ═══
+        this.leadManualOverride = options.leadManualOverride ?? false;
 
         // ═══ KERF FLIP (Kompensationsseite umkehren) ═══
         this.kerfFlipped = false;  // true = Kerf auf Gegenseite
@@ -185,7 +189,7 @@ class CamContour {
         }
 
         const Area_Final = Math.abs(Geometry.getSignedArea(finalOffset));
-        if (Area_Final / Area_Original < 0.01) {
+        if (!isFinite(Area_Final) || Area_Original < 1e-10 || Area_Final / Area_Original < 0.01) {
             this.compensationSkipped = true;
             return cacheResult({ points: this.points, flipped: false });
         }
@@ -685,6 +689,7 @@ class CamContour {
                 const p1 = pts[i];
                 const p2 = pts[i - 1];
                 const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                if (segLen < 1e-10) continue;  // Skip zero-length segments
                 if (segLen <= remaining) {
                     overcutPoints.push({ x: p2.x, y: p2.y });
                     remaining -= segLen;
@@ -1735,6 +1740,7 @@ class CamContour {
             leadInLengthMax: this.leadInLengthMax
         });
         c.kerfSide = this.kerfSide;
+        c.leadManualOverride = this.leadManualOverride;
         c.areaClassApplied = this.areaClassApplied;
         c.kerfFlipped = this.kerfFlipped;
         c.isClosed = this.isClosed;

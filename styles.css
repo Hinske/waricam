@@ -348,12 +348,12 @@ html, body {
 .ribbon-btn-sm {
     display: flex;
     align-items: center;
-    padding: 2px 6px;
+    padding: 4px 8px;
     cursor: pointer;
     border: 1px solid transparent;
     background: transparent;
     gap: 4px;
-    height: 24px;
+    min-height: 28px;
     white-space: nowrap;
 }
 
@@ -429,8 +429,9 @@ html, body {
 }
 
 .ribbon-btn-mini {
-    height: 22px;
-    padding: 0 6px;
+    min-height: 26px;
+    height: auto;
+    padding: 2px 8px;
     border: 1px solid var(--ribbon-border);
     background: var(--panel-input-bg);
     color: var(--panel-text);
@@ -1026,7 +1027,7 @@ html, body {
 }
 
 .status-toggle {
-    height: 20px;
+    min-height: 26px;
     padding: 0 8px;
     display: flex;
     align-items: center;
@@ -1071,9 +1072,9 @@ html, body {
 .context-menu { max-height: 80vh; overflow-y: auto; }
 
 .context-menu-item {
-    padding: 5px 14px;
+    padding: 8px 16px;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--ctx-text);
     display: flex;
     align-items: center;
@@ -2175,4 +2176,77 @@ html, body {
 
 @media (max-width: 768px) {
     .workspace-sidebar { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM TOOLTIPS — [data-tip] Pseudo-Element
+   ═══════════════════════════════════════════════════════════════ */
+
+[data-tip] {
+    position: relative;
+}
+
+[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #e0e0e0;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    white-space: pre-line;
+    max-width: 280px;
+    width: max-content;
+    z-index: 100000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    transition-delay: 0s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+[data-tip]:hover::after {
+    opacity: 1;
+    transition-delay: 0.4s;
+}
+
+/* Tooltip nach unten (fuer Title-Bar-Buttons) */
+[data-tip-pos="bottom"]::after {
+    bottom: auto;
+    top: calc(100% + 6px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WIZARD STEP INDICATOR
+   ═══════════════════════════════════════════════════════════════ */
+
+.wizard-indicator {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    font-size: 12px;
+    color: var(--ribbon-text);
+}
+
+.wizard-step-badge {
+    background: var(--accent-blue);
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.wizard-step-name {
+    color: var(--ribbon-label);
+    font-size: 11px;
 }

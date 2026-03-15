@@ -15,6 +15,7 @@
  * V1.1: Dynamische R-Parameter via CeraJetEngine.toRParameters()
  * V1.3: Multi-Head Support, Machine-Profile Integration
  * V1.4: BugFix: Overcut-Erstsegment (i=0), R-Parameter Dezimalstellen (bar/g/min = int), _ff() entfernt
+ * V1.5: Slit-Rückzug in Schnittrichtung, expliziter F-Code auf Kontur, _fc() NaN-Warnung
  *
  * Last Modified: 2026-03-15
  * Build: 20260315-bugfix
@@ -22,7 +23,7 @@
 
 class SinumerikPostprocessor {
 
-    static VERSION = '1.4';
+    static VERSION = '1.5';
 
     constructor(options = {}) {
         // ═══ Formatierung ═══
@@ -452,15 +453,17 @@ class SinumerikPostprocessor {
             lines.push(`N${this._lineNum++} ${kerfCode} G01 X${this._fc(pts[0].x)} Y${this._fc(pts[0].y)} ${feedStr}`);
         }
 
-        // ── Kontur-Punkte (G01/G02/G03) ──
+        // ── Kontur-Punkte (G01/G02/G03) — V1.5: expliziter F-Code auf erstem Segment ──
         const contourSegments = this._processContourPoints(pts);
+        const contourFeedParam = this._getNormalVorschubParam(quality);
         for (let i = 0; i < contourSegments.length; i++) {
             const seg = contourSegments[i];
+            const feedSuffix = (i === 0) ? ` F=${contourFeedParam}` : '';
             if (seg.type === 'line') {
-                lines.push(`N${this._lineNum++} G01 X${this._fc(seg.x)} Y${this._fc(seg.y)}`);
+                lines.push(`N${this._lineNum++} G01 X${this._fc(seg.x)} Y${this._fc(seg.y)}${feedSuffix}`);
             } else {
                 const arcCmd = seg.clockwise ? 'G02' : 'G03';
-                lines.push(`N${this._lineNum++} ${arcCmd} X${this._fc(seg.x)} Y${this._fc(seg.y)} I${this._fc(seg.i)} J${this._fc(seg.j)}`);
+                lines.push(`N${this._lineNum++} ${arcCmd} X${this._fc(seg.x)} Y${this._fc(seg.y)} I${this._fc(seg.i)} J${this._fc(seg.j)}${feedSuffix}`);
             }
         }
 
@@ -589,8 +592,9 @@ class SinumerikPostprocessor {
         // L205: Jet-Off
         lines.push(`N${this._lineNum++} L205`);
 
-        // Kerf abwählen: inkrementell (Slit-Spezialfall)
-        lines.push(`N${this._lineNum++} G91 G40 G01 X1.0 Y0.0`);
+        // Kerf abwählen: inkrementell in Schnittrichtung (V1.5)
+        const retractDir = this._calcSlitRetractDirection(pts);
+        lines.push(`N${this._lineNum++} G91 G40 G01 X${retractDir.x.toFixed(3)} Y${retractDir.y.toFixed(3)}`);
         lines.push(`N${this._lineNum++} G90`);
 
         return lines;
@@ -678,6 +682,22 @@ class SinumerikPostprocessor {
     }
 
     /**
+     * Berechnet die Rückzugsrichtung für Slit-Konturen.
+     * Nutzt die Richtung des letzten Segments, normiert auf 1mm.
+     * V1.5: Ersetzt hardcoded X1.0 Y0.0
+     */
+    _calcSlitRetractDirection(pts) {
+        if (!pts || pts.length < 2) return { x: 1.0, y: 0.0 };
+        const p1 = pts[pts.length - 2];
+        const p2 = pts[pts.length - 1];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 1e-10) return { x: 1.0, y: 0.0 };
+        return { x: dx / len, y: dy / len };
+    }
+
+    /**
      * Speed-Ramping-Faktor: 0.69 normal, 0.20 kleine Löcher
      */
     _getSpeedFactor(contour) {
@@ -743,7 +763,12 @@ class SinumerikPostprocessor {
     // ════════════════════════════════════════════════════════════════
 
     _fc(value) {
-        if (value == null || isNaN(value)) return '0.000';
+        if (value == null || !isFinite(value)) {
+            const msg = `KOORDINATEN-FEHLER: ungültiger Wert (${value})`;
+            console.error(`[PP V1.5] ${msg}`);
+            this._warnings.push(msg);
+            return '0.000';  // Fallback, aber Warnung ist gesetzt
+        }
         return value.toFixed(this.coordDecimals);
     }
 

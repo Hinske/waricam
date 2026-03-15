@@ -307,8 +307,11 @@ const GeometryOps = {
 
         // Abstand vom Corner zum Tangentenpunkt
         const sinHalf = Math.sin(halfAngle);
-        if (sinHalf < 1e-8) return null; // Schutz gegen Division by Zero bei sin(halfAngle)
-        const tanDist = radius / Math.tan(halfAngle);
+        if (sinHalf < 1e-8) return null;
+        const tanHalf = Math.tan(halfAngle);
+        if (!isFinite(tanHalf) || Math.abs(tanHalf) < 1e-10) return null;
+        const tanDist = radius / tanHalf;
+        if (!isFinite(tanDist)) return null;
         if (tanDist > len1 - 0.01 || tanDist > len2 - 0.01) return null; // Radius zu groß
 
         // Tangentenpunkte

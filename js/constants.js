@@ -95,6 +95,73 @@ const CeraCUT = {
     }
 };
 
+// ═══════════════════════════════════════════════════════════════
+// TOOL TOOLTIPS — Zentrale Registry fuer data-tip + Shortcut-Dialog
+// Pflege: Neue Tools hier eintragen, Rest passiert automatisch.
+// Format: { label, tip, shortcut, group }
+// ═══════════════════════════════════════════════════════════════
+
+const TOOL_TOOLTIPS = {
+    // ── Zeichnen ──
+    'L':     { label: 'Linie',      tip: 'Linie zeichnen',                          shortcut: 'L',     group: 'draw' },
+    'C':     { label: 'Kreis',      tip: 'Kreis zeichnen (Mittelpunkt + Radius)',    shortcut: 'C',     group: 'draw' },
+    'A':     { label: 'Bogen',      tip: 'Kreisbogen zeichnen (3 Punkte)',           shortcut: 'A',     group: 'draw' },
+    'N':     { label: 'Rechteck',   tip: 'Rechteck zeichnen (2 Eckpunkte)',          shortcut: 'N',     group: 'draw' },
+    'P':     { label: 'Polylinie',  tip: 'Polylinie (Linienzug)',                    shortcut: 'P',     group: 'draw' },
+    'NG':    { label: 'N-Eck',      tip: 'Regelmaessiges Vieleck',                   shortcut: 'NG',    group: 'draw' },
+    'OB':    { label: 'Langloch',   tip: 'Langloch / Overlap Break',                 shortcut: 'OB',    group: 'draw' },
+    'AB':    { label: 'Arabeske',   tip: 'Arabeske (Laternenfliese)',                shortcut: 'AB',    group: 'draw' },
+    'EL':    { label: 'Ellipse',    tip: 'Ellipse zeichnen',                         shortcut: 'EL',    group: 'draw' },
+    'SP':    { label: 'Spline',     tip: 'Freiform-Kurve (Spline)',                  shortcut: 'SP',    group: 'draw' },
+    'DO':    { label: 'Donut',      tip: 'Ring / Donut',                             shortcut: 'DO',    group: 'draw' },
+    'TX':    { label: 'Text',       tip: 'Text als schneidbare Konturen',            shortcut: 'TX',    group: 'draw' },
+
+    // ── Bearbeiten ──
+    'M':     { label: 'Verschieben', tip: 'Objekte verschieben',                     shortcut: 'M',     group: 'edit' },
+    'CO':    { label: 'Kopieren',    tip: 'Objekte kopieren',                        shortcut: 'CO',    group: 'edit' },
+    'RO':    { label: 'Drehen',      tip: 'Objekte drehen',                          shortcut: 'RO',    group: 'edit' },
+    'MI':    { label: 'Spiegeln',    tip: 'Objekte spiegeln',                        shortcut: 'MI',    group: 'edit' },
+    'SC':    { label: 'Skalieren',   tip: 'Objekte vergroessern/verkleinern',        shortcut: 'SC',    group: 'edit' },
+    'AR':    { label: 'Reihe',       tip: 'Objekte in Reihe/Raster kopieren',        shortcut: 'AR',    group: 'edit' },
+    'O':     { label: 'Versetzen',   tip: 'Parallele Kopie mit Abstand',             shortcut: 'O',     group: 'edit' },
+    'E':     { label: 'Loeschen',    tip: 'Selektierte Objekte loeschen',            shortcut: 'E / Entf', group: 'edit' },
+    'F':     { label: 'Abrunden',    tip: 'Ecke zweier Linien verrunden',            shortcut: 'F',     group: 'edit' },
+    'CH':    { label: 'Fase',        tip: 'Ecke abschraegen',                        shortcut: 'CH',    group: 'edit' },
+    'T':     { label: 'Stutzen',     tip: 'Linie an Schnittpunkt abschneiden',       shortcut: 'T',     group: 'edit' },
+    'EX':    { label: 'Dehnen',      tip: 'Linie bis zur naechsten Kante dehnen',    shortcut: 'EX',    group: 'edit' },
+    'X':     { label: 'Explode',     tip: 'Konturen in Einzelteile zerlegen',        shortcut: 'X',     group: 'edit' },
+    'J':     { label: 'Join',        tip: 'Linien zu einer Kontur verbinden',        shortcut: 'J',     group: 'edit' },
+    'B':     { label: 'Brechen',     tip: 'Kontur an einem Punkt teilen',            shortcut: 'B',     group: 'edit' },
+    'BO':    { label: 'Boolesch',    tip: 'Formen verschmelzen/subtrahieren',        shortcut: 'BO',    group: 'edit' },
+    'BP':    { label: 'Boundary',    tip: 'Umrandung erkennen',                      shortcut: 'BP',    group: 'edit' },
+    'CLDCL': { label: 'Aufteilen',   tip: 'Kontur gleichmaessig aufteilen',          shortcut: 'CLDCL', group: 'edit' },
+
+    // ── CAM / Analyse ──
+    'AN':    { label: 'Analyze',     tip: 'Geometrie auf Fehler pruefen',            shortcut: 'AN',    group: 'cam' },
+};
+
+// Nicht-Tool-Shortcuts (fuer Shortcut-Dialog, nicht fuer data-tip)
+const GENERAL_SHORTCUTS = [
+    { shortcut: 'Strg+Z',       label: 'Rueckgaengig' },
+    { shortcut: 'Strg+Y',       label: 'Wiederholen' },
+    { shortcut: 'Strg+A',       label: 'Alles waehlen' },
+    { shortcut: 'Strg+S',       label: 'Speichern' },
+    { shortcut: 'Strg+P',       label: 'Drucken' },
+    { shortcut: 'F1',           label: 'Hilfe / Tastenkuerzel' },
+    { shortcut: 'F3',           label: 'Messen' },
+    { shortcut: 'F8',           label: 'Ortho-Modus' },
+    { shortcut: 'ESC',          label: 'Abbrechen' },
+    { shortcut: 'Home',         label: 'Alles zeigen' },
+];
+
+const MOUSE_SHORTCUTS = [
+    'Scrollrad: Zoom',
+    'Mittelklick-Drag: Verschieben',
+    'Leertaste+Drag: Verschieben',
+    'Pinch: Zoom (Trackpad)',
+    'Rechtsklick: Bestaetigen / Menu',
+];
+
 // Freeze
 Object.freeze(CeraCUT);
 Object.freeze(CeraCUT.TOLERANCES);
