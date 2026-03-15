@@ -15,9 +15,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev
 # oder: PORT=3000 node server.js
 
-# Produktions-Server (Port 5000)
+# Produktions-Server (Port 5000, HTTPS mit Auto-TLS)
 npm run serve
 # oder: node server.js
+# HTTPS-Zertifikat wird beim ersten Start automatisch generiert (certs/)
+# Ohne HTTPS: NO_HTTPS=1 node server.js
 
 # Versions-Sync: build-info.js → CLAUDE.md
 node scripts/sync-versions.js          # Aktualisieren
@@ -96,7 +98,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Quality Zones** | `quality-zones.js` | **V1.1** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
 | **DXF Browser** | `dxf-browser.js` | **V1.0** | Server-DXF-Browse Modal, Breadcrumb-Navigation, API-Fallback |
-| **Server** | `server.js` | **V1.0** | Node.js HTTP-Server, statische Dateien, DXF-Browse-API (/api/dxf/*) |
+| **Server** | `server.js` | **V1.1** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API (/api/dxf/*), HTTP→HTTPS Redirect |
 | **Build-Info** | `build-info.js` | **V5.9** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
@@ -166,6 +168,7 @@ ceraCUT/
 │   ├── dxf-browser.js                ← Server-DXF-Browse Modal V1.0
 │   ├── opentype.min.js               ← Font-Rendering Library
 │   └── package.json                   ← Node.js Metadaten
+├── certs/                             ← TLS-Zertifikate (auto-generiert, nicht in Git)
 ├── fonts/                             ← Font-Dateien (nicht in Git)
 ├── Examples/                          ← Test-DXF-Dateien
 ├── CLAUDE.md                          ← Diese Datei
