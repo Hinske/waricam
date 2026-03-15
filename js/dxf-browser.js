@@ -11,7 +11,7 @@
 class DXFBrowser {
     constructor(app) {
         this.app = app;
-        this.currentPath = '';
+        this.currentPath = localStorage.getItem('ceracut-dxf-browser-path') || '';
         this.overlay = null;
         this.isAvailable = null; // null = ungeprüft
     }
@@ -45,9 +45,8 @@ class DXFBrowser {
             return;
         }
 
-        this.currentPath = '';
         this._createModal();
-        this.loadDirectory('');
+        this.loadDirectory(this.currentPath || '');
     }
 
     /**
@@ -109,6 +108,7 @@ class DXFBrowser {
      */
     async loadDirectory(dirPath) {
         this.currentPath = dirPath;
+        localStorage.setItem('ceracut-dxf-browser-path', dirPath);
         const listEl = this.overlay?.querySelector('.dxf-browser-list');
         const statusEl = this.overlay?.querySelector('.dxf-browser-status');
         if (!listEl) return;
