@@ -14,7 +14,7 @@ const CERACUT_BUILD = {
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
         'cam-contour':        { version: '5.1', build: '20260315-clearance' },
-        'canvas-renderer':    { version: '3.18', build: '20260315-intarsia20' },
+        'canvas-renderer':    { version: '3.19', build: '20260315-arcfix' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
