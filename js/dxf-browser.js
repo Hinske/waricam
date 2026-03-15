@@ -72,7 +72,7 @@ class DXFBrowser {
         this.overlay.style.cssText = 'display:flex; z-index:10000;';
 
         this.overlay.innerHTML = `
-            <div class="dialog-box" style="width:600px; max-height:80vh; display:flex; flex-direction:column;">
+            <div style="width:600px; max-height:80vh; display:flex; flex-direction:column; background:#1e1e1e; border:1px solid #555; border-radius:6px; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
                 <div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #444;">
                     <h3 style="margin:0; font-size:14px; color:#e0e0e0;">Server DXF-Dateien</h3>
                     <button class="dxf-browser-close" style="background:none; border:none; color:#888; font-size:18px; cursor:pointer; padding:0 4px;">&times;</button>
