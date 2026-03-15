@@ -25,8 +25,8 @@ apt update && apt install -y git nodejs npm curl ufw
 
 ```bash
 cd /home/CNC
-git clone https://github.com/EUER-REPO/waterjet_v2.git
-cd waterjet_v2
+git clone https://github.com/Hinske/ceraCUT.git
+cd ceraCUT
 ```
 
 Falls privates Repo — SSH-Key einrichten:
@@ -35,7 +35,7 @@ Falls privates Repo — SSH-Key einrichten:
 ssh-keygen -t ed25519 -C "cnc@cerasell"
 cat ~/.ssh/id_ed25519.pub
 # → Key in GitHub unter Settings → SSH Keys einfuegen
-git clone git@github.com:EUER-REPO/waterjet_v2.git
+git clone git@github.com:Hinske/ceraCUT.git
 ```
 
 ---
@@ -49,7 +49,7 @@ npm install -g serve
 Testen:
 
 ```bash
-cd /home/CNC/waterjet_v2
+cd /home/CNC/ceraCUT
 serve . -p 5000
 # → Browser: http://localhost:5000
 ```
@@ -61,13 +61,13 @@ serve . -p 5000
 ```bash
 tee /etc/systemd/system/ceracut.service << 'EOF'
 [Unit]
-Description=CeraCUT CeraCUT Webserver
+Description=CeraCUT Webserver
 After=network.target
 
 [Service]
 Type=simple
 User=CNC
-WorkingDirectory=/home/CNC/waterjet_v2
+WorkingDirectory=/home/CNC/ceraCUT
 ExecStart=/usr/local/bin/serve . -p 5000 -s
 Restart=always
 RestartSec=3
@@ -102,7 +102,7 @@ Update-Script:
 ```bash
 tee /usr/local/bin/ceracut-update << 'EOF'
 #!/bin/bash
-cd /home/CNC/waterjet_v2
+cd /home/CNC/ceraCUT
 git pull --ff-only origin main 2>&1 | logger -t ceracut-update
 EOF
 chmod +x /usr/local/bin/ceracut-update
@@ -146,7 +146,7 @@ Browser → `http://cnc-server-ip:5000` → Menu (⋮) → "Als App installieren
 
 | Feld | Wert |
 |------|------|
-| Name | CeraCUT CeraCUT |
+| Name | CeraCUT |
 | URL | `http://192.168.x.x:5000` |
 
 ---
@@ -180,7 +180,7 @@ ss -tlnp | grep 5000
 
 **Git pull schlaegt fehl:**
 ```bash
-cd /home/CNC/waterjet_v2
+cd /home/CNC/ceraCUT
 git status
 git stash  # Lokale Aenderungen sichern
 git pull --ff-only origin main

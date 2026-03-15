@@ -37,8 +37,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 | Beschreibung | Pfad |
 |--------------|------|
-| Lokal (Windows) | `G:\Meine Ablage\Cerasell\Projekte\CAM Software\waterjet_v2\` |
-| Server (Linux) | `/home/CNC/waterjet_v2/` |
+| Lokal (Windows) | `G:\Meine Ablage\Cerasell\Projekte\CAM Software\ceraCUT\` |
+| Server (Linux) | `/home/CNC/ceraCUT/` |
 | Sync-Methode | Syncthing (automatisch, bidirektional) |
 
 ---
@@ -117,7 +117,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 ### Dateistruktur
 
 ```
-waterjet_v2/
+ceraCUT/
 ├── index.html                         ← UI (Wizard, Export-Modal, Ribbon, Command-Line)
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
