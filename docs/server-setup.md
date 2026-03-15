@@ -46,13 +46,25 @@ git clone git@github.com:Hinske/ceraCUT.git
 
 Kein `npm install` noetig — `server.js` nutzt nur Node.js built-in Module.
 
+HTTPS wird beim ersten Start automatisch eingerichtet (Self-Signed Zertifikat via openssl).
+Das ist noetig damit die File System Access API (Workspace, Strg+S) im Browser funktioniert.
+
 Testen:
 
 ```bash
 cd /home/CNC/ceraCUT
 node server.js
-# → Browser: http://localhost:5000
-# → DXF-Browse API: http://localhost:5000/api/dxf/list
+# → Generiert automatisch certs/server.crt + certs/server.key (10 Jahre gueltig)
+# → Browser: https://localhost:5000
+# → DXF-Browse API: https://localhost:5000/api/dxf/list
+```
+
+Beim ersten Zugriff im Browser: "Erweitert" → "Weiter zu ... (unsicher)" klicken.
+
+Ohne HTTPS starten (Fallback, FSAPI funktioniert dann NICHT):
+
+```bash
+NO_HTTPS=1 node server.js
 ```
 
 DXF-Netzlaufwerk mounten (optional, fuer Server-Browse):
@@ -90,6 +102,7 @@ Restart=always
 RestartSec=3
 Environment=NODE_ENV=production
 Environment=DXF_ROOT=/mnt/dxf
+# HTTPS wird automatisch aktiviert (Self-Signed Cert in certs/)
 
 [Install]
 WantedBy=multi-user.target

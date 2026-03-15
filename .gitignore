@@ -37,6 +37,9 @@ npm-debug.log*
 # System-Anweisungen (lokal in .claude/)
 system-anweisung-*.md
 
+# TLS-Zertifikate (lokal generiert)
+certs/
+
 # Fonts (Copyright, lokal via Syncthing)
 fonts/*.ttf
 fonts/*.TTF
