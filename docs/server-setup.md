@@ -128,18 +128,35 @@ ufw enable
 
 ## 6. Auto-Update (als root)
 
-Update-Script:
+Update-Script (restart bei server.js-Aenderung):
 
 ```bash
 tee /usr/local/bin/ceracut-update << 'EOF'
 #!/bin/bash
 cd /home/CNC/ceraCUT
-git pull --ff-only origin main 2>&1 | logger -t ceracut-update
+
+# Aktuellen Commit merken
+OLD_HEAD=$(git rev-parse HEAD)
+
+# Pullen
+OUTPUT=$(git pull --ff-only origin main 2>&1)
+echo "$OUTPUT" | logger -t ceracut-update
+
+NEW_HEAD=$(git rev-parse HEAD)
+
+# Nichts geaendert? → fertig
+[ "$OLD_HEAD" = "$NEW_HEAD" ] && exit 0
+
+# Prüfen ob server.js sich geaendert hat → Neustart
+if git diff --name-only "$OLD_HEAD" "$NEW_HEAD" | grep -q '^server\.js$'; then
+    echo "server.js geaendert — Neustart" | logger -t ceracut-update
+    systemctl restart ceracut
+fi
 EOF
 chmod +x /usr/local/bin/ceracut-update
 ```
 
-Cronjob — alle 5 Minuten (als User CNC):
+Cronjob — alle 5 Minuten (als root, da systemctl restart root braucht):
 
 ```bash
 (crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/ceracut-update") | crontab -
@@ -160,7 +177,7 @@ journalctl -t ceracut-update --since "1 hour ago"
 ip addr show | grep "inet " | grep -v 127.0.0.1
 
 # Von jedem Rechner im Netzwerk:
-# Browser → http://192.168.x.x:5000
+# Browser → https://192.168.x.x:5000
 ```
 
 ---
