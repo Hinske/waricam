@@ -1,5 +1,5 @@
 /**
- * CeraCUT Lead Profiles V1.0
+ * CeraCUT Lead Profiles V1.1
  *
  * Profil-basierte Lead-Verwaltung für Wasserstrahl-CAM.
  * Built-in Profile für typische Material/Dicke-Kombinationen.
@@ -8,13 +8,13 @@
  * Persistenz via localStorage.
  *
  * Last Modified: 2026-03-15
- * Build: 20260315-leadprofiles
+ * Build: 20260315-intarsia20
  */
 
 const LeadProfiles = (() => {
     'use strict';
 
-    const VERSION = '1.0';
+    const VERSION = '1.1';
     const STORAGE_KEY = 'ceracut_lead_profiles';
     const ACTIVE_KEY = 'ceracut_active_lead_profile';
     const PREFIX = `[LeadProfiles V${VERSION}]`;
@@ -27,7 +27,7 @@ const LeadProfiles = (() => {
     let _activeProfileId = null;
 
     // ════════════════════════════════════════════════════════════════
-    // BUILT-IN PROFILE (7 Stück)
+    // BUILT-IN PROFILE (8 Stück)
     // ════════════════════════════════════════════════════════════════
 
     function _createBuiltinProfiles() {
@@ -226,6 +226,34 @@ const LeadProfiles = (() => {
                     altLeadOutLength: 3.0, altOvercutLength: 2.0
                 },
                 smallHole: { thresholdDiameter: 10.0, strategy: 'center_pierce' },
+                slit: { leadInType: 'on_geometry', overcutLength: 0 }
+            },
+            {
+                id: 'builtin-intarsia',
+                name: 'Intarsien',
+                isBuiltin: true,
+                ext: {
+                    leadInType: 'linear', leadInLength: 2.0, leadInRadius: 0, leadInAngle: 45,
+                    leadOutLength: 1.5, overcutLength: 0.3,
+                    piercingType: 'auto', piercingStationaryTime: 1.5,
+                    piercingCircularRadius: 2.0, piercingCircularTime: 2.0,
+                    preferCorners: true, leadInDynamic: false,
+                    leadInLengthMin: 1.0, leadInLengthMax: 5.0
+                },
+                int: {
+                    leadInType: 'linear', leadInLength: 1.5, leadInRadius: 0, leadInAngle: 45,
+                    leadOutLength: 1.0, overcutLength: 0.2,
+                    piercingType: 'auto', piercingStationaryTime: 1.5,
+                    piercingCircularRadius: 2.0, piercingCircularTime: 2.0,
+                    preferCorners: true, leadInDynamic: false,
+                    leadInLengthMin: 1.0, leadInLengthMax: 4.0
+                },
+                alt: {
+                    altLeadEnabled: false, altLeadType: 'linear',
+                    altLeadInLength: 1.5, altLeadInAngle: 5,
+                    altLeadOutLength: 1.0, altOvercutLength: 0.3
+                },
+                smallHole: { thresholdDiameter: 6.0, strategy: 'center_pierce' },
                 slit: { leadInType: 'on_geometry', overcutLength: 0 }
             }
         ];

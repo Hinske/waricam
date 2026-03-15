@@ -2235,16 +2235,7 @@ html, body {
     color: var(--ribbon-text);
 }
 
-.wizard-step-badge {
-    background: var(--accent-blue);
-    color: #fff;
-    font-weight: 700;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    min-width: 30px;
-    text-align: center;
-}
+
 
 .wizard-step-name {
     color: var(--ribbon-label);

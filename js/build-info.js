@@ -4,8 +4,8 @@
  */
 
 const CERACUT_BUILD = {
-    version: '6.0',
-    build: '20260315-leadprofiles',
+    version: '6.1',
+    build: '20260315-intarsia20',
     date: '2026-03-15',
     time: '23:59 MEZ',
 
@@ -14,7 +14,7 @@ const CERACUT_BUILD = {
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
         'cam-contour':        { version: '5.1', build: '20260315-clearance' },
-        'canvas-renderer':    { version: '3.17', build: '20260315-discfill' },
+        'canvas-renderer':    { version: '3.18', build: '20260315-intarsia20' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -27,8 +27,8 @@ const CERACUT_BUILD = {
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
-        'lead-profiles':      { version: '1.0', build: '20260315-leadprofiles' },
-        'app':                { version: '6.0', build: '20260315-leadprofiles' },
+        'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
+        'app':                { version: '6.1', build: '20260315-intarsia20' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.2', build: '20260315-ctxmenu' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -203,7 +203,12 @@ const CERACUT_BUILD = {
         'V6.0: DXF-Fehlermeldungen kategorisiert — Splines, Encoding, Komplexität mit Lösungshinweisen',
         'V6.0: Export-Validierung — prüft ob G-Code tatsächlich erzeugt wurde (nicht leer)',
         'V6.0: Toolpath-Preview — 2D-Visualisierung im Vorschau-Modal (Eilgang, Konturen, Reihenfolge, Legende)',
-        'V6.0: Disc-Fuellung — halbtransparente Flaeche fuer Teile in CAM-Modi, Holes werden ausgespart (even-odd)'
+        'V6.0: Disc-Fuellung — halbtransparente Flaeche fuer Teile in CAM-Modi, Holes werden ausgespart (even-odd)',
+        'V6.1: Intarsien V2.0 — automatische POS/NEG-Erzeugung als echte Canvas-Konturen (lead-profiles V1.1, canvas-renderer V3.18)',
+        'V6.1: Intarsien-Lead-Profil (builtin-intarsia) — lineare Leads fuer saubere Intarsien-Kanten',
+        'V6.1: Offset-Richtung Fix — NEG nach aussen (+offset), POS nach innen (-offset)',
+        'V6.1: Beide-Button — POS+NEG gleichzeitig als ueberlagerte Vorschau (Orange/Blau)',
+        'V6.1: Live-Regeneration bei Gap-Aenderung (debounced 200ms) und Undo/Redo'
     ],
     
     print() {

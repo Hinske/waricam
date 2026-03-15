@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.16 - Canvas Renderer
+ * CeraCUT V3.18 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
  * V3.16: Notebook-Navigation — Trackpad-Pan (Zwei-Finger), Pinch-to-Zoom, Space+Drag Pan
@@ -647,6 +647,27 @@ class CanvasRenderer {
             visible.filter(c => c.isReference).forEach(c => this.drawContour(ctx, c));
             visible.filter(c => !c.isReference).forEach(c => this.drawContour(ctx, c));
 
+            // V2.0: Intarsien-Konturen als halbtransparentes Overlay
+            const intarsiaPreview = this.app?.settings?.intarsiaPreview;
+            const isCamMode = (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge');
+            if (this.app?.settings?.intarsiaMode && intarsiaPreview && isCamMode) {
+                const sets = [];
+                if (intarsiaPreview === 'pos' || intarsiaPreview === 'both')
+                    sets.push({ contours: this.app.intarsiaPosContours, color: '#ff8c00' });
+                if (intarsiaPreview === 'neg' || intarsiaPreview === 'both')
+                    sets.push({ contours: this.app.intarsiaNegContours, color: '#2196f3' });
+
+                ctx.globalAlpha = 0.7;
+                for (const set of sets) {
+                    if (!set.contours) continue;
+                    for (const c of set.contours) {
+                        if (c.isReference) continue;
+                        this.drawContour(ctx, c, { overrideColor: set.color });
+                    }
+                }
+                ctx.globalAlpha = 1;
+            }
+
             if (this.currentMode === 'reihenfolge' && this.app?.cutOrder) {
                 this.drawTravelPaths(ctx);
             }
@@ -747,7 +768,7 @@ class CanvasRenderer {
         ctx.globalAlpha = 1;
     }
 
-    drawContour(ctx, contour) {
+    drawContour(ctx, contour, options) {
         const points = contour.points;
         if (!points || points.length < 2) return;
 
@@ -783,33 +804,12 @@ class CanvasRenderer {
             const layerDef = this.app?.layerManager?.getLayer(layerName);
             let displayColor = layerDef?.color || this.colors.disc;
 
-            // V5.7: Intarsia-Preview — Konturfarbe + Fugen-Offset-Linien
-            const intarsiaPreview = this.app?.settings?.intarsiaPreview;
-            const isCamMode = (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge');
-            if (intarsiaPreview && contour.isClosed && isCamMode) {
-                const posColor = '#ff8c00'; // Orange = Einleger (POS)
-                const negColor = '#2196f3'; // Blau = Aussparung (NEG)
-                displayColor = (intarsiaPreview === 'pos') ? posColor : negColor;
-
-                // Fugen-Offset-Linien zeichnen (POS innen, NEG außen)
-                const kerf = this.app?.settings?.kerfWidth || 0.8;
-                const gap = this.app?.settings?.intarsiaGap ?? (kerf * 2);
-                const addOffset = (gap - 2 * kerf) / 2;
-                if (Math.abs(addOffset) >= 0.01 && points.length >= 3) {
-                    try {
-                        const off1 = Geometry.offsetPolygon(points, addOffset, true);
-                        const off2 = Geometry.offsetPolygon(points, -addOffset, true);
-                        ctx.globalAlpha = 0.5;
-                        ctx.setLineDash([4 / this.scale, 3 / this.scale]);
-                        if (off1?.length > 2) this.drawPath(ctx, off1, posColor, baseWidth * 0.7);
-                        if (off2?.length > 2) this.drawPath(ctx, off2, negColor, baseWidth * 0.7);
-                        ctx.setLineDash([]);
-                        ctx.globalAlpha = 1;
-                    } catch (e) {
-                        console.warn('[Intarsia Preview] Offset-Fehler:', e.message);
-                    }
-                }
+            // V2.0: overrideColor für Intarsien-Overlay-Konturen
+            if (options?.overrideColor) {
+                displayColor = options.overrideColor;
             }
+
+            const isCamMode = (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge');
 
             if (isHovered) displayColor = this.colors.hovered;
             if (isSelected) displayColor = this.colors.selected;

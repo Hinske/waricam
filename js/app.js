@@ -1,5 +1,5 @@
 /**
- * CeraCUT V5.9 - Main Application
+ * CeraCUT V6.1 - Main Application
  * Wizard Controller + Konturen-Panel
  * V3.8: Layer-System, Layer-Manager Dialog, DXF-Writer R12
  * V3.7: Tier 4 Aufteilen — CL2D (Halbieren), CLND (N-Teilen), CLDCL (Divided Calculation)
@@ -38,6 +38,8 @@ class CeraCutApp {
         this.dxfContent = null;
         this.dxfResult = null;
         this.contours = [];
+        this.intarsiaPosContours = null;  // CamContour[] | null — Intarsien V2.0
+        this.intarsiaNegContours = null;  // CamContour[] | null — Intarsien V2.0
         this.cutOrder = []; // Schnitt-Reihenfolge (Indizes)
         this.selectedLayers = [];
         this.bounds = null;
@@ -69,7 +71,7 @@ class CeraCutApp {
             // V5.2: Intarsien-Modus
             intarsiaMode: false,
             intarsiaGap: 1.6,           // Fugenbreite in mm
-            intarsiaPreview: null,      // 'pos' | 'neg' | null
+            intarsiaPreview: null,      // 'pos' | 'neg' | 'both' | null
             // V5.3 Phase B: Flächenklassen (IGEMS-Standard)
             areaClasses: null           // null = nicht aktiv, Array = [{maxArea, enabled, ...}]
         };
@@ -2254,6 +2256,7 @@ class CeraCutApp {
     
     /** UI nach Undo/Redo aktualisieren */
     _refreshAfterUndoRedo() {
+        if (this.settings.intarsiaMode) this.regenerateIntarsiaContours();
         this.renderer?.render();
         this.updateContourPanel();
         this.updateCutOrderList?.();
@@ -2451,9 +2454,7 @@ class CeraCutApp {
         // Wizard-Indikator aktualisieren
         const stepToRibbon = { 1: 'file', 2: 'cam', 3: 'cam', 4: 'cam', 5: 'order', 6: 'export' };
         const stepNames = ['', 'Datei laden', 'Referenz', 'Nullpunkt', 'Schneiden', 'Reihenfolge', 'Export'];
-        const badge = document.getElementById('wizard-step-badge');
         const stepNameEl = document.getElementById('wizard-step-name');
-        if (badge) badge.textContent = `${this.currentStep}/${this.totalSteps}`;
         if (stepNameEl) stepNameEl.textContent = stepNames[this.currentStep] || '';
 
         // Ribbon-Tab synchronisieren (nur für Steps 2-6, Step 1 lässt den Tab wie er ist)
@@ -4051,8 +4052,74 @@ class CeraCutApp {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // V5.2: INTARSIEN-EXPORT (Dual NEG/POS)
+    // V2.0: INTARSIEN — Live-Konturen + Export
     // ════════════════════════════════════════════════════════════════
+
+    /**
+     * V2.0: Erzeugt POS- und NEG-Konturen als echte CamContour-Arrays.
+     * Werden vom Renderer als halbtransparente Overlay-Konturen gezeichnet.
+     *
+     * NEG (Aussparung): Behält cuttingMode, Offset +additionalOffset (nach außen → Loch größer)
+     * POS (Einleger):   Invertiert cuttingMode, Offset -additionalOffset (nach innen → Teil kleiner)
+     */
+    regenerateIntarsiaContours() {
+        if (!this.settings.intarsiaMode || !this.contours || this.contours.length === 0) {
+            this.intarsiaPosContours = null;
+            this.intarsiaNegContours = null;
+            return;
+        }
+
+        const kerf = this.settings.kerfWidth || 0.8;
+        const gap = parseFloat(document.getElementById('intarsia-gap')?.value) || this.settings.intarsiaGap || (kerf * 2);
+        const additionalOffset = (gap - 2 * kerf) / 2;
+
+        const intarsiaProfile = typeof LeadProfiles !== 'undefined'
+            ? LeadProfiles.getById('builtin-intarsia')
+            : null;
+
+        const posContours = [];
+        const negContours = [];
+
+        for (const c of this.contours) {
+            if (c.isReference) continue;
+            if (!c.isClosed && c.cuttingMode !== 'slit') continue;
+
+            // ─── NEG-Clone: Aussparung — cuttingMode beibehalten, Offset nach außen ───
+            const negClone = c.clone();
+            negClone._intarsiaType = 'neg';
+            if (Math.abs(additionalOffset) >= 0.01 && negClone.isClosed && negClone.cuttingMode !== 'slit') {
+                this._applyIntarsiaOffset(negClone, +additionalOffset);
+            }
+
+            // ─── POS-Clone: Einleger — cuttingMode invertieren, Offset nach innen ───
+            const posClone = c.clone();
+            posClone._intarsiaType = 'pos';
+            if (posClone.cuttingMode === 'disc') {
+                posClone.cuttingMode = 'hole';
+                posClone.type = 'INNER';
+            } else if (posClone.cuttingMode === 'hole') {
+                posClone.cuttingMode = 'disc';
+                posClone.type = 'OUTER';
+            }
+            if (Math.abs(additionalOffset) >= 0.01 && posClone.isClosed && posClone.cuttingMode !== 'slit') {
+                this._applyIntarsiaOffset(posClone, -additionalOffset);
+            }
+
+            // Intarsien-Lead-Profil anwenden
+            if (intarsiaProfile) {
+                LeadProfiles.applyBatchRules([negClone], intarsiaProfile);
+                LeadProfiles.applyBatchRules([posClone], intarsiaProfile);
+            }
+
+            negContours.push(negClone);
+            posContours.push(posClone);
+        }
+
+        this.intarsiaPosContours = posContours;
+        this.intarsiaNegContours = negContours;
+
+        console.log(`[Intarsia V2.0] Regenerated: ${posContours.length} POS, ${negContours.length} NEG`);
+    }
 
     /**
      * Erzeugt zwei CNC-Dateien für Intarsien-Schnitt:
@@ -4065,8 +4132,8 @@ class CeraCutApp {
      *          → Leads flippen automatisch (Pierce immer im Abfall)
      */
     exportIntarsia() {
-        console.time('[Intarsia V5.2] Export');
-        console.log('[Intarsia V5.2] exportIntarsia() gestartet');
+        console.time('[Intarsia V2.0] Export');
+        console.log('[Intarsia V2.0] exportIntarsia() gestartet');
 
         if (!this.contours || this.contours.length === 0) {
             this.showToast('Keine Konturen zum Exportieren', 'error');
@@ -4076,6 +4143,9 @@ class CeraCutApp {
             this.showToast('Keine Schneidreihenfolge festgelegt', 'error');
             return;
         }
+
+        // Sicherstellen dass Intarsien-Konturen aktuell sind
+        this.regenerateIntarsiaContours();
 
         const baseName = document.getElementById('planname-input')?.value
             || this.dxfFileName?.replace(/\.dxf$/i, '').toUpperCase()
@@ -4088,20 +4158,18 @@ class CeraCutApp {
             technologyParams
         };
 
-        // ─── NEG Export (Aussparung) — normale cuttingModes (disc→G42) + Gap-Offset ───
-        // Disc-Konturen + G42 = Kerf nach außen = Loch wird größer = Aussparung
-        console.log('[Intarsia V5.2] Generiere NEG (Aussparung, normale Modes + Gap-Offset)...');
-        const negContours = this._createIntarsiaContours('neg');
+        // ─── NEG Export (Aussparung) — Offset nach außen, Loch wird größer ───
+        console.log('[Intarsia V2.0] Generiere NEG (Aussparung)...');
+        const negContours = this._buildIntarsiaExportContours(this.intarsiaNegContours);
         const ppNeg = new SinumerikPostprocessor();
         const negResult = ppNeg.generate(negContours, this.cutOrder, {
             ...commonSettings,
             planName: baseName + '_NEG'
         });
 
-        // ─── POS Export (Einleger) — invertierte cuttingModes (disc→hole→G41) ───
-        // Hole-Modus + G41 = Kerf nach innen = Teil wird kleiner = Einleger
-        console.log('[Intarsia V5.2] Generiere POS (Einleger, invertierte Modes)...');
-        const posContours = this._createIntarsiaContours('pos');
+        // ─── POS Export (Einleger) — invertierte cuttingModes, Offset nach innen ───
+        console.log('[Intarsia V2.0] Generiere POS (Einleger)...');
+        const posContours = this._buildIntarsiaExportContours(this.intarsiaPosContours);
         const ppPos = new SinumerikPostprocessor();
         const posResult = ppPos.generate(posContours, this.cutOrder, {
             ...commonSettings,
@@ -4115,23 +4183,36 @@ class CeraCutApp {
         ];
 
         if (allWarnings.length > 0) {
-            console.warn('[Intarsia V5.2] Warnungen:', allWarnings);
+            console.warn('[Intarsia V2.0] Warnungen:', allWarnings);
         }
 
         this._downloadIntarsiaFile(posResult.code, baseName + '_POS.CNC');
-        // Kurze Verzögerung damit Browser nicht "Multiple Downloads" blockiert
         setTimeout(() => {
             this._downloadIntarsiaFile(negResult.code, baseName + '_NEG.CNC');
         }, 300);
 
-        const totalContours = (posResult.stats?.contours || 0) + (negResult.stats?.contours || 0);
         this.showToast(
-            `✅ Intarsien: ${baseName}_POS.CNC + ${baseName}_NEG.CNC (${posResult.stats?.contours || 0} Konturen)`,
+            `Intarsien: ${baseName}_POS.CNC + ${baseName}_NEG.CNC (${posResult.stats?.contours || 0} Konturen)`,
             'success'
         );
 
-        console.log(`[Intarsia V5.2] Export abgeschlossen: POS=${posResult.stats?.contours} NEG=${negResult.stats?.contours} Konturen`);
-        console.timeEnd('[Intarsia V5.2] Export');
+        console.log(`[Intarsia V2.0] Export abgeschlossen: POS=${posResult.stats?.contours} NEG=${negResult.stats?.contours} Konturen`);
+        console.timeEnd('[Intarsia V2.0] Export');
+    }
+
+    /**
+     * Baut Export-Konturen-Array aus pre-generierten Intarsien-Konturen.
+     * Füllt Referenz-Konturen an den richtigen Positionen ein.
+     */
+    _buildIntarsiaExportContours(intarsiaContours) {
+        if (!intarsiaContours) return this.contours;
+        // Map: Intarsien-Konturen an den passenden Indizes, Referenzen/offene Konturen direkt
+        let intIdx = 0;
+        return this.contours.map(c => {
+            if (c.isReference) return c;
+            if (!c.isClosed && c.cuttingMode !== 'slit') return c;
+            return intarsiaContours[intIdx++] || c;
+        });
     }
 
     /**
@@ -4183,9 +4264,10 @@ class CeraCutApp {
                 // slit bleibt slit
             }
 
-            // Fugen-Offset anwenden (für POS und NEG)
+            // Fugen-Offset anwenden: NEG nach außen (+), POS nach innen (-)
             if (Math.abs(additionalOffset) >= 0.01 && clone.isClosed && clone.cuttingMode !== 'slit') {
-                this._applyIntarsiaOffset(clone, additionalOffset);
+                const sign = (fileType === 'pos') ? -1 : +1;
+                this._applyIntarsiaOffset(clone, sign * additionalOffset);
             }
 
             // Leads neu berechnen passend zum (ggf. invertierten) cuttingMode

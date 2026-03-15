@@ -57,7 +57,6 @@
         <div class="ribbon-tab" data-ribbon="export">Export</div>
         <div class="ribbon-tab" data-ribbon="view">Ansicht</div>
         <div class="wizard-indicator" id="wizard-indicator">
-            <span class="wizard-step-badge" id="wizard-step-badge">1/6</span>
             <span class="wizard-step-name" id="wizard-step-name">Datei laden</span>
         </div>
     </div>
@@ -736,6 +735,7 @@
                     <div class="ribbon-inline-row" style="gap:2px">
                         <button class="ribbon-btn-mini intarsia-preview-btn" data-view="pos" title="Einleger-Vorschau (POS)" disabled>POS</button>
                         <button class="ribbon-btn-mini intarsia-preview-btn" data-view="neg" title="Aussparungs-Vorschau (NEG)" disabled>NEG</button>
+                        <button class="ribbon-btn-mini intarsia-preview-btn" data-view="both" title="Beide Vorschauen" disabled>&#9889;</button>
                     </div>
                     <div class="ribbon-inline-row">
                         <button class="ribbon-btn-mini" id="btn-intarsia-export" title="NEG + POS exportieren" disabled style="color:#f0a030">⬇ Export</button>
@@ -1422,10 +1422,10 @@
 <script src="js/arc-fitting.js?v=20260315-bugfix35"></script>
 <script src="js/dxf-parser.js?v=20260315-bugfix35"></script>
 <script src="js/cam-contour.js?v=20260315-clearance"></script>
-<script src="js/lead-profiles.js?v=20260315-leadprofiles"></script>
+<script src="js/lead-profiles.js?v=20260315-intarsia20"></script>
 <script src="js/cerajet-engine.js?v=20260315-bugfix35"></script>
 <script src="js/ceracut-pipeline.js?v=20260315-bugfix35"></script>
-<script src="js/canvas-renderer.js?v=20260315-trackpad"></script>
+<script src="js/canvas-renderer.js?v=20260315-intarsia20"></script>
 <script src="js/undo-manager.js?v=20260315-bugfix35"></script>
 <script src="js/sinumerik-postprocessor.js?v=20260315-bugfix35"></script>
 <script src="js/command-line.js?v=20260315-bugfix35"></script>
@@ -1456,7 +1456,7 @@
 <script src="js/quality-zones.js?v=20260315-bugfix35"></script>
 <script src="js/project-manager.js?v=20260315-bugfix35"></script>
 <script src="js/dxf-browser.js?v=20260315-bugfix35"></script>
-<script src="js/app.js?v=20260315-leadprofiles"></script>
+<script src="js/app.js?v=20260315-intarsia20"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1489,9 +1489,7 @@
 
             // Wizard-Indikator aktualisieren
             const step = ribbonToStep[target];
-            const badge = document.getElementById('wizard-step-badge');
             const stepName = document.getElementById('wizard-step-name');
-            if (badge && step) badge.textContent = step + '/6';
             if (stepName) stepName.textContent = ribbonToName[target] || '';
 
             // App-Step synchronisieren (CAM-Modi brauchen korrekte Renderer-Mode)
@@ -2189,10 +2187,14 @@
                     intarsiaFields.forEach(el => el.disabled = !on);
                     if (on) {
                         updateIntarsiaInfo();
-                        console.log('[Intarsia V5.2] Modus aktiviert');
+                        origApp.regenerateIntarsiaContours?.();
+                        console.log('[Intarsia V2.0] Modus aktiviert');
                     } else {
-                        console.log('[Intarsia V5.2] Modus deaktiviert');
+                        origApp.intarsiaPosContours = null;
+                        origApp.intarsiaNegContours = null;
+                        console.log('[Intarsia V2.0] Modus deaktiviert');
                     }
+                    origApp.renderer?.render();
                 }
 
                 function updateIntarsiaInfo() {
@@ -2209,10 +2211,20 @@
                     }
                 }
 
+                let _gapDebounceTimer = null;
                 chk?.addEventListener('change', () => setIntarsiaEnabled(chk.checked));
                 gapInput?.addEventListener('input', () => {
                     updateIntarsiaInfo();
                     origApp.settings.intarsiaGap = parseFloat(gapInput.value) || 1.6;
+                    clearTimeout(_gapDebounceTimer);
+                    _gapDebounceTimer = setTimeout(() => {
+                        origApp.regenerateIntarsiaContours?.();
+                        origApp.renderer?.render();
+                    }, 200);
+                });
+                gapInput?.addEventListener('change', () => {
+                    origApp.settings.intarsiaGap = parseFloat(gapInput.value) || 1.6;
+                    origApp.regenerateIntarsiaContours?.();
                     origApp.renderer?.render();
                 });
 
@@ -2225,26 +2237,25 @@
                     }
                 });
 
-                // NEG/POS Vorschau-Buttons — Toggle: nochmal klicken = deaktivieren
+                // NEG/POS/Beide Vorschau-Buttons — Toggle: nochmal klicken = deaktivieren
                 previewBtns.forEach(btn => {
                     btn.addEventListener('click', () => {
-                        const view = btn.dataset.view; // 'pos' | 'neg'
+                        const view = btn.dataset.view; // 'pos' | 'neg' | 'both'
                         if (origApp.settings.intarsiaPreview === view) {
-                            // Nochmal geklickt → deaktivieren
                             origApp.settings.intarsiaPreview = null;
                             previewBtns.forEach(b => b.classList.remove('active'));
-                            console.log('[Intarsia V5.2] Vorschau: AUS');
+                            console.log('[Intarsia V2.0] Vorschau: AUS');
                         } else {
                             previewBtns.forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
                             origApp.settings.intarsiaPreview = view;
-                            console.log(`[Intarsia V5.2] Vorschau: ${view.toUpperCase()}`);
+                            console.log(`[Intarsia V2.0] Vorschau: ${view.toUpperCase()}`);
                         }
                         origApp.renderer?.render();
                     });
                 });
 
-                console.log('[Intarsia V5.2] UI-Bindings initialisiert');
+                console.log('[Intarsia V2.0] UI-Bindings initialisiert');
             })();
 
             // ═══ V3.11: Image Underlay Bindings ═══
