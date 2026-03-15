@@ -1,7 +1,7 @@
 /**
  * CeraCUT Build Info V6.1
  * Version: V6.1
- * Last Modified: 2026-03-15
+ * Last Modified: 2026-03-15, 23:59 MEZ
  * Build: 20260315-intarsia20
  *
  * Zeigt Versionsinformationen in der Console
