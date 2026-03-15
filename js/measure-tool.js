@@ -1,5 +1,5 @@
 /**
- * WARICAM V3.12 - Measure Tool (IGEMS-Stil)
+ * CeraCUT V3.12 - Measure Tool (IGEMS-Stil)
  * 5 Mess-Modi: Abstand, Radius, Winkel, Fläche, Volumen
  * Build: 20260216-meas1
  */

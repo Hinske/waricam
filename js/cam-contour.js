@@ -1,5 +1,5 @@
 /**
- * WARICAM CamContour V4.8 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V4.8 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -1619,7 +1619,7 @@ class CamContour {
     }
 
     /**
-     * Standard-Flächenklassen nach WARICAM Kap. 6.2 / IGEMS Handbuch.
+     * Standard-Flächenklassen nach CeraCUT Kap. 6.2 / IGEMS Handbuch.
      * Kann überschrieben werden durch user-Einstellungen in settings.areaClasses.
      */
     static defaultAreaClasses() {

@@ -1,5 +1,5 @@
 /**
- * WARICAM Nesting Engine V1.0
+ * CeraCUT Nesting Engine V1.0
  * Automatische Teile-Verschachtelung für Wasserstrahlschneiden
  *
  * Algorithmen:
@@ -972,7 +972,7 @@ const NestingEngine = (() => {
                 p.y += placement.position.y;
             }
 
-            // Cache invalidieren (WARICAM-Pattern)
+            // Cache invalidieren (CeraCUT-Pattern)
             if (typeof ModificationTool !== 'undefined' && ModificationTool?.invalidateCache) {
                 ModificationTool.invalidateCache(contour);
             } else {

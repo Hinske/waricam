@@ -47,7 +47,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 
 | Feld | Wert |
 |------|------|
-| Name | WARICAM / CeraCAM |
+| Name | CeraCUT / CeraCUT |
 | Version | **V5.9** |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
@@ -69,7 +69,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.4** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
-| **Pipeline** | `waricam-pipeline.js` | **V3.2** | Topologie (disc/hole/reference/slit), Kerf-Offset |
+| **Pipeline** | `ceracut-pipeline.js` | **V3.2** | Topologie (disc/hole/reference/slit), Kerf-Offset |
 | **Drawing Tools** | `drawing-tools.js` | **V2.5** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
@@ -119,7 +119,7 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 ```
 waterjet_v2/
 ├── index.html                         ← UI (Wizard, Export-Modal, Ribbon, Command-Line)
-├── styles.css                         ← Dark Theme (WARICAM Blue)
+├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
 │   ├── build-info.js                  ← Versions-Banner V5.9
@@ -128,7 +128,7 @@ waterjet_v2/
 │   ├── dxf-parser.js                  ← DXF Parser V3.8 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.3 (Intersection, Arabeske, splitAndOverlap)
-│   ├── waricam-pipeline.js            ← Pipeline V3.1
+│   ├── ceracut-pipeline.js            ← Pipeline V3.1
 │   ├── cam-contour.js                 ← Kontur-Klasse V4.8 (Lead-Routing)
 │   ├── cerajet-engine.js              ← Technologie-Engine
 │   ├── canvas-renderer.js             ← Canvas Rendering V3.14 (Lead-Differenzierung)
@@ -361,7 +361,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-WARICAM/CeraCAM V5.9 - Build 20260315-bugfix35
+CeraCUT/CeraCUT V5.9 - Build 20260315-bugfix35
 [BUILD] Modules:
   dxf-parser: V3.8 (20260312-textglyphs)
   dxf-writer: V1.2 (20260315-bugfix35)

@@ -1,5 +1,5 @@
 /**
- * WARICAM CAM-Tools V1.0 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
+ * CeraCUT CAM-Tools V1.0 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
  * 7 Tools für Analyse, Optimierung und Vorbereitung der Schnittgeometrie
  * 
  * Tools:
@@ -11,7 +11,7 @@
  *   Vectorize   (VZ)   — Kurven/Arcs in Liniensegmente umwandeln (Toleranz)
  *   ConvexHull  (HULL) — Konvexes Hüllpolygon um selektierte Objekte
  * 
- * Benötigt: geometry-ops.js V2.1, drawing-tools.js V2.2, waricam-pipeline.js V3.1
+ * Benötigt: geometry-ops.js V2.1, drawing-tools.js V2.2, ceracut-pipeline.js V3.1
  * 
  * Created: 2026-02-17 MEZ
  * Build: 20260217-camtools10

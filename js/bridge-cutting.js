@@ -1,5 +1,5 @@
 /**
- * WARICAM Bridge Cutting V1.0 — Micro-Joint / Steg-Modul
+ * CeraCUT Bridge Cutting V1.0 — Micro-Joint / Steg-Modul
  *
  * Verwaltet Bridges (Stege/Micro-Joints) zwischen Teilen und Restmaterial.
  * Bridges halten Teile während des Schneidvorgangs in Position.

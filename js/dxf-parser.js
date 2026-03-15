@@ -1,5 +1,5 @@
 /**
- * WARICAM DXF Parser V3.8
+ * CeraCUT DXF Parser V3.8
  * Last Modified: 2026-03-12 MEZ
  * Build: 20260312-textglyphs
  *

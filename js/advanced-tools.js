@@ -1,5 +1,5 @@
 /**
- * WARICAM Advanced Tools V1.3 — Tier 5 CAD Tools
+ * CeraCUT Advanced Tools V1.3 — Tier 5 CAD Tools
  * 13 CAD-Werkzeuge + Ribbon-Alias-Fix
  *
  * V1.3: Offset Ghost-Preview (handleMouseMove), Chamfer Continuous Mode + finish()

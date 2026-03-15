@@ -1,5 +1,5 @@
 /**
- * WARICAM Tool Manager V2.2 — Tier 4 Aufteilungstools
+ * CeraCUT Tool Manager V2.2 — Tier 4 Aufteilungstools
  * Ergänzt drawing-tools.js um CL2D (Halbieren), CLND (N-Teilen), CLDCL (Berechnungs-Dialog)
  * 
  * WICHTIG: drawing-tools.js MUSS vor dieser Datei geladen werden!

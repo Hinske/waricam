@@ -1,5 +1,5 @@
 /**
- * WARICAM Drawing Tools Extension V1.0
+ * CeraCUT Drawing Tools Extension V1.0
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
@@ -751,8 +751,8 @@ class OverlapBreakTool extends BaseTool {
                 contours.push(...newContours);
                 contours.forEach(c => { c.isSelected = false; });
                 // Pipeline re-trigger für Topologie-Validierung
-                if (typeof WaricamPipeline !== 'undefined') {
-                    WaricamPipeline.autoProcess(app.contours, { kerfWidth: app.kerfWidth || 0.8 });
+                if (typeof CeraCutPipeline !== 'undefined') {
+                    CeraCutPipeline.autoProcess(app.contours, { kerfWidth: app.kerfWidth || 0.8 });
                 }
                 rerender();
             },

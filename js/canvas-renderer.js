@@ -1,5 +1,5 @@
 /**
- * WARICAM V3.13 - Canvas Renderer
+ * CeraCUT V3.13 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
@@ -144,7 +144,7 @@ class CanvasRenderer {
         this._hasSelection = false; // Schneller Check ohne .some() bei jedem Render
 
         // Starte mit gespeichertem Theme oder Dark als Default
-        const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('ceracam-theme')) || 'dark';
+        const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('ceracut-theme')) || 'dark';
         this.colors = Object.assign({}, CANVAS_THEMES[savedTheme] || CANVAS_THEMES.dark);
         this._currentTheme = savedTheme;
 

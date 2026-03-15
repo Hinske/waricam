@@ -1,6 +1,6 @@
-# CeraCAM - Waterjet CAM Software
+# CeraCUT - Waterjet CAM Software
 
-CAM-Software für CNC-Wasserstrahlschneiden. Basiert auf dem WARICAM-Format.
+CAM-Software für CNC-Wasserstrahlschneiden. Basiert auf dem CeraCUT-Format.
 
 ## Features
 
@@ -44,7 +44,7 @@ npx serve .
 ├── geometry.js         # Geometrie-Kernel
 ├── dxf-parser.js       # DXF Import
 ├── cam-contour.js      # Konturen-Datenmodell
-├── waricam-pipeline.js # Processing Pipeline
+├── ceracut-pipeline.js # Processing Pipeline
 ├── ROADMAP.md          # Feature Roadmap
 └── Examples/           # Test-DXF-Dateien
 ```

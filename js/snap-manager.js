@@ -1,5 +1,5 @@
 /**
- * WARICAM Snap Manager V1.2
+ * CeraCUT Snap Manager V1.2
  * Erweitetes Object-Snap System (AutoCAD-Stil)
  * - Endpoint, Midpoint, Center, GeoCenter, Quadrant, Intersection, Perpendicular, Tangent, Nearest
  * - V1.1: Perpendicular + Tangent (7 Kern-Snaps)

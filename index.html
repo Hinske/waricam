@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CeraCAM V5.7 — Wasserstrahl CAM</title>
+    <title>CeraCUT V5.7 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css?v=20260315-ctxpanel">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
@@ -39,7 +39,7 @@
             </button>
         </div>
         <span class="title-text">
-            <span id="current-filename">Keine Datei geladen</span> — CeraCAM V5.7
+            <span id="current-filename">Keine Datei geladen</span> — CeraCUT V5.7
         </span>
         <div class="title-right">
             <span class="version-badge">SINUMERIK 840D</span>
@@ -432,7 +432,7 @@
             <div class="ribbon-group-label">CAM-Tools</div>
         </div>
     </div>
-    <!-- ── CAM Panel (V3.14 — IGEMS/WARICAM-konform, 7 Gruppen) ── -->
+    <!-- ── CAM Panel (V3.14 — IGEMS/CeraCUT-konform, 7 Gruppen) ── -->
     <div class="ribbon-panel" data-ribbon="cam" style="display:none">
         <!-- ═══ Referenz ═══ -->
         <div class="ribbon-group">
@@ -592,7 +592,7 @@
             <div class="ribbon-group-label">Außen-Lead</div>
         </div>
 
-        <!-- ═══ Innen-Lead (NEU V3.14 — WARICAM Kap. 6.2.2) ═══ -->
+        <!-- ═══ Innen-Lead (NEU V3.14 — CeraCUT Kap. 6.2.2) ═══ -->
         <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
@@ -965,11 +965,11 @@
         <!-- ═══ Design / Theme ═══ -->
         <div class="ribbon-group">
             <div class="ribbon-group-content">
-                <div class="ribbon-btn-lg" id="btn-theme-light" title="Hell-Modus (Light)" onclick="document.documentElement.removeAttribute('data-theme');localStorage.setItem('ceracam-theme','light');document.getElementById('btn-theme-light').classList.add('active');document.getElementById('btn-theme-dark').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('light');else if(window.renderer)window.renderer.setTheme('light');console.log('[CeraCAM] Theme: light');">
+                <div class="ribbon-btn-lg" id="btn-theme-light" title="Hell-Modus (Light)" onclick="document.documentElement.removeAttribute('data-theme');localStorage.setItem('ceracut-theme','light');document.getElementById('btn-theme-light').classList.add('active');document.getElementById('btn-theme-dark').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('light');else if(window.renderer)window.renderer.setTheme('light');console.log('[CeraCUT] Theme: light');">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#f5c842" stroke="#e8a020" stroke-width="1.5"/><line x1="16" y1="2" x2="16" y2="6" stroke="#e8a020" stroke-width="2"/><line x1="16" y1="26" x2="16" y2="30" stroke="#e8a020" stroke-width="2"/><line x1="2" y1="16" x2="6" y2="16" stroke="#e8a020" stroke-width="2"/><line x1="26" y1="16" x2="30" y2="16" stroke="#e8a020" stroke-width="2"/><line x1="6.1" y1="6.1" x2="8.9" y2="8.9" stroke="#e8a020" stroke-width="2"/><line x1="23.1" y1="23.1" x2="25.9" y2="25.9" stroke="#e8a020" stroke-width="2"/><line x1="23.1" y1="6.1" x2="25.9" y2="8.9" stroke="#e8a020" stroke-width="2"/><line x1="6.1" y1="23.1" x2="8.9" y2="25.9" stroke="#e8a020" stroke-width="2"/></svg></div>
                     <span class="label">Hell</span>
                 </div>
-                <div class="ribbon-btn-lg" id="btn-theme-dark" title="Dunkel-Modus (Dark)" onclick="document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('ceracam-theme','dark');document.getElementById('btn-theme-dark').classList.add('active');document.getElementById('btn-theme-light').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('dark');else if(window.renderer)window.renderer.setTheme('dark');console.log('[CeraCAM] Theme: dark');">
+                <div class="ribbon-btn-lg" id="btn-theme-dark" title="Dunkel-Modus (Dark)" onclick="document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('ceracut-theme','dark');document.getElementById('btn-theme-dark').classList.add('active');document.getElementById('btn-theme-light').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('dark');else if(window.renderer)window.renderer.setTheme('dark');console.log('[CeraCUT] Theme: dark');">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M10 6 A12 12 0 1 0 26 22 A9 9 0 1 1 10 6z" fill="#4fc3f7" stroke="#2196f3" stroke-width="1.5"/></svg></div>
                     <span class="label">Dunkel</span>
                 </div>
@@ -1366,7 +1366,7 @@
     <div id="print-footer">
         <span class="print-filename"></span>
         <span class="print-date"></span>
-        <span class="print-app">CeraCAM</span>
+        <span class="print-app">CeraCUT</span>
     </div>
 </div>
 
@@ -1380,7 +1380,7 @@
 <script src="js/dxf-parser.js?v=20260312-v38-textglyphs"></script>
 <script src="js/cam-contour.js?v=20260311-v48"></script>
 <script src="js/cerajet-engine.js?v=20260217-tech10"></script>
-<script src="js/waricam-pipeline.js?v=20260215-2200"></script>
+<script src="js/ceracut-pipeline.js?v=20260215-2200"></script>
 <script src="js/canvas-renderer.js?v=20260311-leaddiff"></script>
 <script src="js/undo-manager.js?v=20260309-v11"></script>
 <script src="js/sinumerik-postprocessor.js?v=20260309-v13"></script>
@@ -1455,7 +1455,7 @@
     });
 
     // ── App.js Backward Compatibility Shim ──
-    // Must run AFTER DOMContentLoaded (app.js creates WaricamApp there)
+    // Must run AFTER DOMContentLoaded (app.js creates CeraCutApp there)
     // Using setTimeout(0) to run after all DOMContentLoaded handlers
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
@@ -1504,7 +1504,7 @@
                     }
                     origCancelTool();
                 };
-                console.log('%c[CeraCAM Shim] Auto-Apply bei Tool-Ende aktiviert', 'color: #22c55e');
+                console.log('%c[CeraCUT Shim] Auto-Apply bei Tool-Ende aktiviert', 'color: #22c55e');
             }
             
             // Ribbon-Tab-Wechsel triggert passende Modi
@@ -1861,9 +1861,9 @@
                         pathEl.style.color = '#0a0';
                     }
                     origApp.showToast(`CNC-Ordner: ${cncDirHandle.name}`, 'success');
-                    console.log('[CeraCAM CNC] Ordner gewählt:', cncDirHandle.name);
+                    console.log('[CeraCUT CNC] Ordner gewählt:', cncDirHandle.name);
                 } catch (err) {
-                    if (err.name !== 'AbortError') console.error('[CeraCAM CNC] Ordner-Auswahl fehlgeschlagen:', err);
+                    if (err.name !== 'AbortError') console.error('[CeraCUT CNC] Ordner-Auswahl fehlgeschlagen:', err);
                 }
             });
 
@@ -1910,9 +1910,9 @@
                             `✅ ${filename} → ${cncDirHandle.name}/ (${result.stats?.contours || '?'} Konturen)`,
                             'success'
                         );
-                        console.log('[CeraCAM CNC] MPF geschrieben:', cncDirHandle.name + '/' + filename);
+                        console.log('[CeraCUT CNC] MPF geschrieben:', cncDirHandle.name + '/' + filename);
                     } catch (err) {
-                        console.error('[CeraCAM CNC] Schreiben fehlgeschlagen:', err);
+                        console.error('[CeraCUT CNC] Schreiben fehlgeschlagen:', err);
                         origApp.showToast('CNC Export fehlgeschlagen: ' + err.message, 'error');
                     }
                 } else if (hasFSAPI) {
@@ -1928,7 +1928,7 @@
                         origApp.showToast(`✅ ${handle.name} exportiert (${result.stats?.contours || '?'} Konturen)`, 'success');
                     } catch (err) {
                         if (err.name !== 'AbortError') {
-                            console.error('[CeraCAM CNC] Export fehlgeschlagen:', err);
+                            console.error('[CeraCUT CNC] Export fehlgeschlagen:', err);
                             origApp.showToast('CNC Export fehlgeschlagen: ' + err.message, 'error');
                         }
                     }
@@ -1963,7 +1963,7 @@
                     origApp.showToast('Klicke auf Canvas für neuen Nullpunkt (Snap aktiv)', 'info');
                 }
             });
-            console.log('[CeraCAM] Canvas-Toolbar verdrahtet');
+            console.log('[CeraCUT] Canvas-Toolbar verdrahtet');
 
             // ═══ V3.14: CAM-Tab Innen-Lead "= Außen" Toggle ═══
             document.getElementById('int-like-ext')?.addEventListener('change', (e) => {
@@ -2044,7 +2044,7 @@
                     if (badgeEl) {
                         const mat = result.material;
                         badgeEl.innerHTML = mat.v
-                            ? `<span style="color:#4ade80">✓ Waricam-bestätigt</span> · BKZ:${mat.bkz} AKZ:${mat.akz}`
+                            ? `<span style="color:#4ade80">✓ CeraCUT-bestätigt</span> · BKZ:${mat.bkz} AKZ:${mat.akz}`
                             : `<span style="color:#fbbf24">≈ geschätzt</span> · BKZ:${mat.bkz} AKZ:${mat.akz}`;
                     }
 
@@ -2112,7 +2112,7 @@
                 console.log('%c[CeraJet V1.0] Technologie-UI initialisiert', 'color: #0ea5e9; font-weight: bold');
             })();
 
-            console.log('%c[CeraCAM V5.0] CAM-Tab Bindings (Innen/Außen, Technologie)', 'color: #e8a020; font-weight: bold');
+            console.log('%c[CeraCUT V5.0] CAM-Tab Bindings (Innen/Außen, Technologie)', 'color: #e8a020; font-weight: bold');
 
             // ═══ V5.2: Intarsien-Modus Bindings ═══
             (() => {
@@ -2281,7 +2281,7 @@
                 };
             }
 
-            console.log('[CeraCAM] Image Underlay verdrahtet');
+            console.log('[CeraCUT] Image Underlay verdrahtet');
 
             // ═══ V3.12: Dimension Tool Bindings ═══
             // DimensionManager initialisieren
@@ -2330,7 +2330,7 @@
                         if (mode) dimMgr.startTool(mode);
                     });
                 });
-                console.log('%c[CeraCAM Shim] Bemaßungs-Flyout aktiviert (5 Modi)', 'color: #00ffff');
+                console.log('%c[CeraCUT Shim] Bemaßungs-Flyout aktiviert (5 Modi)', 'color: #00ffff');
             }
 
             // Bemaßungen löschen
@@ -2433,7 +2433,7 @@
                 }
             }
 
-            console.log('%c[CeraCAM] Dimension Tool V2.2 verdrahtet (DIMSCALE)', 'color: #00ffff; font-weight: bold');
+            console.log('%c[CeraCUT] Dimension Tool V2.2 verdrahtet (DIMSCALE)', 'color: #00ffff; font-weight: bold');
 
             // ═══ V3.12: Gesamtlänge-Werkzeug (TOTLEN) ═══
             /**
@@ -2548,7 +2548,7 @@
             origApp.calcContourLength = calcContourLength;
             origApp.totalLength = totalLengthAction;
 
-            console.log('%c[CeraCAM] \u03a3 Gesamtl\u00e4nge-Werkzeug (TOTLEN) verdrahtet', 'color: #22c55e; font-weight: bold');
+            console.log('%c[CeraCUT] \u03a3 Gesamtl\u00e4nge-Werkzeug (TOTLEN) verdrahtet', 'color: #22c55e; font-weight: bold');
 
             // ═══ V3.12: MeasureManager (IGEMS 5-Modi) ═══
             if (!origApp.measureManager) {
@@ -2601,7 +2601,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCAM] Messen-Flyout aktiviert (5 Modi, Hover)', 'color: #ffc800');
+                console.log('%c[CeraCUT] Messen-Flyout aktiviert (5 Modi, Hover)', 'color: #ffc800');
             }
 
             // MeasureManager in Click-Pipeline einhängen
@@ -2640,7 +2640,7 @@
                 }
             }, true);
 
-            console.log('%c[CeraCAM] MeasureManager V1.0 (5 IGEMS-Modi, Click-Flyout)', 'color: #ffc800; font-weight: bold');
+            console.log('%c[CeraCUT] MeasureManager V1.0 (5 IGEMS-Modi, Click-Flyout)', 'color: #ffc800; font-weight: bold');
 
             // ═══════════════════════════════════════════════════════════
             //  IMPORT: CNC-READER + SVG-PARSER
@@ -2840,7 +2840,7 @@
                 _finishImport(result.entities, result.stats, result.warnings, 'CNC Reader');
 
                 // Pipeline: Referenzrahmen als isReference markieren
-                // (wird von WaricamPipeline._analyzeTopology automatisch erkannt,
+                // (wird von CeraCutPipeline._analyzeTopology automatisch erkannt,
                 //  da er die größte Kontur ist)
 
                 _cncImportPendingContent = null;
@@ -2931,9 +2931,9 @@
                 _svgImportPendingContent = null;
             });
 
-            console.log('%c[CeraCAM] Import: CNC-Reader + SVG-Parser verdrahtet', 'color:#e8a020; font-weight:bold');
+            console.log('%c[CeraCUT] Import: CNC-Reader + SVG-Parser verdrahtet', 'color:#e8a020; font-weight:bold');
 
-            console.log('%c[CeraCAM Shim] App-Methoden gepatcht (Step=4, Layer, CNC)', 'color: #22c55e');
+            console.log('%c[CeraCUT Shim] App-Methoden gepatcht (Step=4, Layer, CNC)', 'color: #22c55e');
 
             // ═══ V3.11: Kreis-Flyout-Menü ═══
             const circleBtn = document.querySelector('.draw-tool-btn[data-tool="C"]');
@@ -2978,7 +2978,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCAM Shim] Kreis-Flyout aktiviert (6 Modi)', 'color: #22c55e');
+                console.log('%c[CeraCUT Shim] Kreis-Flyout aktiviert (6 Modi)', 'color: #22c55e');
             }
 
             // ═══ V3.12: Linien-Flyout-Menü ═══
@@ -3012,7 +3012,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCAM Shim] Linien-Flyout aktiviert (3 Modi)', 'color: #0078d4');
+                console.log('%c[CeraCUT Shim] Linien-Flyout aktiviert (3 Modi)', 'color: #0078d4');
             }
 
             // ═══ V5.2: Intarsien-Modus UI Bindings — entfernt (bereits als IIFE in Zeile ~2117) ═══
@@ -3112,7 +3112,7 @@
 
             // Aus localStorage laden oder Default
             try {
-                const saved = JSON.parse(localStorage.getItem('waricam_area_classes'));
+                const saved = JSON.parse(localStorage.getItem('ceracut_area_classes'));
                 origApp.settings.areaClasses = (saved && saved.length === 6) ? saved : JSON.parse(JSON.stringify(defaultAreaClasses));
             } catch(e) {
                 origApp.settings.areaClasses = JSON.parse(JSON.stringify(defaultAreaClasses));
@@ -3185,7 +3185,7 @@
             });
             areaClassApplyBtn?.addEventListener('click', () => {
                 readAreaClassTable();
-                localStorage.setItem('waricam_area_classes', JSON.stringify(origApp.settings.areaClasses));
+                localStorage.setItem('ceracut_area_classes', JSON.stringify(origApp.settings.areaClasses));
                 areaClassPopup.style.display = 'none';
                 origApp._captureLeadSnapshot?.();
                 origApp._applyLeadValues?.();
@@ -3398,7 +3398,7 @@
                 }
             }
 
-            console.log('%c[CeraCAM V5.5] Neue Features aktiviert: Nesting, Simulation, Kosten, Maschinen, Q-Zonen, Bridges, Multi-Collision', 'color: #22c55e; font-weight: bold');
+            console.log('%c[CeraCUT V5.5] Neue Features aktiviert: Nesting, Simulation, Kosten, Maschinen, Q-Zonen, Bridges, Multi-Collision', 'color: #22c55e; font-weight: bold');
 
             // ═══ V5.1: Generische Tool-Flyouts (Abrunden, Stutzen, Struktur, CAM-Geo) ═══
             document.querySelectorAll('.tool-flyout').forEach(flyout => {
@@ -3432,13 +3432,13 @@
                     });
                 });
             });
-            console.log('%c[CeraCAM Shim] Tool-Flyouts aktiviert (Abrund., Stutzen, Struktur, CAM-Geo)', 'color: #22c55e');
+            console.log('%c[CeraCUT Shim] Tool-Flyouts aktiviert (Abrund., Stutzen, Struktur, CAM-Geo)', 'color: #22c55e');
         }, 0);
     });
     
     // ── Theme Toggle — beim Laden gespeichertes Theme wiederherstellen ──
     (function() {
-        const saved = localStorage.getItem('ceracam-theme');
+        const saved = localStorage.getItem('ceracut-theme');
         if (saved === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
             // Buttons korrekt setzen (nach DOM-Ready)
@@ -3452,10 +3452,10 @@
                 document.getElementById('btn-theme-light')?.classList.add('active');
             });
         }
-        console.log('[CeraCAM] Theme geladen:', saved || 'light (default)');
+        console.log('[CeraCUT] Theme geladen:', saved || 'light (default)');
     })();
     
-    console.log('%c[CeraCAM UI] AutoCAD 2017 Layout geladen', 'color: #0078d4; font-weight: bold');
+    console.log('%c[CeraCUT UI] AutoCAD 2017 Layout geladen', 'color: #0078d4; font-weight: bold');
 })();
 </script>
 </body>

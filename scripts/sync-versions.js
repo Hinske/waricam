@@ -2,7 +2,7 @@
 /**
  * sync-versions.js — Synchronisiert Modul-Versionen aus build-info.js in CLAUDE.md
  *
- * Liest WARICAM_BUILD.modules aus build-info.js und aktualisiert:
+ * Liest CERACUT_BUILD.modules aus build-info.js und aktualisiert:
  *   1. Header (Version, Build, Datum)
  *   2. Modul-Tabelle (## Module & Versionen)
  *   3. Dateistruktur-Baum (Versions-Kommentare)
@@ -48,7 +48,7 @@ const MODULE_TO_FILE = {
     'dxf-parser':         'dxf-parser.js',
     'geometry':           'geometry.js',
     'geometry-ops':       'geometry-ops.js',
-    'pipeline':           'waricam-pipeline.js',
+    'pipeline':           'ceracut-pipeline.js',
     'cam-contour':        'cam-contour.js',
     'canvas-renderer':    'canvas-renderer.js',
     'undo-manager':       'undo-manager.js',
@@ -183,8 +183,8 @@ function syncClaudeMd(info, checkOnly) {
 
     // 6. Sync-Prüfung: Console-Block aktualisieren
     md = md.replace(
-        /WARICAM\/CeraCAM V[\d.]+ - Build [\w-]+/,
-        `WARICAM/CeraCAM V${info.version} - Build ${info.build}`
+        /CeraCUT\/CeraCUT V[\d.]+ - Build [\w-]+/,
+        `CeraCUT/CeraCUT V${info.version} - Build ${info.build}`
     );
 
     // Einzelne Modul-Zeilen im Sync-Block
@@ -227,15 +227,15 @@ function syncIndexHtml(info, checkOnly) {
     const original = html;
     let changes = [];
 
-    // <title>CeraCAM Vx.y — Wasserstrahl CAM</title>
+    // <title>CeraCUT Vx.y — Wasserstrahl CAM</title>
     html = html.replace(
-        /(<title>CeraCAM V)[\d.]+( — Wasserstrahl CAM<\/title>)/,
+        /(<title>CeraCUT V)[\d.]+( — Wasserstrahl CAM<\/title>)/,
         `$1${info.version}$2`
     );
 
-    // Header-Zeile: "Keine Datei geladen" — CeraCAM Vx.y
+    // Header-Zeile: "Keine Datei geladen" — CeraCUT Vx.y
     html = html.replace(
-        /(— CeraCAM V)[\d.]+/,
+        /(— CeraCUT V)[\d.]+/,
         `$1${info.version}`
     );
 

@@ -1,12 +1,12 @@
 /**
- * WARICAM V2.7 Constants
+ * CeraCUT V2.7 Constants
  * Blaues Farbschema
  */
 
-const WARICAM = {
+const CeraCUT = {
     VERSION: '2.7.0',
     BUILD: '2026-01-27',
-    NAME: 'WARICAM Wasserstrahl-CAM',
+    NAME: 'CeraCUT Wasserstrahl-CAM',
 
     // Toleranzen (in mm)
     TOLERANCES: {
@@ -18,7 +18,7 @@ const WARICAM = {
         MEASURE_SNAP: 5.0
     },
 
-    // Farben - WARICAM Blau
+    // Farben - CeraCUT Blau
     COLORS: {
         // Hintergrund
         BG_PRIMARY: '#0f0f1a',
@@ -96,16 +96,13 @@ const WARICAM = {
 };
 
 // Freeze
-Object.freeze(WARICAM);
-Object.freeze(WARICAM.TOLERANCES);
-Object.freeze(WARICAM.COLORS);
-Object.freeze(WARICAM.RENDER);
-Object.freeze(WARICAM.DEFAULTS);
-Object.freeze(WARICAM.LIMITS);
-
-// Alias für Kompatibilität
-const CERACAM = WARICAM;
+Object.freeze(CeraCUT);
+Object.freeze(CeraCUT.TOLERANCES);
+Object.freeze(CeraCUT.COLORS);
+Object.freeze(CeraCUT.RENDER);
+Object.freeze(CeraCUT.DEFAULTS);
+Object.freeze(CeraCUT.LIMITS);
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WARICAM;
+    module.exports = CeraCUT;
 }

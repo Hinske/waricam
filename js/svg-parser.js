@@ -95,7 +95,7 @@ class SVGParser {
             warnings.push(`Keine width/viewBox → Annahme: 1px = ${(1/this.PX_PER_MM).toFixed(4)}mm (96dpi)`);
         }
 
-        // Y-Achse: SVG hat Y↓, WARICAM hat Y↑ → Flip (Spiegelung um Mitte)
+        // Y-Achse: SVG hat Y↓, CeraCUT hat Y↑ → Flip (Spiegelung um Mitte)
         // Wir flippen nach dem Sammeln aller Punkte (einfacher)
         const viewBoxH = vbH ?? (physH ? physH / scale : null);
 
@@ -586,7 +586,7 @@ class SVGParser {
             x = nx; y = ny;
         }
 
-        // Y-Flip: SVG Y↓ → WARICAM Y↑
+        // Y-Flip: SVG Y↓ → CeraCUT Y↑
         // Flip um SVG-Mittelpunkt (viewBoxH/2)
         if (tx.yFlip && tx.viewBoxH !== null) {
             y = tx.viewBoxH - y;

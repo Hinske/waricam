@@ -1,5 +1,5 @@
 /**
- * WARICAM V2.9 - Geometry Kernel
+ * CeraCUT V2.9 - Geometry Kernel
  * Last Modified: 2026-01-28 06:45 UTC
  * Build: 20260128-0645
  * 
@@ -301,7 +301,7 @@ const Geometry = {
 };
 
 /**
- * WARICAM V2.8 - Spline Utilities
+ * CeraCUT V2.8 - Spline Utilities
  * B-Spline/NURBS Interpolation via De Boor Algorithm
  */
 const SplineUtils = {
@@ -854,7 +854,7 @@ const SplineUtils = {
 };
 
 /**
- * WARICAM V2.8 - Micro-Healing
+ * CeraCUT V2.8 - Micro-Healing
  * Geometrie-Bereinigung nach IGEMS-Standard
  */
 const MicroHealing = {

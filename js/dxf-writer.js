@@ -1,5 +1,5 @@
 /**
- * WARICAM DXF Writer V1.0
+ * CeraCUT DXF Writer V1.0
  * Export von Konturen als AutoCAD DXF R12 (AC1009)
  * 
  * Unterstützte Entity-Typen:

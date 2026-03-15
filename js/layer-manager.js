@@ -1,5 +1,5 @@
 /**
- * WARICAM Layer Manager V1.0
+ * CeraCUT Layer Manager V1.0
  * Verwaltung von Zeichnungslayern (AutoCAD-Stil)
  * 
  * Features:

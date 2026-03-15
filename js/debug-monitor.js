@@ -1,11 +1,11 @@
 /**
- * WARICAM Debug Monitor V1.0
+ * CeraCUT Debug Monitor V1.0
  * ════════════════════════════════════════════════════════════
- * Automatisches Fehler-Monitoring für CeraCAM / WARICAM
+ * Automatisches Fehler-Monitoring für CeraCUT / CeraCUT
  *
  * Features:
  *   - Globaler Error-Catcher (window.onerror + unhandledrejection)
- *   - Automatische Zuordnung zu bekannten WARICAM-Fallen
+ *   - Automatische Zuordnung zu bekannten CeraCUT-Fallen
  *   - Session-Log in sessionStorage (letzte 200 Einträge)
  *   - Action-Tracker: Letzte 50 User-Aktionen protokolliert
  *   - Performance-Monitor: Frames die >16ms dauern
@@ -19,7 +19,7 @@
  * Claude Code Workflow:
  *   1. Strg+Shift+D → "Export JSON"
  *   2. Datei an Claude Code übergeben
- *   3. claude "Analysiere diesen WARICAM Debug-Log und schlage Fixes vor"
+ *   3. claude "Analysiere diesen CeraCUT Debug-Log und schlage Fixes vor"
  *
  * Build: 20260219-dm10
  */
@@ -31,7 +31,7 @@
     console.log('%c[DebugMonitor V1.0] Startet — Strg+Shift+D für Overlay', 'color: #ff9800; font-weight: bold');
 
     // ═══════════════════════════════════════════════════════
-    // BEKANNTE WARICAM-FALLEN (aus system-anweisung V16)
+    // BEKANNTE CeraCUT-FALLEN (aus system-anweisung V16)
     // ═══════════════════════════════════════════════════════
 
     const KNOWN_TRAPS = [
@@ -133,7 +133,7 @@
     // SESSION LOG MANAGEMENT
     // ═══════════════════════════════════════════════════════
 
-    const SESSION_KEY = 'waricam_debug_log';
+    const SESSION_KEY = 'ceracut_debug_log';
     const MAX_LOG_ENTRIES = 200;
     const MAX_ACTION_ENTRIES = 50;
 
@@ -357,7 +357,7 @@
             _logError('promise-rejection', msg, 'Promise', 0, 0, stack);
         });
 
-        // console.error überwachen (für interne WARICAM Fehler die console.error nutzen)
+        // console.error überwachen (für interne CeraCUT Fehler die console.error nutzen)
         const _origError = console.error;
         console.error = function(...args) {
             _origError.apply(console, args);
@@ -377,7 +377,7 @@
 
     function _createOverlay() {
         const overlay = document.createElement('div');
-        overlay.id = 'waricam-debug-overlay';
+        overlay.id = 'ceracut-debug-overlay';
         overlay.style.cssText = `
             position: fixed;
             top: 20px;
@@ -408,7 +408,7 @@
                 cursor: move;
                 user-select: none;
             ">
-                <span style="color: #ff9800; font-weight: bold;">🔍 WARICAM Debug Monitor V1.0</span>
+                <span style="color: #ff9800; font-weight: bold;">🔍 CeraCUT Debug Monitor V1.0</span>
                 <div style="display: flex; gap: 6px;">
                     <button id="wdm-export" style="background:#004499;color:#fff;border:none;padding:2px 8px;border-radius:2px;cursor:pointer;font-size:10px;">📥 Export JSON</button>
                     <button id="wdm-clear" style="background:#440000;color:#fff;border:none;padding:2px 8px;border-radius:2px;cursor:pointer;font-size:10px;">🗑 Löschen</button>
@@ -585,7 +585,7 @@
         if (!_overlayRef) {
             _overlayRef = _createOverlay();
         }
-        const el = document.getElementById('waricam-debug-overlay');
+        const el = document.getElementById('ceracut-debug-overlay');
         _overlayVisible = !_overlayVisible;
         el.style.display = _overlayVisible ? 'flex' : 'none';
         if (_overlayVisible) {
@@ -643,7 +643,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `waricam-debug-${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}.json`;
+        a.download = `ceracut-debug-${new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)}.json`;
         a.click();
         URL.revokeObjectURL(url);
 
@@ -667,10 +667,10 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // PUBLIC API (window.waricamDebug)
+    // PUBLIC API (window.ceracutDebug)
     // ═══════════════════════════════════════════════════════
 
-    window.waricamDebug = {
+    window.ceracutDebug = {
         /** Overlay öffnen/schließen */
         toggle: _toggleOverlay,
 
@@ -700,7 +700,7 @@
 
         /** Bekannte Fallen anzeigen */
         showTraps: () => {
-            console.group('[DebugMonitor V1.0] Bekannte WARICAM-Fallen:');
+            console.group('[DebugMonitor V1.0] Bekannte CeraCUT-Fallen:');
             KNOWN_TRAPS.filter(t => !t.isPositive).forEach(t => {
                 const hits = _sessionLog.filter(e => e.trap?.id === t.id).length;
                 console.log(`${t.label} [${hits > 0 ? '⚠ ' + hits + '× getroffen' : '✅ nicht getroffen'}]\n  💡 ${t.hint}`);

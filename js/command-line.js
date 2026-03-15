@@ -1,5 +1,5 @@
 /**
- * WARICAM Command Line V1.0
+ * CeraCUT Command Line V1.0
  * AutoCAD-style Command Line Interface
  * - Prompt-System für Zeichentools
  * - Koordinateneingabe (absolut + relativ)

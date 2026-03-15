@@ -4,7 +4,7 @@
  * Reine Berechnungslogik, kein DOM. Liefert Vorschübe, Anschussparameter
  * und R-Parameter für den Sinumerik 840D Postprozessor.
  *
- * Basis: Waricam-kalibrierte Referenzwerte + physikalische Skalierung.
+ * Basis: CeraCUT-kalibrierte Referenzwerte + physikalische Skalierung.
  * Formel: v = refQ4 × (P/P_ref)^1.6 × (d_a/d_a_ref)^1.21 × (m_a/m_a_ref)^0.4 / (h/h_ref)^1.15
  *
  * Referenzbedingungen: 10mm, 2900bar, 0.25W/0.80A, 200 g/min
@@ -19,7 +19,7 @@ class CeraJetEngine {
     // ════════════════════════════════════════════════════════════════
     // MATERIALDATENBANK
     // Ref-Vorschübe bei Standardbedingungen (Q4 = Mittel)
-    // ✓ = Waricam-bestätigt, sonst geschätzt
+    // ✓ = CeraCUT-bestätigt, sonst geschätzt
     // ════════════════════════════════════════════════════════════════
 
     static MATERIALS = [
@@ -71,7 +71,7 @@ class CeraJetEngine {
     static Q_NAMES   = ['Sehr Gut', 'Gut', 'Mittelfein', 'Mittel', 'Grob'];
     static Q_SHORT   = ['S.Gut', 'Gut', 'M.fein', 'Mittel', 'Grob'];
 
-    // Ecken-Vorschub = 1/3 des Geraden-Vorschubs (exakt aus Waricam)
+    // Ecken-Vorschub = 1/3 des Geraden-Vorschubs (exakt aus CeraCUT)
     static CORNER_FACTOR = 1 / 3;
 
     // Referenzbedingungen für refQ4
@@ -129,7 +129,7 @@ class CeraJetEngine {
 
     /**
      * Anschusszeit in Sekunden.
-     * Empirisch aus Waricam-Datenpunkten:
+     * Empirisch aus CeraCUT-Datenpunkten:
      *   Stahl(AKZ=170)=4.3s, Granit(91)=1.0s, Alu(300)=2.9s, Edst(100)=2.4s @ 10mm
      */
     static calcPierceTime(akz, h, refQ4) {

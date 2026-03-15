@@ -1,5 +1,5 @@
 {
-  "name": "ceracam",
+  "name": "ceracut",
   "version": "2.7.0",
   "description": "CAM Software für CNC-Wasserstrahlschneiden",
   "main": "index.html",
@@ -12,7 +12,7 @@
     "cnc",
     "waterjet",
     "dxf",
-    "waricam"
+    "ceracut"
   ],
   "author": "Cerasell GmbH",
   "license": "UNLICENSED",

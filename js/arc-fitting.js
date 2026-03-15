@@ -1,5 +1,5 @@
 /**
- * WARICAM V3.0 - Arc Fitting Module
+ * CeraCUT V3.0 - Arc Fitting Module
  * Konvertiert Splines/Polylines zu Bögen und Linien
  *
  * Algorithmen:

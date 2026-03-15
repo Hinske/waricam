@@ -1,5 +1,5 @@
 /**
- * WARICAM V3.8 - Main Application
+ * CeraCUT V3.8 - Main Application
  * Wizard Controller + Konturen-Panel
  * V3.8: Layer-System, Layer-Manager Dialog, DXF-Writer R12
  * V3.7: Tier 4 Aufteilen — CL2D (Halbieren), CLND (N-Teilen), CLDCL (Divided Calculation)
@@ -29,7 +29,7 @@ function sanitizeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-class WaricamApp {
+class CeraCutApp {
     constructor() {
         // State
         this.currentStep = 1;
@@ -136,7 +136,7 @@ class WaricamApp {
     
     init() {
         console.log('%c╔══════════════════════════════════════════════╗', 'color: #00aaff; font-weight: bold');
-        console.log('%c║  WARICAM Wasserstrahl-CAM V3.8               ║', 'color: #00aaff; font-weight: bold');
+        console.log('%c║  CeraCUT Wasserstrahl-CAM V3.8               ║', 'color: #00aaff; font-weight: bold');
         console.log('%c║  V3.8: Layer-System + DXF-Writer R12         ║', 'color: #00aaff; font-weight: bold');
         console.log('%c╚══════════════════════════════════════════════╝', 'color: #00aaff; font-weight: bold');
         
@@ -624,7 +624,7 @@ class WaricamApp {
                     const testPt = cam.points[0];
                     for (const existing of this.contours) {
                         if (existing.isClosed && !existing.isReference && existing.points?.length >= 3) {
-                            if (WaricamPipeline._pointInPolygon(testPt, existing.points)) {
+                            if (CeraCutPipeline._pointInPolygon(testPt, existing.points)) {
                                 nestingLevel++;
                             }
                         }
@@ -2440,7 +2440,7 @@ class WaricamApp {
             if (window.showOpenFilePicker) {
                 try {
                     const [fileHandle] = await window.showOpenFilePicker({
-                        id: 'waricam-dxf',
+                        id: 'ceracut-dxf',
                         startIn: this._lastDirHandle || 'documents'
                     });
                     this._lastDirHandle = fileHandle; // Ordner merken
@@ -2576,7 +2576,7 @@ class WaricamApp {
                         `⚠️ ${this.dxfResult.ignoredCount} Element(e) ignoriert: ${types}`,
                         'warning'
                     );
-                    console.warn('[WARICAM] Ignorierte Entity-Typen:', types);
+                    console.warn('[CeraCUT] Ignorierte Entity-Typen:', types);
                 }
                 
                 // Quick-Fix #2: Größen-Warnung
@@ -2605,7 +2605,7 @@ class WaricamApp {
                 this.layerManager.updateEntityCounts(this.dxfResult.contours || []);
                 
             } catch (error) {
-                console.error('[WARICAM] Parse error:', error);
+                console.error('[CeraCUT] Parse error:', error);
                 this.showToast(`Parse-Fehler: ${error.message}`, 'error');
                 this.showParserSpinner(false);
                 return;
@@ -2662,7 +2662,7 @@ class WaricamApp {
         this.undoManager?.clear();
         this.clipboardManager?.clear();
         
-        if (typeof WaricamPipeline === 'undefined') {
+        if (typeof CeraCutPipeline === 'undefined') {
             this.contours = contours;
             this.updateRenderer();
             return;
@@ -2673,7 +2673,7 @@ class WaricamApp {
         const arcFittingTolerance = parseFloat(document.getElementById('arc-fitting-tolerance')?.value) || 0.01;
 
         console.time('[PERF] Pipeline.autoProcess');
-        const result = WaricamPipeline.autoProcess(contours, {
+        const result = CeraCutPipeline.autoProcess(contours, {
             kerfWidth: this.settings.kerfWidth,
             quality: this.settings.quality,
             enableArcFitting: enableArcFitting,
@@ -2722,7 +2722,7 @@ class WaricamApp {
             }
 
             // V3.0: Feedback für Arc-Fitting
-            const arcStats = WaricamPipeline.arcFittingStats;
+            const arcStats = CeraCutPipeline.arcFittingStats;
             if (arcStats && arcStats.totalArcs > 0) {
                 const ratio = (result.contours.length > 0) ?
                     ((arcStats.totalArcs + arcStats.totalLines) / result.contours.length).toFixed(1) : '1';
@@ -3796,7 +3796,7 @@ class WaricamApp {
 
     /**
      * Einzelne CNC-Datei als Download auslösen.
-     * Nutzt FSAPI-Ordner wenn verfügbar (CeraCAM Shim setzt window._cncDirHandle).
+     * Nutzt FSAPI-Ordner wenn verfügbar (CeraCUT Shim setzt window._cncDirHandle).
      */
     async _downloadIntarsiaFile(code, filename) {
         if (!code) return;
@@ -4183,7 +4183,7 @@ class WaricamApp {
         if (window.showSaveFilePicker) {
             try {
                 const opts = {
-                    id: 'waricam-dxf',
+                    id: 'ceracut-dxf',
                     suggestedName: defaultName,
                     types: [{
                         description: 'DXF-Zeichnung',
@@ -4270,5 +4270,5 @@ class WaricamApp {
 
 // Init App
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new WaricamApp();
+    window.app = new CeraCutApp();
 });

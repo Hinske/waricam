@@ -1,5 +1,5 @@
 /**
- * WARICAM Dimension Tool V2.3
+ * CeraCUT Dimension Tool V2.3
  * AutoCAD-style dimensioning: Linear, Aligned, Angular, Radius, Diameter
  * 
  * V2.3: Fix Diameter-Linie, Angular komplett neu (arc ohne scale-Hack),

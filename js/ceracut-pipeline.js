@@ -1,5 +1,5 @@
 /**
- * WARICAM V3.1 - Processing Pipeline
+ * CeraCUT V3.1 - Processing Pipeline
  * Last Modified: 2026-02-11 12:00 UTC
  * Build: 20260211-1200
  *
@@ -7,7 +7,7 @@
  * V2.9: Referenz NUR bei Rechteck-Konturen
  */
 
-const WaricamPipeline = {
+const CeraCutPipeline = {
     kerfWidth: 1.0,
     healingStats: null,
 
@@ -420,4 +420,4 @@ const WaricamPipeline = {
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) { module.exports = WaricamPipeline; }
+if (typeof module !== 'undefined' && module.exports) { module.exports = CeraCutPipeline; }

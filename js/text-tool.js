@@ -1,5 +1,5 @@
 /**
- * WARICAM Text Tool V1.2
+ * CeraCUT Text Tool V1.2
  * Text → schneidbare Vektor-Konturen via opentype.js
  * Created: 2026-02-16 MEZ
  * Last Modified: 2026-03-12 MEZ

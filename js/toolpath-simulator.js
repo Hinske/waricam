@@ -1,5 +1,5 @@
 /**
- * WARICAM Toolpath Simulator V1.0
+ * CeraCUT Toolpath Simulator V1.0
  * Simulation und Verifikation des Schneidpfads vor dem Export.
  *
  * Erkennt: Rapid-Moves durch Material, Lead-In/Out-Kollisionen,
@@ -1251,7 +1251,7 @@ const ToolpathSimulator = {
     formatReport(result) {
         const lines = [];
         lines.push('═══════════════════════════════════════════════');
-        lines.push(`  WARICAM Toolpath Simulator V${this.VERSION}`);
+        lines.push(`  CeraCUT Toolpath Simulator V${this.VERSION}`);
         lines.push('═══════════════════════════════════════════════');
         lines.push('');
 

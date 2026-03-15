@@ -1,5 +1,5 @@
 /**
- * WARICAM Dynamic Input HUD V1.0
+ * CeraCUT Dynamic Input HUD V1.0
  * AutoCAD-style Koordinatenanzeige am Cursor
  * - Zeigt absolute/relative Koordinaten
  * - Zeigt Distanz + Winkel bei aktivem Tool

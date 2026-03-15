@@ -1,6 +1,6 @@
 /**
- * WARICAM Drawing & Modification Tools V2.2
- * AutoCAD-style CAD Tools für WARICAM
+ * CeraCUT Drawing & Modification Tools V2.2
+ * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
  * Tier 2 – Modifizieren: Move (M), Copy (Shift+C), Rotate (R), Mirror (Shift+M),

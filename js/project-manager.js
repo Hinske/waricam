@@ -21,7 +21,7 @@ class ProjectManager {
         this.files = [];               // [{name, lastModified, size, handle}]
         this._autoSaveTimer = null;
         this._autoSaveIntervalMs = 60000; // 60s Standard
-        this._dbName = 'waricam-project';
+        this._dbName = 'ceracut-project';
         this._dbStore = 'handles';
         this._isScanning = false;
 
@@ -60,7 +60,7 @@ class ProjectManager {
 
         try {
             this.directoryHandle = await window.showDirectoryPicker({
-                id: 'waricam-workspace',
+                id: 'ceracut-workspace',
                 mode: 'readwrite',
                 startIn: 'documents'
             });

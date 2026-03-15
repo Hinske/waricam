@@ -1,6 +1,6 @@
 /**
  * =========================================================================
- *  WARICAM / CeraCAM – Undo/Redo Manager (Command Pattern) + Clipboard
+ *  CeraCUT / CeraCUT – Undo/Redo Manager (Command Pattern) + Clipboard
  * =========================================================================
  *  Datei:    undo-manager.js
  *  Version:  V1.1
@@ -56,7 +56,7 @@ class BaseCommand {
 
 
 // =========================================================================
-//  SECTION 2: Konkrete Command-Implementierungen (WARICAM-spezifisch)
+//  SECTION 2: Konkrete Command-Implementierungen (CeraCUT-spezifisch)
 // =========================================================================
 
 /**
@@ -664,7 +664,7 @@ class ClipboardManager {
     /**
      * @param {object}      options
      * @param {UndoManager}  options.undoManager
-     * @param {WaricamApp}   options.app          - Referenz auf die App-Instanz
+     * @param {CeraCutApp}   options.app          - Referenz auf die App-Instanz
      */
     constructor(options) {
         this.undoManager = options.undoManager;
@@ -856,7 +856,7 @@ class ClipboardManager {
         try {
             if (!navigator.clipboard?.writeText) return;
             const data = {
-                type: 'waricam-contours',
+                type: 'ceracut-contours',
                 version: '1.0',
                 count: contours.length,
                 timestamp: new Date().toISOString()

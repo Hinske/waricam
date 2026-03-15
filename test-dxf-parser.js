@@ -1,5 +1,5 @@
 /**
- * WARICAM DXF Parser Test Suite
+ * CeraCUT DXF Parser Test Suite
  * Testet alle DXF-Dateien im Examples-Verzeichnis
  * 
  * Ausführen: node test-dxf-parser.js
@@ -20,7 +20,7 @@ eval(parserCode);
 const EXAMPLES_DIR = path.join(__dirname, 'Examples');
 
 console.log('╔══════════════════════════════════════════════════════════════╗');
-console.log('║  WARICAM DXF Parser Test Suite V2.8                          ║');
+console.log('║  CeraCUT DXF Parser Test Suite V2.8                          ║');
 console.log('╚══════════════════════════════════════════════════════════════╝');
 console.log('');
 

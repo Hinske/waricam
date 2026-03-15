@@ -1,6 +1,6 @@
-# WARICAM Server-Einrichtung — Debian
+# CeraCUT Server-Einrichtung — Debian
 
-Anleitung fuer den CNC-Rechner als WARICAM-Webserver.
+Anleitung fuer den CNC-Rechner als CeraCUT-Webserver.
 Alle Clients im Netzwerk greifen per Browser zu — kein Install noetig.
 
 ```
@@ -59,9 +59,9 @@ serve . -p 5000
 ## 4. Systemd-Service (als root)
 
 ```bash
-tee /etc/systemd/system/waricam.service << 'EOF'
+tee /etc/systemd/system/ceracut.service << 'EOF'
 [Unit]
-Description=WARICAM CeraCAM Webserver
+Description=CeraCUT CeraCUT Webserver
 After=network.target
 
 [Service]
@@ -78,9 +78,9 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable waricam
-systemctl start waricam
-systemctl status waricam
+systemctl enable ceracut
+systemctl start ceracut
+systemctl status ceracut
 ```
 
 ---
@@ -100,24 +100,24 @@ ufw enable
 Update-Script:
 
 ```bash
-tee /usr/local/bin/waricam-update << 'EOF'
+tee /usr/local/bin/ceracut-update << 'EOF'
 #!/bin/bash
 cd /home/CNC/waterjet_v2
-git pull --ff-only origin main 2>&1 | logger -t waricam-update
+git pull --ff-only origin main 2>&1 | logger -t ceracut-update
 EOF
-chmod +x /usr/local/bin/waricam-update
+chmod +x /usr/local/bin/ceracut-update
 ```
 
 Cronjob — alle 5 Minuten (als User CNC):
 
 ```bash
-(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/waricam-update") | crontab -
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/ceracut-update") | crontab -
 ```
 
 Logs pruefen:
 
 ```bash
-journalctl -t waricam-update --since "1 hour ago"
+journalctl -t ceracut-update --since "1 hour ago"
 ```
 
 ---
@@ -146,7 +146,7 @@ Browser → `http://cnc-server-ip:5000` → Menu (⋮) → "Als App installieren
 
 | Feld | Wert |
 |------|------|
-| Name | WARICAM CeraCAM |
+| Name | CeraCUT CeraCUT |
 | URL | `http://192.168.x.x:5000` |
 
 ---
@@ -160,7 +160,7 @@ Browser → `http://cnc-server-ip:5000` → Menu (⋮) → "Als App installieren
 | Clients | Browser → `http://cnc-server-ip:5000` |
 | CNC-Export | Download-Dialog (oder FSAPI wenn direkt am Server) |
 | Neustart | Automatisch via systemd nach Reboot |
-| Logs | `journalctl -u waricam` / `journalctl -t waricam-update` |
+| Logs | `journalctl -u ceracut` / `journalctl -t ceracut-update` |
 
 ---
 
@@ -168,8 +168,8 @@ Browser → `http://cnc-server-ip:5000` → Menu (⋮) → "Als App installieren
 
 **Server laeuft nicht:**
 ```bash
-systemctl status waricam
-journalctl -u waricam -n 50
+systemctl status ceracut
+journalctl -u ceracut -n 50
 ```
 
 **Port blockiert:**
@@ -189,5 +189,5 @@ git pull --ff-only origin main
 **Falscher serve-Pfad:**
 ```bash
 which serve
-# Falls nicht /usr/local/bin/serve → ExecStart in waricam.service anpassen
+# Falls nicht /usr/local/bin/serve → ExecStart in ceracut.service anpassen
 ```

@@ -1,5 +1,5 @@
 /**
- * WARICAM/CeraCAM Sinumerik 840D Postprozessor V1.0
+ * CeraCUT/CeraCUT Sinumerik 840D Postprozessor V1.0
  *
  * Erzeugt CNC-Code im MPF-Format für Sinumerik 840D Steuerungen.
  * Format-Vorlage: 7 echte CNC-Referenzdateien (KERNKREIS, ERBEN, SCHWEDEN, etc.)

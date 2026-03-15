@@ -1,5 +1,5 @@
 /**
- * WARICAM Machine Profiles V1.0
+ * CeraCUT Machine Profiles V1.0
  *
  * Maschinenpark-Verwaltung fuer Wasserstrahl-CAM Software.
  * Verwaltet CNC-Maschinenprofile mit Arbeitsbereich, Druckparametern,
@@ -15,8 +15,8 @@ const MachineProfiles = (() => {
     'use strict';
 
     const VERSION = '1.0';
-    const STORAGE_KEY = 'waricam_machine_profiles';
-    const ACTIVE_KEY = 'waricam_active_profile';
+    const STORAGE_KEY = 'ceracut_machine_profiles';
+    const ACTIVE_KEY = 'ceracut_active_profile';
     const PREFIX = `[MachineProfiles V${VERSION}]`;
 
     // ════════════════════════════════════════════════════════════════
@@ -130,7 +130,7 @@ const MachineProfiles = (() => {
 
                 templates: {
                     header: [
-                        '; Erzeugt von WARICAM/CeraCAM',
+                        '; Erzeugt von CeraCUT/CeraCUT',
                         '; Maschine: Cerasell WJ-3020',
                         '; Steuerung: Sinumerik 840D',
                         'G17 G90 G40',
@@ -220,7 +220,7 @@ const MachineProfiles = (() => {
 
                 templates: {
                     header: [
-                        '; Erzeugt von WARICAM/CeraCAM',
+                        '; Erzeugt von CeraCUT/CeraCUT',
                         '; Maschine: Cerasell WJ-2015',
                         '; Steuerung: Sinumerik 840D',
                         'G17 G90 G40',
@@ -309,7 +309,7 @@ const MachineProfiles = (() => {
 
                 templates: {
                     header: [
-                        '; Erzeugt von WARICAM/CeraCAM',
+                        '; Erzeugt von CeraCUT/CeraCUT',
                         '; Maschine: Generic Waterjet',
                         'G17 G90 G40'
                     ].join('\n'),
@@ -734,7 +734,7 @@ const MachineProfiles = (() => {
      */
     function exportProfiles(id) {
         const exportData = {
-            format: 'waricam-machine-profiles',
+            format: 'ceracut-machine-profiles',
             version: VERSION,
             exportedAt: new Date().toISOString(),
             profiles: []
@@ -776,8 +776,8 @@ const MachineProfiles = (() => {
             return result;
         }
 
-        if (!data || data.format !== 'waricam-machine-profiles') {
-            result.errors.push('Ungueltiges Dateiformat (erwartet: waricam-machine-profiles)');
+        if (!data || data.format !== 'ceracut-machine-profiles') {
+            result.errors.push('Ungueltiges Dateiformat (erwartet: ceracut-machine-profiles)');
             return result;
         }
 

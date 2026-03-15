@@ -1,5 +1,5 @@
 /**
- * WARICAM Default Font — Liberation Sans Regular
+ * CeraCUT Default Font — Liberation Sans Regular
  * Metrisch kompatibel mit Arial (SIL Open Font License)
  * Auto-generiert: 2026-03-12
  * Groesse: 401 KB (535 KB base64)

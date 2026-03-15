@@ -1,5 +1,5 @@
 /**
- * WARICAM Image Underlay V1.0
+ * CeraCUT Image Underlay V1.0
  * Bild-Hintergrund für Nachzeichnen (AutoCAD IMAGE/IMAGEATTACH)
  * 
  * Features:
@@ -16,7 +16,7 @@
 
 class ImageUnderlayManager {
 
-    static DB_NAME = 'waricam-images';
+    static DB_NAME = 'ceracut-images';
     static DB_VERSION = 1;
     static STORE_NAME = 'blobs';
 
@@ -548,7 +548,7 @@ class ImageUnderlayManager {
             lines.push(' 13', ul.width.toFixed(1));
             lines.push(' 23', ul.height.toFixed(1));
             // Dateiname als XDATA
-            lines.push('1001', 'WARICAM_IMAGE');
+            lines.push('1001', 'CERACUT_IMAGE');
             lines.push('1000', ul.filename);
         }
         return lines;

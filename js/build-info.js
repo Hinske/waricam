@@ -1,9 +1,9 @@
 /**
- * WARICAM Build Info
+ * CeraCUT Build Info
  * Zeigt Versionsinformationen in der Console
  */
 
-const WARICAM_BUILD = {
+const CERACUT_BUILD = {
     version: '5.9',
     build: '20260315-bugfix35',
     date: '2026-03-15',
@@ -97,7 +97,7 @@ const WARICAM_BUILD = {
         'V5.3 Phase B: clone() für alle B.1/B.2 Properties erweitert',
         'V5.3 Phase B: properties-panel-styles.css verlinkt (war bisher missing)',
         'Debug Monitor V1.0: Globaler Error-Catcher (onerror+unhandledrejection+console.error)',
-        'Debug Monitor V1.0: 13 bekannte WARICAM-Fallen automatisch erkannt und erklärt',
+        'Debug Monitor V1.0: 13 bekannte CeraCUT-Fallen automatisch erkannt und erklärt',
         'Debug Monitor V1.0: Session-Log (200 Fehler), Action-Tracker (50 Aktionen)',
         'Debug Monitor V1.0: Performance-Monitor Frame-Drop-Erkennung (>50ms)',
         'Debug Monitor V1.0: Overlay Strg+Shift+D — 4 Tabs (Fehler/Aktionen/Perf/Fallen)',
@@ -188,7 +188,7 @@ const WARICAM_BUILD = {
     
     print() {
         console.log('%c╔══════════════════════════════════════════════════════════╗', 'color: #00aa00; font-weight: bold');
-        console.log('%c║  WARICAM/CeraCAM V' + this.version + ' - Build ' + this.build + '            ║', 'color: #00aa00; font-weight: bold');
+        console.log('%c║  CeraCUT/CeraCUT V' + this.version + ' - Build ' + this.build + '            ║', 'color: #00aa00; font-weight: bold');
         console.log('%c║  Last Modified: ' + this.date + ' ' + this.time + '                   ║', 'color: #00aa00');
         console.log('%c╚══════════════════════════════════════════════════════════╝', 'color: #00aa00; font-weight: bold');
         
@@ -205,11 +205,11 @@ const WARICAM_BUILD = {
 // Auto-Print beim Laden
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        WARICAM_BUILD.print();
+        CERACUT_BUILD.print();
     });
 }
 
 // Export für Node.js Tests
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WARICAM_BUILD;
+    module.exports = CERACUT_BUILD;
 }
