@@ -1,5 +1,5 @@
 /**
- * CeraCUT GeometryOps V2.2 — Geometry Operations Engine
+ * CeraCUT GeometryOps V2.4 — Geometry Operations Engine
  * Foundation für Tier 3+5 CAD Tools
  * 
  * V2.2: Arabeske (Laternenfliese) — 8 Kreisbögen, _arcThrough3Points, _circumscribedCircle

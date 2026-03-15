@@ -352,7 +352,7 @@ const CostCalculator = (() => {
         const holeArea = contourDetails
             .filter(d => (d.contour ?? orderedContours[d.index])?.cuttingMode === 'hole')
             .reduce((s, d) => s + d.area, 0);
-        const usedArea = discArea - holeArea;       // mm² Netto-Nutzfläche
+        const usedArea = Math.max(0, discArea - holeArea);  // mm² Netto-Nutzfläche
         const wasteArea = sheetAreaMm2 - usedArea;  // mm² Abfall
         const utilization = sheetAreaMm2 > 0 ? (usedArea / sheetAreaMm2) * 100 : 0;
 
@@ -473,17 +473,17 @@ const CostCalculator = (() => {
         const cfg = { ...DEFAULT_SETTINGS, ...settings };
         const cutting = (contours || []).filter(c => c && !c.isReference && c.cuttingMode);
 
-        let totalTime = 0;
+        let cuttingPierceTime = 0;  // nur Schneid- + Piercing-Zeit (kein Eilgang, kein Rüsten)
         let totalLength = 0;
         for (const c of cutting) {
             const t = calcContourTime(c, cfg);
-            totalTime += t.totalTime;
+            cuttingPierceTime += t.totalTime;
             totalLength += t.pathLength;
         }
-        totalTime += cfg.setupTime;
+        const totalTime = cuttingPierceTime + cfg.setupTime;
 
         const totalMinutes = totalTime / 60;
-        const activeMinutes = (totalTime - cfg.setupTime) / 60;
+        const activeMinutes = cuttingPierceTime / 60;  // konsistent mit calculate(): nur Schneid-/Piercing-Minuten
         const totalCost = (totalMinutes / 60) * cfg.machineRate +
                           activeMinutes * cfg.abrasiveConsumption * cfg.abrasiveRate +
                           (activeMinutes * cfg.waterConsumption / 1000) * cfg.waterRate +

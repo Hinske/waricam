@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Letzte Aktualisierung:** 2026-03-15
 > **Version:** V5.9
-> **Build:** 20260315-bugfix35
+> **Build:** 20260315-bugfix36
 
 ---
 

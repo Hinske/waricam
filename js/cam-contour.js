@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V4.8 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V4.9 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -632,7 +632,6 @@ class CamContour {
      * Typisch: Linear, kurz (3mm), flacher Winkel (5°) — Blind-Lead-Stil.
      */
     _tryAlternativeLeadIn(entry, tangent, normal, contourPts) {
-        console.time('[CamContour V4.5] _tryAlternativeLeadIn');
         // Primär-Werte sichern
         const orig = {
             type: this.leadInType,
@@ -644,7 +643,7 @@ class CamContour {
         // Alt-Parameter einsetzen (V4.6: neue Property-Namen)
         this.leadInType = this.altLeadType;
         this.leadInLength = this.altLeadInLength;
-        this.leadInRadius = 0;  // IGEMS Blind Lead: kein Radius — arc wird unten zu linear degradiert
+        this.leadInRadius = this.altLeadInRadius ?? 0;  // IGEMS Blind Lead: kein Radius — arc wird unten zu linear degradiert
         this.leadInAngle = this.altLeadInAngle;
 
         let altPath;
@@ -662,7 +661,6 @@ class CamContour {
         this.leadInAngle = orig.angle;
 
         if (altPath) altPath.isAlternative = true;
-        console.timeEnd('[CamContour V4.5] _tryAlternativeLeadIn');
         return altPath;
     }
 
@@ -1604,7 +1602,7 @@ class CamContour {
      * @param {Object} cls - Flächenklasse aus getMatchingAreaClass()
      */
     applyAreaClass(cls) {
-        if (!cls) return;
+        if (!cls) return false;
         console.log(`[CamContour B.3] Flächenklasse angewendet: ${this.name}, Fläche=${this.getAreaCm2().toFixed(2)}cm², maxArea=${cls.maxAreaCm2}cm²`);
 
         if (cls.leadType)   this.leadInType   = cls.leadType;
@@ -1616,6 +1614,7 @@ class CamContour {
 
         this.areaClassApplied = true;
         this.invalidate();
+        return true;
     }
 
     /**
@@ -1645,7 +1644,6 @@ class CamContour {
      * Wird automatisch in getLeadInPath() gerufen wenn leadInDynamic=true.
      */
     _calcDynamicLeadLength(entry, tangent, normal, contourPts) {
-        console.time('[CamContour B.2] _calcDynamicLeadLength');
         const MIN = this.leadInLengthMin;
         const MAX = this.leadInLengthMax;
         const origLen = this.leadInLength;
@@ -1669,7 +1667,6 @@ class CamContour {
 
         this.leadInLength = origLen;  // Restore
         const dynamicLen = Math.max(MIN, Math.min(MAX, best));
-        console.timeEnd('[CamContour B.2] _calcDynamicLeadLength');
         console.log(`[CamContour B.2] Dynamic Lead: ${this.name}, L=${dynamicLen.toFixed(2)}mm (min=${MIN}, max=${MAX})`);
         return dynamicLen;
     }

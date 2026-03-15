@@ -1,5 +1,5 @@
 /**
- * CeraCUT Quality Zones V1.0
+ * CeraCUT Quality Zones V1.1
  * Automatische Erkennung von Geschwindigkeitszonen fuer Wasserstrahlschneiden
  * Ecken, enge Radien, Anfahrt/Abfahrt → Geschwindigkeitsanpassung
  * Last Modified: 2026-03-09

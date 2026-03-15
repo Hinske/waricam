@@ -500,7 +500,7 @@ const DXFParser = {
     _parseInsert(lines, startIndex, layerOverride) {
         let blockName = null, insertX = 0, insertY = 0, scaleX = 1, scaleY = 1, rotation = 0, insertLayer = layerOverride;
         
-        for (let i = startIndex; i < Math.min(startIndex + 50, lines.length); i += 2) {
+        for (let i = startIndex; i < lines.length; i += 2) {
             const code = lines[i]?.trim();
             const value = lines[i + 1]?.trim();
             if (code === '0' && i > startIndex) break;

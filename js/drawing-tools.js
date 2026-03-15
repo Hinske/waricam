@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.2
+ * CeraCUT Drawing & Modification Tools V2.5
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -2159,7 +2159,7 @@ class OffsetTool extends ModificationTool {
     getToolName() { return 'OFFSET'; }
 
     start() {
-        this.cmd?.log('⚠️ Offset-Tool: Noch nicht implementiert (kommt in V2.1)', 'warning');
+        this.cmd?.log('⚠️ Offset-Tool: Bitte OffsetToolAdvanced verwenden (advanced-tools.js)', 'warning');
         this.manager.activeTool = null;
         this.manager._setDefaultPrompt();
     }
@@ -2262,6 +2262,7 @@ class LineTool extends BaseTool {
         this.points = [];
         this.segments = [];
         this.manager.rubberBand = null;
+        this.manager.ghostContours = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;
         this.manager.renderer?.render();

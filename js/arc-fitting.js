@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.0 - Arc Fitting Module
+ * CeraCUT V3.1 - Arc Fitting Module
  * Konvertiert Splines/Polylines zu Bögen und Linien
  *
  * Algorithmen:
@@ -734,11 +734,11 @@ const ArcFittingUtils = {
         // Bogenlänge: Richtung (CW/CCW) berücksichtigen
         let span = Math.abs(seg.endAngle - seg.startAngle);
         if (seg.clockwise) {
-          // CW: wenn span < PI, ist es der Major-Arc → korrigieren
-          if (span < Math.PI) span = 2 * Math.PI - span;
-        } else {
-          // CCW: Minor-Arc
+          // CW: span > PI bedeutet Major-Arc → auf Minor-Arc korrigieren
           if (span > Math.PI) span = 2 * Math.PI - span;
+        } else {
+          // CCW: span < PI bedeutet Math.abs hat falschen Ast gewählt → korrigieren
+          if (span < Math.PI) span = 2 * Math.PI - span;
         }
         totalLength += span * seg.radius;
       }

@@ -5,7 +5,7 @@
 
 const CERACUT_BUILD = {
     version: '5.9',
-    build: '20260315-bugfix35',
+    build: '20260315-bugfix36',
     date: '2026-03-15',
     time: '22:00 MEZ',
 

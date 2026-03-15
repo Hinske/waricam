@@ -1,5 +1,5 @@
 /**
- * CeraCUT DXF Writer V1.0
+ * CeraCUT DXF Writer V1.2
  * Export von Konturen als AutoCAD DXF R12 (AC1009)
  * 
  * Unterstützte Entity-Typen:
@@ -125,7 +125,7 @@ class DXFWriter {
 
         // Codepage: UTF-8 für Umlaute in Layer-Namen
         this._write(9, '$DWGCODEPAGE');
-        this._write(3, 'ANSI_1252');
+        this._write(3, 'UTF-8');
 
         // Einfügepunkt
         this._write(9, '$INSBASE');

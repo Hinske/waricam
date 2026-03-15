@@ -1,5 +1,5 @@
 /**
- * CeraCUT Advanced Tools V1.3 — Tier 5 CAD Tools
+ * CeraCUT Advanced Tools V1.4 — Tier 5 CAD Tools
  * 13 CAD-Werkzeuge + Ribbon-Alias-Fix
  *
  * V1.3: Offset Ghost-Preview (handleMouseMove), Chamfer Continuous Mode + finish()
@@ -392,7 +392,7 @@ class FilletTool extends BaseTool {
 
         var oldPoints = clicked.points.map(function(p){return {x:p.x,y:p.y};});
         var newPoints = GeometryOps.filletPolyline(clicked.points, clicked.isClosed, this.radius);
-        if (!newPoints || newPoints.length < 3) { this.cmd?.log('Fillet fehlgeschlagen', 'error'); return; }
+        if (!newPoints || newPoints.length < 3) { this.cmd?.log('Fillet fehlgeschlagen', 'error'); this._resetToPick1?.(); return; }
 
         var rerender = function() {
             ModificationTool.invalidateCache(clicked);
@@ -522,11 +522,16 @@ class TrimTool extends BaseTool {
                 rerender();
             },
             function() {
+                // BUG23 fix: Einfüge-Position dynamisch aus erstem newContour ableiten,
+                // damit targetIndex nach zwischenzeitlichen Add/Remove-Operationen korrekt bleibt.
+                var insertAt = targetIndex;
+                var firstNewIdx = contours.indexOf(newContours[0]);
+                if (firstNewIdx !== -1) insertAt = firstNewIdx;
                 for (var i = 0; i < newContours.length; i++) {
                     var idx = contours.indexOf(newContours[i]);
                     if (idx !== -1) contours.splice(idx, 1);
                 }
-                contours.splice(Math.min(Math.max(0, targetIndex), contours.length), 0, clicked);
+                contours.splice(Math.min(Math.max(0, insertAt), contours.length), 0, clicked);
                 rerender();
             }
         );
@@ -759,7 +764,9 @@ class ChamferTool extends BaseTool {
             var isWrapAround = clicked.isClosed && ((this.seg1Index === 0 && hit.segmentIndex === maxSeg) || (hit.segmentIndex === 0 && this.seg1Index === maxSeg));
             if (diff !== 1 && !isWrapAround) { this.cmd?.log('Benachbarte Segmente nötig', 'error'); this.state = 'pick1'; return; }
 
-            var cornerIdx = Math.max(this.seg1Index, hit.segmentIndex);
+            // BUG4 fix: wrap-around bei geschlossener Kontur → Ecke ist Index 0, nicht maxSeg
+            var n = clicked.points.length - 1; // Segmentzahl
+            var cornerIdx = isWrapAround ? 0 : Math.max(this.seg1Index, hit.segmentIndex);
             var pts = clicked.points;
             var pPrev = pts[cornerIdx-1 >= 0 ? cornerIdx-1 : pts.length-2];
             var pCorner = pts[cornerIdx];

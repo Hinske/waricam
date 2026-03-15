@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.13 - Canvas Renderer
+ * CeraCUT V3.15 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
@@ -183,7 +183,8 @@ class CanvasRenderer {
             this.render();
         };
         resize();
-        window.addEventListener('resize', resize);
+        this._resizeHandler = resize;
+        window.addEventListener('resize', this._resizeHandler);
     }
 
     initEventListeners() {
@@ -327,14 +328,7 @@ class CanvasRenderer {
                 }
             }
 
-            const hovered = this.findContourAtPoint(worldPos.x, worldPos.y);
-            let needsRender = false;
-            if (hovered !== this.hoveredContour) {
-                this.hoveredContour = hovered;
-                needsRender = true;
-            }
-
-            // Panning zuerst — Hover-Detection und Snap überspringen für Performance
+            // BUG 24 Fix: Panning-Check vor Hover-Detection für Performance
             if (isPanning) {
                 this.offsetX += e.offsetX - lastX;
                 this.offsetY += e.offsetY - lastY;
@@ -342,6 +336,13 @@ class CanvasRenderer {
                 lastY = e.offsetY;
                 this.render();
                 return;
+            }
+
+            const hovered = this.findContourAtPoint(worldPos.x, worldPos.y);
+            let needsRender = false;
+            if (hovered !== this.hoveredContour) {
+                this.hoveredContour = hovered;
+                needsRender = true;
             }
 
             // V3.10: Grip-Hover — nur prüfen wenn Selektion existiert
@@ -415,6 +416,11 @@ class CanvasRenderer {
                 );
                 app?.undoManager?.undoStack?.push(cmd);
                 if (app?.undoManager?.redoStack) app.undoManager.redoStack.length = 0;
+                // BUG 15 Fix: Stack nach maxHistory kürzen
+                if (app?.undoManager) {
+                    const max = app.undoManager.maxHistory || 100;
+                    if (app.undoManager.undoStack.length > max) app.undoManager.undoStack.shift();
+                }
                 this._gripDirty = true;
                 isDraggingGrip = false;
                 dragGrip = null;
@@ -455,6 +461,8 @@ class CanvasRenderer {
             // V3.10: Grip-Drag abbrechen (ohne Commit)
             if (isDraggingGrip && dragContourRef && dragOldPoints) {
                 dragContourRef.points = dragOldPoints.map(p => ({x: p.x, y: p.y}));
+                // BUG 21 Fix: Cache nach Rollback invalidieren
+                if (typeof ModificationTool !== 'undefined') ModificationTool.invalidateCache?.(dragContourRef);
                 this._gripDirty = true;
             }
             isDraggingGrip = false;

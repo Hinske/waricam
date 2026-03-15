@@ -278,7 +278,7 @@ function handleDXFFile(res, queryPath) {
             res.writeHead(200, {
                 'Content-Type': 'application/octet-stream',
                 'Content-Length': buffer.length,
-                'Content-Disposition': `inline; filename="${path.basename(filePath)}"`,
+                'Content-Disposition': `inline; filename="${path.basename(filePath).replace(/"/g, '\\"')}"`,
             });
             res.end(buffer);
         });
@@ -339,7 +339,14 @@ function handleStatic(req, res, pathname) {
 
 function requestHandler(req, res) {
     const parsed = url.parse(req.url, true);
-    const pathname = decodeURIComponent(parsed.pathname);
+    let pathname;
+    try {
+        pathname = decodeURIComponent(parsed.pathname);
+    } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('400 Bad Request: Ungültige URL-Kodierung');
+        return;
+    }
 
     // API-Routen
     if (pathname === '/api/dxf/list' && req.method === 'GET') {

@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.1 - Processing Pipeline
+ * CeraCUT V3.2 - Processing Pipeline
  * Last Modified: 2026-02-11 12:00 UTC
  * Build: 20260211-1200
  *

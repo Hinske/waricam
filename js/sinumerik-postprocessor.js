@@ -1,5 +1,5 @@
 /**
- * CeraCUT/CeraCUT Sinumerik 840D Postprozessor V1.0
+ * CeraCUT/CeraCUT Sinumerik 840D Postprozessor V1.4
  *
  * Erzeugt CNC-Code im MPF-Format für Sinumerik 840D Steuerungen.
  * Format-Vorlage: 7 echte CNC-Referenzdateien (KERNKREIS, ERBEN, SCHWEDEN, etc.)
@@ -14,14 +14,15 @@
  *
  * V1.1: Dynamische R-Parameter via CeraJetEngine.toRParameters()
  * V1.3: Multi-Head Support, Machine-Profile Integration
+ * V1.4: BugFix: Overcut-Erstsegment (i=0), R-Parameter Dezimalstellen (bar/g/min = int), _ff() entfernt
  *
- * Last Modified: 2026-03-09
- * Build: 20260309-multihead
+ * Last Modified: 2026-03-15
+ * Build: 20260315-bugfix
  */
 
 class SinumerikPostprocessor {
 
-    static VERSION = '1.3';
+    static VERSION = '1.4';
 
     constructor(options = {}) {
         // ═══ Formatierung ═══
@@ -210,11 +211,11 @@ class SinumerikPostprocessor {
             `R911=${r('R911', 1.0)}                                ;Massstabsfaktor`,
             `R923=${r('R923', 9, 0)}                                  ;Anschussart 7=PUNKT, 8=BOHREN, 9=Rotation`,
             `R928=${r('R928', 0.80)}                               ;Rotationsradius`,
-            `R917=${r('R917', 1000, 2)}                            ;Rotationsanschuss Vorschub mm/min`,
+            `R917=${r('R917', 1000, 0)}                            ;Rotationsanschuss Vorschub mm/min`,
             `R929=${r('R929', 1.0)}                               ;Rotationsanschusszeit`,
             `R914=${r('R914', 0.0)}                               ;Punktanschusszeit`,
             `R913=${r('R913', 0.0)}                               ;Druckanstiegszeit`,
-            `R959=${r('R959', 270, 2)}                             ;Abrasiv beim Anschuss`,
+            `R959=${r('R959', 270, 0)}                             ;Abrasiv beim Anschuss`,
             `R935=${r('R935', 15, 0)}                                 ;Silovorwahl`,
             `R920=${r('R920', 0.0)}                               ;Abheben Z am Schnittende`,
             ';',
@@ -238,25 +239,25 @@ class SinumerikPostprocessor {
             `R958=${r('R958', 0.80)}                               ;Schnittspalt Reihe 4 mittel`,
             `R927=${r('R927', 0.80)}                               ;Schnittspalt Reihe 5 grob`,
             ';',
-            `R947=${r('R947', 2900, 2)}                            ;Schneiddruck Reihe 1 sehr gut`,
-            `R949=${r('R949', 2900, 2)}                            ;Schneiddruck Reihe 2 gut`,
-            `R951=${r('R951', 2900, 2)}                            ;Schneiddruck Reihe 3 mittelfein`,
-            `R953=${r('R953', 3500, 2)}                            ;Schneiddruck Reihe 4 mittel`,
-            `R955=${r('R955', 3500, 2)}                            ;Schneiddruck Reihe 5 grob`,
+            `R947=${r('R947', 2900, 0)}                            ;Schneiddruck Reihe 1 sehr gut`,
+            `R949=${r('R949', 2900, 0)}                            ;Schneiddruck Reihe 2 gut`,
+            `R951=${r('R951', 2900, 0)}                            ;Schneiddruck Reihe 3 mittelfein`,
+            `R953=${r('R953', 3500, 0)}                            ;Schneiddruck Reihe 4 mittel`,
+            `R955=${r('R955', 3500, 0)}                            ;Schneiddruck Reihe 5 grob`,
             ';',
-            `R948=${r('R948', 270, 2)}                             ;Abrasiv Reihe 1 sehr gut`,
-            `R950=${r('R950', 270, 2)}                             ;Abrasiv Reihe 2 gut`,
-            `R952=${r('R952', 250, 2)}                             ;Abrasiv Reihe 3 mittelfein`,
-            `R954=${r('R954', 340, 2)}                             ;Abrasiv Reihe 4 mittel`,
-            `R956=${r('R956', 340, 2)}                             ;Abrasiv Reihe 5 grob`,
+            `R948=${r('R948', 270, 0)}                             ;Abrasiv Reihe 1 sehr gut`,
+            `R950=${r('R950', 270, 0)}                             ;Abrasiv Reihe 2 gut`,
+            `R952=${r('R952', 250, 0)}                             ;Abrasiv Reihe 3 mittelfein`,
+            `R954=${r('R954', 340, 0)}                             ;Abrasiv Reihe 4 mittel`,
+            `R956=${r('R956', 340, 0)}                             ;Abrasiv Reihe 5 grob`,
             ';',
-            `R967=${r('R967', 270, 2)}                             ;Abrasiv in Ecken Reihe 1 sehr gut`,
-            `R968=${r('R968', 270, 2)}                             ;Abrasiv in Ecken Reihe 2 gut`,
-            `R969=${r('R969', 250, 2)}                             ;Abrasiv in Ecken Reihe 3 mittelfein`,
-            `R970=${r('R970', 340, 2)}                             ;Abrasiv in Ecken Reihe 4 mittel`,
-            `R971=${r('R971', 340, 2)}                             ;Abrasiv in Ecken Reihe 5 grob`,
+            `R967=${r('R967', 270, 0)}                             ;Abrasiv in Ecken Reihe 1 sehr gut`,
+            `R968=${r('R968', 270, 0)}                             ;Abrasiv in Ecken Reihe 2 gut`,
+            `R969=${r('R969', 250, 0)}                             ;Abrasiv in Ecken Reihe 3 mittelfein`,
+            `R970=${r('R970', 340, 0)}                             ;Abrasiv in Ecken Reihe 4 mittel`,
+            `R971=${r('R971', 340, 0)}                             ;Abrasiv in Ecken Reihe 5 grob`,
             ';',
-            `R916=${r('R916', 2900, 2)}                            ;Anschussdruck`,
+            `R916=${r('R916', 2900, 0)}                            ;Anschussdruck`,
             ';',
             `R937=${r('R937', 500, 0)}                                ;Min. Druck Abrasiv ein`,
             ';',
@@ -467,7 +468,7 @@ class SinumerikPostprocessor {
         const overcut = contour.getOvercutPath?.();
         if (overcut?.points?.length >= 2) {
             const overcutSegments = this._processContourPoints(overcut.points);
-            for (let i = 1; i < overcutSegments.length; i++) {
+            for (let i = 0; i < overcutSegments.length; i++) {
                 const seg = overcutSegments[i];
                 if (seg.type === 'line') {
                     lines.push(`N${this._lineNum++} G01 X${this._fc(seg.x)} Y${this._fc(seg.y)}`);
@@ -744,10 +745,6 @@ class SinumerikPostprocessor {
     _fc(value) {
         if (value == null || isNaN(value)) return '0.000';
         return value.toFixed(this.coordDecimals);
-    }
-
-    _ff(value) {
-        return value.toFixed(this.feedDecimals);
     }
 
     // ════════════════════════════════════════════════════════════════

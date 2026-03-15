@@ -94,6 +94,7 @@ const Geometry = {
           seg2.p1, seg2.p2
         );
 
+        if (intersection && (isNaN(intersection.x) || isNaN(intersection.y))) intersection = null;
         if (intersection) {
           offsetPoints.push(intersection);
         } else {
@@ -115,6 +116,7 @@ const Geometry = {
           seg2.p1, seg2.p2
         );
 
+        if (intersection && (isNaN(intersection.x) || isNaN(intersection.y))) intersection = null;
         if (intersection) {
           offsetPoints.push(intersection);
         } else {

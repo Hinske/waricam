@@ -1,5 +1,5 @@
 /**
- * CeraCUT Nesting Engine V1.0
+ * CeraCUT Nesting Engine V1.1
  * Automatische Teile-Verschachtelung für Wasserstrahlschneiden
  *
  * Algorithmen:
@@ -194,10 +194,9 @@ const NestingEngine = (() => {
         }
 
         // B spiegeln am Ursprung (für Minkowski-Differenz)
-        const refB = _boundingBox(hullB);
         const negB = hullB.map(p => ({
-            x: -(p.x - refB.minX),
-            y: -(p.y - refB.minY)
+            x: -p.x,
+            y: -p.y
         }));
 
         // Minkowski-Summe von A und (-B)
@@ -521,7 +520,7 @@ const NestingEngine = (() => {
     function _collidesWithPlaced(testBBox, partPoints, position, placedParts, spacing) {
         for (const placed of placedParts) {
             // Schneller BBox-Check mit Spacing
-            if (_bboxOverlap(testBBox, placed.bbox, 0)) {
+            if (_bboxOverlap(testBBox, placed.bbox, spacing)) {
                 // Genauerer Check: Polygon-Überlappung
                 if (_polygonsOverlap(partPoints, position, placed.points, placed.position)) {
                     return true;

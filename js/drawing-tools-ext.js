@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing Tools Extension V1.0
+ * CeraCUT Drawing Tools Extension V1.1
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ

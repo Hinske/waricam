@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.8 - Main Application
+ * CeraCUT V5.9 - Main Application
  * Wizard Controller + Konturen-Panel
  * V3.8: Layer-System, Layer-Manager Dialog, DXF-Writer R12
  * V3.7: Tier 4 Aufteilen — CL2D (Halbieren), CLND (N-Teilen), CLDCL (Divided Calculation)
@@ -717,13 +717,13 @@ class CeraCutApp {
     
     setStartpointOnContour(contour, clickPoint) {
         if (!contour || !contour.points || contour.points.length < 3) return;
-        
+
         const points = contour.points;
-        
+
         // Finde nächsten Punkt auf der Kontur
         let nearestIndex = 0;
         let minDist = Infinity;
-        
+
         for (let i = 0; i < points.length - 1; i++) {
             const d = Math.hypot(points[i].x - clickPoint.x, points[i].y - clickPoint.y);
             if (d < minDist) {
@@ -731,15 +731,15 @@ class CeraCutApp {
                 nearestIndex = i;
             }
         }
-        
+
         // Rotiere Punkte-Array
         if (nearestIndex > 0) {
             const before = points.slice(0, nearestIndex);
             const after = points.slice(nearestIndex);
-            
+
             // Neues Array: after + before (ohne doppelten Schlusspunkt)
             const newPoints = [...after];
-            
+
             // Wenn geschlossen, alten Anfang anhängen
             if (contour.isClosed) {
                 newPoints.push(...before);
@@ -748,10 +748,32 @@ class CeraCutApp {
                     newPoints.push({...newPoints[0]});
                 }
             }
-            
+
+            // Undo-fähige Mutation via FunctionCommand
+            const oldPoints = contour.points.map(p => ({...p}));
+            const app = this;
+            const cmd = new FunctionCommand(
+                `Startpunkt verschieben (Punkt ${nearestIndex})`,
+                () => {
+                    contour.points = newPoints.map(p => ({...p}));
+                    contour.invalidate?.();
+                    app.renderer?.render();
+                    app.updateContourPanel();
+                },
+                () => {
+                    contour.points = oldPoints.map(p => ({...p}));
+                    contour.invalidate?.();
+                    app.renderer?.render();
+                    app.updateContourPanel();
+                }
+            );
+            // Aktion bereits ausgeführt — direkt auf Stack pushen
             contour.points = newPoints;
             contour.invalidate?.();
-            
+            contour._rotationCount = (contour._rotationCount || 0) + 1;
+            this.undoManager.undoStack.push(cmd);
+            this.undoManager.redoStack = [];
+
             this.showToast(`📍 Startpunkt verschoben (Punkt ${nearestIndex})`, 'success');
             this.renderer.render();
             this.updateContourPanel();
@@ -1212,6 +1234,12 @@ class CeraCutApp {
                 isSelected: false,
                 microjoints: contour.microjoints ? [...contour.microjoints] : []
             });
+            // Cache-Properties löschen — nicht übernehmen aus Original
+            newContour._cachedKerfPolyline = null;
+            newContour._cacheKey = null;
+            newContour._cachedLeadInPath = null;
+            newContour._cachedLeadOutPath = null;
+            newContour._cachedOvercutPath = null;
         } else {
             newContour = {
                 ...contour,
@@ -1608,6 +1636,7 @@ class CeraCutApp {
             // Kontur umkehren wenn das Ende näher war
             if (bestReverse && best.contour.points) {
                 best.contour.points.reverse();
+                best.contour.invalidate?.();
                 // Endpunkte-Cache aktualisieren
                 const ep = endpoints.get(best);
                 const tmp = ep.first;
@@ -2448,7 +2477,6 @@ class CeraCutApp {
                         id: 'ceracut-dxf',
                         startIn: this._lastDirHandle || 'documents'
                     });
-                    this._lastDirHandle = fileHandle; // Ordner merken
                     this._dxfFileHandle = fileHandle;  // Handle merken für Strg+S
                     const file = await fileHandle.getFile();
                     this.loadFile(file);
@@ -3418,10 +3446,11 @@ class CeraCutApp {
         targets.forEach(c => {
             if (c.cuttingMode === 'hole') {
                 // B.3: Flächenklassen-Override für Löcher
-                if (useAreaClasses && typeof c.applyAreaClass === 'function') {
-                    const applied = c.applyAreaClass(this.settings.areaClasses);
-                    if (applied) {
-                        console.log(`[Phase B.3] Flächenklasse angewandt auf Kontur #${c.id}: area=${c._lastAreaCm2?.toFixed(2)} cm²`);
+                if (useAreaClasses && typeof c.getMatchingAreaClass === 'function' && typeof c.applyAreaClass === 'function') {
+                    const cls = c.getMatchingAreaClass(this.settings.areaClasses);
+                    if (cls) {
+                        c.applyAreaClass(cls);
+                        console.log(`[Phase B.3] Flächenklasse angewandt auf Kontur #${c.id}: area=${c.getAreaCm2?.().toFixed(2)} cm²`);
                         return; // Flächenklasse hat alle Werte gesetzt
                     }
                 }
@@ -4104,6 +4133,7 @@ class CeraCutApp {
 
         // Print-Canvas vorbereiten
         const printCanvas = document.getElementById('print-canvas');
+        if (!printCanvas) { console.warn('[App] print-canvas element not found'); return; }
         printCanvas.width = pageW;
         printCanvas.height = pageH;
         const ctx = printCanvas.getContext('2d');
@@ -4215,9 +4245,8 @@ class CeraCutApp {
                     opts.startIn = this._lastDirHandle;
                 }
                 const fileHandle = await window.showSaveFilePicker(opts);
-                // Handle merken für "Speichern" und Ordner
+                // Handle merken für "Speichern"
                 this._dxfFileHandle = fileHandle;
-                this._lastDirHandle = fileHandle;
                 const filename = fileHandle.name;
                 this.loadedFileName = filename;
 

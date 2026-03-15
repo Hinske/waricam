@@ -1,5 +1,5 @@
 /**
- * CeraCUT Properties Panel V1.1
+ * CeraCUT Properties Panel V1.2
  * Kontur-Eigenschaften als Kontextmenu-Sektion (Step 4 / CAM)
  * - Generiert editierbare CAM-Felder (Quality, Piercing, Lead-In, Kerf)
  * - Bindet Events mit Undo-Support (PropertyChangeCommand)

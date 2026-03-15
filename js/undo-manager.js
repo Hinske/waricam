@@ -413,7 +413,17 @@ class UndoManager {
      * @param {BaseCommand} command
      */
     execute(command) {
-        command.execute();
+        try {
+            command.execute();
+        } catch (err) {
+            console.error(`[UndoManager V1.1] Fehler bei execute() von "${command.description}":`, err);
+            // Offene Gruppe schließen, damit kein inkonsistenter Gruppen-Zustand bleibt
+            if (this._groupCommands) {
+                this._groupCommands = null;
+                this._groupDescription = null;
+            }
+            throw err;
+        }
 
         if (this._groupCommands) {
             this._groupCommands.push(command);
@@ -424,13 +434,13 @@ class UndoManager {
             // Edge Case: Redo-Stack leeren nach neuer Aktion
             if (this.redoStack.length > 0) {
                 this.redoStack.length = 0;
-                console.log('[UndoManager V1.0] Redo-Stack geleert (neue Aktion nach Undo)');
+                console.log('[UndoManager V1.1] Redo-Stack geleert (neue Aktion nach Undo)');
             }
 
             this._notifyStateChange();
         }
 
-        console.log(`[UndoManager V1.0] Ausgeführt: "${command.description}"`);
+        console.log(`[UndoManager V1.1] Ausgeführt: "${command.description}"`);
     }
 
     /**
@@ -611,9 +621,13 @@ class WizardStepUndo {
         }
 
         let undoneCount = 0;
-        while (this.undoManager.undoStack.length > marker && this.undoManager.canUndo()) {
+        let maxIter = 1000;
+        while (this.undoManager.undoStack.length > marker && this.undoManager.canUndo() && --maxIter > 0) {
             this.undoManager.undo();
             undoneCount++;
+        }
+        if (maxIter <= 0) {
+            console.warn(`[WizardStepUndo V1.1] Max-Iterationen erreicht bei undoStep(${stepNumber}) — moeglicher Endlos-Loop abgebrochen`);
         }
 
         // Marker entfernen

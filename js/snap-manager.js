@@ -1,5 +1,5 @@
 /**
- * CeraCUT Snap Manager V1.2
+ * CeraCUT Snap Manager V1.3
  * Erweitetes Object-Snap System (AutoCAD-Stil)
  * - Endpoint, Midpoint, Center, GeoCenter, Quadrant, Intersection, Perpendicular, Tangent, Nearest
  * - V1.1: Perpendicular + Tangent (7 Kern-Snaps)
@@ -807,9 +807,6 @@ class SnapManager {
             }
         }
 
-        if (results.length > 0) {
-            console.log(`[SnapManager V1.1] Perpendicular: ${results.length} Kandidat(en) gefunden`);
-        }
         return results;
     }
 
@@ -899,9 +896,6 @@ class SnapManager {
             }
         }
 
-        if (results.length > 0) {
-            console.log(`[SnapManager V1.1] Tangent: ${results.length} Kandidat(en) gefunden`);
-        }
         return results;
     }
 
