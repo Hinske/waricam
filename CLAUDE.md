@@ -97,8 +97,8 @@ node test-dxf-parser.js      # Parser Unit-Tests (Node.js)
 | **Bridge Cutting** | `bridge-cutting.js` | **V1.0** | Haltestege zwischen Teilen (auto/manuell) |
 | **Quality Zones** | `quality-zones.js` | **V1.1** | Auto-Erkennung Ecken/Radien, Speed-Reduktion |
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
-| **DXF Browser** | `dxf-browser.js` | **V1.0** | Server-DXF-Browse Modal, Breadcrumb-Navigation, API-Fallback |
-| **Server** | `server.js` | **V1.1** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API (/api/dxf/*), HTTP→HTTPS Redirect |
+| **DXF Browser** | `dxf-browser.js` | **V1.1** | Server-DXF-Browse Modal, Breadcrumb-Navigation, Pfad-Persistenz (localStorage) |
+| **Server** | `server.js` | **V1.2** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API, Dual-Protocol (HTTP+HTTPS auf einem Port) |
 | **Build-Info** | `build-info.js` | **V5.9** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.7 | Toleranzen, Farben, Defaults |
 
