@@ -78,3 +78,10 @@
 - **Root Cause:** `_parseHatch()` las alle `10/20`-Koordinatenpaare aus ALLEN Boundary-Loops in ein einziges `boundaryPoints[]`-Array. HATCH-Entities können mehrere getrennte Pfade haben (äußere Grenze + innere Löcher) — die Punkte verschiedener Pfade wurden zu einer einzigen Polylinie verbunden.
 - **Regel:** DXF HATCH-Entities sind reine Visualisierung (Schraffur/Füllung), keine Schneidgeometrie. Im CAM-Kontext sollten sie beim Import übersprungen werden (`return null`). Falls sie in Zukunft doch benötigt werden: Boundary-Loops anhand Code 92 (Boundary-Typ) trennen und als separate Konturen zurückgeben — nie alles in ein Array.
 - **Betroffene Module:** `dxf-parser.js` (`_parseHatch`)
+
+### [2026-03-16] Falsche disc/hole-Topologie bei konkaven Polygonen (Löwenkopf)
+- **Fehler:** Bei komplexen konkaven Formen (z.B. Löwenmähne mit Zacken) wurden Konturen falsch als disc/hole klassifiziert. Disc-Fill erschien auf Holes und umgekehrt.
+- **Root Cause:** `Geometry.centroid()` war ein simpler arithmetischer Mittelwert aller Punkte. Bei stark konkaven Formen (Sterne, Zacken, Halbmonde) fällt dieser Punkt **außerhalb** des Polygons. `_pointInPolygon(centroid, parent)` lieferte dann falsche Ergebnisse → falsches Nesting-Level → falsche disc/hole-Zuweisung.
+- **Lösung:** `centroid()` durch flächengewichteten Centroid (Shoelace-basiert) ersetzt. Neue Methode `interiorPoint()` mit Horizontal-Scan-Fallback — garantiert einen Punkt innerhalb des Polygons, auch bei extrem konkaven Formen.
+- **Regel:** Für Point-in-Polygon-Tests an konkaven Formen NIE den arithmetischen Mittelwert als Testpunkt verwenden. Immer `Geometry.interiorPoint()` nutzen, das einen garantiert-inneren Punkt liefert.
+- **Betroffene Module:** `geometry.js` (centroid, interiorPoint), `ceracut-pipeline.js` (_analyzeTopology), `canvas-renderer.js` (Disc-Fill, Hatch Hole-Cutout)

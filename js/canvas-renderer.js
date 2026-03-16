@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.23 - Canvas Renderer
+ * CeraCUT V3.24 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.24: interiorPoint() für Hole-Cutout bei konkaven Polygonen
  * V3.23: Disc-Fill in allen Modi sichtbar (nicht nur CAM), Hatch-Rendering
  * V3.22: Disc-Fill Hole-Cutout — Centroid statt points[0] für robuste Even-Odd Erkennung
  * V3.21: Disc-Füllung Fix (World-Koordinaten statt worldToScreen), Hit-Test Revert
@@ -836,7 +837,7 @@ class CanvasRenderer {
                     if (other === contour || !other.isClosed || other.isReference) continue;
                     if (other.cuttingMode !== 'hole') continue;
                     if (other.points?.length < 3) continue;
-                    const tp = Geometry.centroid(other.points);
+                    const tp = Geometry.interiorPoint(other.points);
                     if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon?.(tp, points)) {
                         const hp = other.points;
                         ctx.moveTo(hp[hp.length - 1].x, hp[hp.length - 1].y);
@@ -924,7 +925,7 @@ class CanvasRenderer {
             if (other === contour || !other.isClosed || other.isReference) continue;
             if (other.cuttingMode !== 'hole') continue;
             if (other.points?.length < 3) continue;
-            const tp = typeof Geometry !== 'undefined' ? Geometry.centroid(other.points) : other.points[0];
+            const tp = typeof Geometry !== 'undefined' ? Geometry.interiorPoint(other.points) : other.points[0];
             if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon?.(tp, points)) {
                 const hp = other.points;
                 ctx.moveTo(hp[hp.length - 1].x, hp[hp.length - 1].y);

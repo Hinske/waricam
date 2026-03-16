@@ -1,8 +1,8 @@
 /**
- * CeraCUT V2.9 - Geometry Kernel
- * Last Modified: 2026-01-28 06:45 UTC
- * Build: 20260128-0645
- * 
+ * CeraCUT V2.10 - Geometry Kernel
+ * Last Modified: 2026-03-16 15:20 UTC
+ * Build: 20260316-centroid
+ *
  * Mathematics over Guesswork
  */
 
@@ -188,19 +188,116 @@ const Geometry = {
     return Math.sqrt(dx * dx + dy * dy);
   },
 
+  /**
+   * V2.10: Flächengewichteter Centroid (Shoelace-basiert).
+   * Für konvexe UND konkave Polygone korrekt — liegt näher am visuellen Zentrum
+   * als der arithmetische Mittelwert. Fallback auf Mittelwert bei degenerierten Polygonen.
+   */
   centroid(points) {
     if (!points || points.length === 0) return { x: 0, y: 0 };
-    
-    let sumX = 0, sumY = 0;
-    for (const p of points) {
-      sumX += p.x;
-      sumY += p.y;
+    if (points.length < 3) {
+      // Linie oder Punkt — arithmetischer Mittelwert
+      let sx = 0, sy = 0;
+      for (const p of points) { sx += p.x; sy += p.y; }
+      return { x: sx / points.length, y: sy / points.length };
     }
-    
+
+    let area = 0, cx = 0, cy = 0;
+    const n = points.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const cross = points[i].x * points[j].y - points[j].x * points[i].y;
+      area += cross;
+      cx += (points[i].x + points[j].x) * cross;
+      cy += (points[i].y + points[j].y) * cross;
+    }
+    area /= 2;
+
+    if (Math.abs(area) < 1e-10) {
+      // Degeneriertes Polygon — Fallback
+      let sx = 0, sy = 0;
+      for (const p of points) { sx += p.x; sy += p.y; }
+      return { x: sx / n, y: sy / n };
+    }
+
+    const factor = 1 / (6 * area);
+    return { x: cx * factor, y: cy * factor };
+  },
+
+  /**
+   * V2.10: Garantiert-innerer Punkt eines geschlossenen Polygons.
+   * 1. Versuche flächengewichteten Centroid — wenn innerhalb, fertig.
+   * 2. Sonst: Horizontal-Scan durch Centroid-Y → Mittelwert des längsten inneren Segments.
+   * 3. Letzter Fallback: Mittelwert der ersten drei Punkte (Dreieck-Innenpunkt).
+   */
+  interiorPoint(points) {
+    if (!points || points.length < 3) return this.centroid(points);
+
+    const c = this.centroid(points);
+    if (this._pointInPolygonSimple(c, points)) return c;
+
+    // Horizontal-Scan bei Y = c.y
+    const interior = this._scanInterior(points, c.y);
+    if (interior) return interior;
+
+    // Scan bei 5 weiteren Y-Positionen durch die Bounding-Box
+    let minY = Infinity, maxY = -Infinity;
+    for (const p of points) {
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    for (let t = 0.2; t <= 0.8; t += 0.15) {
+      const scanY = minY + t * (maxY - minY);
+      const interior2 = this._scanInterior(points, scanY);
+      if (interior2) return interior2;
+    }
+
+    // Letzter Fallback: Mittelwert der ersten drei Punkte
     return {
-      x: sumX / points.length,
-      y: sumY / points.length
+      x: (points[0].x + points[1].x + points[2].x) / 3,
+      y: (points[0].y + points[1].y + points[2].y) / 3
     };
+  },
+
+  /** Horizontal-Scan: Schnittpunkte mit Polygon-Kanten bei gegebenem Y */
+  _scanInterior(points, scanY) {
+    const xs = [];
+    const n = points.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const yi = points[i].y, yj = points[j].y;
+      if ((yi <= scanY && yj > scanY) || (yj <= scanY && yi > scanY)) {
+        const t = (scanY - yi) / (yj - yi);
+        xs.push(points[i].x + t * (points[j].x - points[i].x));
+      }
+    }
+    if (xs.length < 2) return null;
+    xs.sort((a, b) => a - b);
+
+    // Längstes inneres Segment finden (Paare: [0,1], [2,3], ...)
+    let bestMid = null, bestLen = 0;
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const len = xs[k + 1] - xs[k];
+      if (len > bestLen) {
+        bestLen = len;
+        bestMid = { x: (xs[k] + xs[k + 1]) / 2, y: scanY };
+      }
+    }
+    return bestMid;
+  },
+
+  /** Einfacher Point-in-Polygon-Test (Ray-Casting) */
+  _pointInPolygonSimple(point, polygon) {
+    let inside = false;
+    const x = point.x, y = point.y;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i].x, yi = polygon[i].y;
+      const xj = polygon[j].x, yj = polygon[j].y;
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    return inside;
   },
 
   boundingBox(points) {

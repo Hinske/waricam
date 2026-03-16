@@ -1,24 +1,24 @@
 /**
- * CeraCUT Build Info V6.2
- * Version: V6.2
- * Last Modified: 2026-03-16, 14:00 MEZ
- * Build: 20260316-hatch
+ * CeraCUT Build Info V6.3
+ * Version: V6.3
+ * Last Modified: 2026-03-16, 15:20 MEZ
+ * Build: 20260316-interior
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.2',
-    build: '20260316-hatch',
+    version: '6.3',
+    build: '20260316-interior',
     date: '2026-03-16',
-    time: '14:00 MEZ',
+    time: '15:20 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
-        'geometry':           { version: '2.9', build: '20260128-0645' },
-        'pipeline':           { version: '3.3', build: '20260316-centroid' },
+        'geometry':           { version: '2.10', build: '20260316-centroid' },
+        'pipeline':           { version: '3.4', build: '20260316-interior' },
         'cam-contour':        { version: '5.4', build: '20260316-hatch' },
-        'canvas-renderer':    { version: '3.23', build: '20260316-hatch' },
+        'canvas-renderer':    { version: '3.24', build: '20260316-interior' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -226,7 +226,11 @@ const CERACUT_BUILD = {
         'V6.2: Hatch als Contour-Property — cam-contour V5.4 mit clone()-Support',
         'V6.2: Properties-Panel V1.3 — Schraffur hinzufuegen/entfernen/bearbeiten im Kontextmenu',
         'V6.2: DXF HATCH-Entities werden beim Import übersprungen — reine Visualisierung, keine Schneidgeometrie (dxf-parser V3.10)',
-        'V6.2: Disc-Fill in allen Wizard-Modi sichtbar — nicht mehr auf CAM-Steps beschraenkt (canvas-renderer V3.23)'
+        'V6.2: Disc-Fill in allen Wizard-Modi sichtbar — nicht mehr auf CAM-Steps beschraenkt (canvas-renderer V3.23)',
+        'V6.3: interiorPoint() — garantiert-innerer Testpunkt für konkave Polygone (geometry V2.10)',
+        'V6.3: Flächengewichteter Centroid (Shoelace) statt arithmetischem Mittelwert — korrekte Topologie bei komplexen Formen',
+        'V6.3: Pipeline V3.4 — robuste disc/hole-Erkennung auch bei Löwen-Zacken und ähnlich konkaven Konturen',
+        'V6.3: Renderer V3.24 — Hole-Cutout im Disc-Fill/Hatch nutzt interiorPoint()'
     ],
     
     print() {
