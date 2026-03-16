@@ -67,6 +67,12 @@
 - **Regel:** Layer-Sichtbarkeitsänderungen MÜSSEN die Pipeline neu auslösen (`applyLayerSelection({ visibilityChange: true })`). LayerManager-Visibility muss als zusätzlicher Filter in `applyLayerSelection()` berücksichtigt werden. Zwei Filter-Systeme dürfen nie unabhängig agieren.
 - **Betroffene Module:** `app.js` (`applyLayerSelection`, `_runPipelineKeepUndo`), `index.html` (Visibility-Toggle Handler)
 
+### [2026-03-16] Disc-Fill nur in CAM-Modi → Füllung fehlt beim Zurücknavigieren
+- **Fehler:** Disc-Füllung war im CAD-Bereich (Step 1-3) unsichtbar, erschien erst bei Wechsel zu CAM (Step 4-5).
+- **Root Cause:** `isCamMode`-Gate im Disc-Fill Code: `contour.cuttingMode === 'disc' && isCamMode`. Sobald Pipeline gelaufen ist und `cuttingMode` gesetzt hat, sollte die Füllung in allen Steps sichtbar sein — nicht nur in Steps 4/5.
+- **Regel:** Visuelle Eigenschaften die an Contour-Properties gebunden sind (cuttingMode, hatch) sollten NICHT zusätzlich an den Wizard-Step gekoppelt werden. Nur interaktive CAM-Elemente (Leads, Kerf, Overcut, Microjoints) gehören hinter `isCamMode`-Gates.
+- **Betroffene Module:** `canvas-renderer.js` (Disc-Fill Condition)
+
 ### [2026-03-16] DXF HATCH-Entities: Multi-Boundary-Loops dürfen nicht in ein Array
 - **Fehler:** Importierte DXF-Dateien mit HATCH-Entities zeigten wirre Verbindungslinien quer durch die Zeichnung.
 - **Root Cause:** `_parseHatch()` las alle `10/20`-Koordinatenpaare aus ALLEN Boundary-Loops in ein einziges `boundaryPoints[]`-Array. HATCH-Entities können mehrere getrennte Pfade haben (äußere Grenze + innere Löcher) — die Punkte verschiedener Pfade wurden zu einer einzigen Polylinie verbunden.
