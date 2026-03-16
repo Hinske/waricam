@@ -1,24 +1,24 @@
 /**
- * CeraCUT Build Info V6.3
- * Version: V6.3
- * Last Modified: 2026-03-16, 15:20 MEZ
- * Build: 20260316-interior
+ * CeraCUT Build Info V6.4
+ * Version: V6.4
+ * Last Modified: 2026-03-16, 17:00 MEZ
+ * Build: 20260316-validate
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.3',
-    build: '20260316-interior',
+    version: '6.4',
+    build: '20260316-validate',
     date: '2026-03-16',
-    time: '15:20 MEZ',
+    time: '17:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.10', build: '20260316-centroid' },
-        'pipeline':           { version: '3.4', build: '20260316-interior' },
-        'cam-contour':        { version: '5.4', build: '20260316-hatch' },
-        'canvas-renderer':    { version: '3.24', build: '20260316-interior' },
+        'pipeline':           { version: '3.5', build: '20260316-validate' },
+        'cam-contour':        { version: '5.5', build: '20260316-material' },
+        'canvas-renderer':    { version: '3.25', build: '20260316-material' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -32,9 +32,9 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.2', build: '20260316-layervis' },
+        'app':                { version: '6.4', build: '20260316-validate' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
-        'properties-panel':   { version: '1.3', build: '20260316-hatch' },
+        'properties-panel':   { version: '1.4', build: '20260316-preview' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.1', build: '20260315-bugfix35' },
         'toolpath-simulator': { version: '1.0', build: '20260309' },
@@ -42,6 +42,7 @@ const CERACUT_BUILD = {
         'machine-profiles':   { version: '1.0', build: '20260309' },
         'bridge-cutting':     { version: '1.0', build: '20260309' },
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
+        'cam-tools':          { version: '1.1', build: '20260316-hittest' },
         'advanced-tools':     { version: '1.4', build: '20260315-bugfix35' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
     },
@@ -230,7 +231,16 @@ const CERACUT_BUILD = {
         'V6.3: interiorPoint() — garantiert-innerer Testpunkt für konkave Polygone (geometry V2.10)',
         'V6.3: Flächengewichteter Centroid (Shoelace) statt arithmetischem Mittelwert — korrekte Topologie bei komplexen Formen',
         'V6.3: Pipeline V3.4 — robuste disc/hole-Erkennung auch bei Löwen-Zacken und ähnlich konkaven Konturen',
-        'V6.3: Renderer V3.24 — Hole-Cutout im Disc-Fill/Hatch nutzt interiorPoint()'
+        'V6.3: Renderer V3.24 — Hole-Cutout im Disc-Fill/Hatch nutzt interiorPoint()',
+        'V6.4: Validation Engine — Pre-Export-Prüfung: Gap<Kerf, scharfe Ecken, Intarsien-Waisen, Lead-Kollisionen, offene Konturen (pipeline V3.5)',
+        'V6.4: Validation Modal — Criticals blockieren Export (rot), Warnings erlauben "Trotzdem exportieren" (gelb)',
+        'V6.4: CAM-Tools V1.1 — Hit-Test Threshold skaliert mit Zoom-Level (präzise bei Zoom, tolerant bei Übersicht)',
+        'V6.4: Properties Panel V1.4 — Live Preview für Lead-Parameter (leadInLength, leadInRadius, overcutLength, leadInAngle)',
+        'V6.4: Live Preview — Escape revertiert ohne Undo-Eintrag, Loslassen committet mit korrektem Undo',
+        'V6.4: Multi-Material Intarsien — 5 Materialgruppen (A-E) mit eigenen Farben (constants V2.8)',
+        'V6.4: CamContour V5.5 — materialGroup + intarsiaRole Properties mit clone()-Support',
+        'V6.4: Renderer V3.25 — Intarsien-Overlay Farben aus materialGroup statt hardcoded',
+        'V6.4: Intarsien Multi-Material Export — separate POS/NEG-Dateien pro Materialgruppe'
     ],
     
     print() {

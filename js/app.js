@@ -1,5 +1,7 @@
 /**
- * CeraCUT V6.2 - Main Application
+ * CeraCUT V6.4 - Main Application
+ * V6.4: Validation Engine — Pre-Export-Prüfung mit Modal (Gap, Ecken, Waisen, Kollisionen)
+ * V6.3: interiorPoint() für robuste Topologie
  * V6.2: Layer-Visibility → Pipeline-Rebuild (unsichtbare Layer aus Topology ausgeschlossen)
  * Wizard Controller + Konturen-Panel
  * V3.8: Layer-System, Layer-Manager Dialog, DXF-Writer R12
@@ -15,8 +17,8 @@
  * V3.1: Undo/Redo (Command Pattern), Clipboard (Copy/Cut/Paste)
  * V3.14: CAM-Tab Redesign — Außen/Innen-Lead, Material-Gruppe, Piercing-Typen, Speed-Info
  * V4.5: IGEMS 4-Slot Lead-System — Alternativ-Lead Fallback bei Kollision
- * Last Modified: 2026-03-15 MEZ
- * Build: 20260315-ux
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-validate
  */
 
 // XSS Protection
@@ -4013,6 +4015,20 @@ class CeraCutApp {
             return;
         }
 
+        // V6.4: Pre-Export Validation
+        if (typeof CeraCutPipeline !== 'undefined' && CeraCutPipeline.validate) {
+            const validation = CeraCutPipeline.validate(this.contours, {
+                kerfWidth: this.settings.kerfWidth || 0.8,
+                intarsiaMode: this.settings.intarsiaMode,
+                intarsiaPosContours: this.intarsiaPosContours,
+                intarsiaNegContours: this.intarsiaNegContours
+            });
+            if (validation.errors.length > 0 || validation.warnings.length > 0) {
+                const proceed = await this._showValidationModal(validation);
+                if (!proceed) return;
+            }
+        }
+
         const planName = document.getElementById('planname-input')?.value
             || this.dxfFileName?.replace(/\.dxf$/i, '').toUpperCase()
             || 'UNNAMED';
@@ -4059,6 +4075,57 @@ class CeraCutApp {
         URL.revokeObjectURL(url);
 
         this.showToast(`✅ ${result.filename} exportiert (${result.stats.contours} Konturen)`, 'success');
+    }
+
+    /**
+     * V6.4: Validation Modal — zeigt Fehler/Warnungen vor Export
+     * @returns {Promise<boolean>} true = weiter exportieren, false = abbrechen
+     */
+    _showValidationModal(validation) {
+        return new Promise(resolve => {
+            const hasCritical = validation.errors.length > 0;
+            const items = [
+                ...validation.errors.map(e => ({ ...e, icon: '⛔' })),
+                ...validation.warnings.map(w => ({ ...w, icon: '⚠️' }))
+            ];
+
+            let listHTML = items.map(item => {
+                const color = item.severity === 'critical' ? '#ef4444' : '#f59e0b';
+                return `<div style="padding:6px 8px;margin:4px 0;background:${color}22;border-left:3px solid ${color};border-radius:3px;font-size:12px;">
+                    <span>${item.icon}</span>
+                    <strong style="color:${color}">[${item.code}]</strong>
+                    <span style="color:#ccc">${item.contourName}:</span>
+                    ${item.message}
+                </div>`;
+            }).join('');
+
+            const overlay = document.createElement('div');
+            overlay.id = 'validation-modal';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = `
+                <div style="background:#1e1e1e;border:1px solid #555;border-radius:8px;max-width:560px;width:90%;max-height:70vh;overflow-y:auto;padding:20px;color:#ddd;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                    <h3 style="margin:0 0 12px;font-size:16px;color:${hasCritical ? '#ef4444' : '#f59e0b'}">
+                        ${hasCritical ? '⛔ Export blockiert' : '⚠️ Warnungen vor Export'}
+                    </h3>
+                    <div style="max-height:40vh;overflow-y:auto;">${listHTML}</div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+                        <button id="val-cancel" style="padding:6px 16px;background:#555;border:none;border-radius:4px;color:#ddd;cursor:pointer;">Abbrechen</button>
+                        ${!hasCritical ? '<button id="val-proceed" style="padding:6px 16px;background:#f59e0b;border:none;border-radius:4px;color:#000;cursor:pointer;font-weight:600;">Trotzdem exportieren</button>' : ''}
+                    </div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+
+            const cleanup = (result) => {
+                overlay.remove();
+                resolve(result);
+            };
+
+            overlay.querySelector('#val-cancel').addEventListener('click', () => cleanup(false));
+            const proceedBtn = overlay.querySelector('#val-proceed');
+            if (proceedBtn) proceedBtn.addEventListener('click', () => cleanup(true));
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+        });
     }
 
     previewGCode() {
@@ -4175,7 +4242,7 @@ class CeraCutApp {
      *          → Gleiche Geometrie, invertierte Kerf-Kompensation
      *          → Leads flippen automatisch (Pierce immer im Abfall)
      */
-    exportIntarsia() {
+    async exportIntarsia() {
         console.time('[Intarsia V2.0] Export');
         console.log('[Intarsia V2.0] exportIntarsia() gestartet');
 
@@ -4186,6 +4253,20 @@ class CeraCutApp {
         if (!this.cutOrder || this.cutOrder.length === 0) {
             this.showToast('Keine Schneidreihenfolge festgelegt', 'error');
             return;
+        }
+
+        // V6.4: Pre-Export Validation
+        if (typeof CeraCutPipeline !== 'undefined' && CeraCutPipeline.validate) {
+            const validation = CeraCutPipeline.validate(this.contours, {
+                kerfWidth: this.settings.kerfWidth || 0.8,
+                intarsiaMode: true,
+                intarsiaPosContours: this.intarsiaPosContours,
+                intarsiaNegContours: this.intarsiaNegContours
+            });
+            if (validation.errors.length > 0 || validation.warnings.length > 0) {
+                const proceed = await this._showValidationModal(validation);
+                if (!proceed) return;
+            }
         }
 
         // Sicherstellen dass Intarsien-Konturen aktuell sind
@@ -4202,45 +4283,62 @@ class CeraCutApp {
             technologyParams
         };
 
-        // ─── NEG Export (Aussparung) — Offset nach außen, Loch wird größer ───
-        console.log('[Intarsia V2.0] Generiere NEG (Aussparung)...');
-        const negContours = this._buildIntarsiaExportContours(this.intarsiaNegContours);
-        const ppNeg = new SinumerikPostprocessor();
-        const negResult = ppNeg.generate(negContours, this.cutOrder, {
-            ...commonSettings,
-            planName: baseName + '_NEG'
-        });
+        // V6.4: Multi-Material Gruppierung
+        const materials = (typeof CeraCUT !== 'undefined' && CeraCUT.INTARSIA_MATERIALS) || [];
+        const usedGroups = new Set();
+        (this.intarsiaPosContours || []).forEach(c => usedGroups.add(c.materialGroup ?? 0));
+        (this.intarsiaNegContours || []).forEach(c => usedGroups.add(c.materialGroup ?? 0));
 
-        // ─── POS Export (Einleger) — invertierte cuttingModes, Offset nach innen ───
-        console.log('[Intarsia V2.0] Generiere POS (Einleger)...');
-        const posContours = this._buildIntarsiaExportContours(this.intarsiaPosContours);
-        const ppPos = new SinumerikPostprocessor();
-        const posResult = ppPos.generate(posContours, this.cutOrder, {
-            ...commonSettings,
-            planName: baseName + '_POS'
-        });
+        const isMultiMaterial = usedGroups.size > 1;
+        let fileCount = 0;
 
-        // ─── Downloads auslösen ───
-        const allWarnings = [
-            ...posResult.warnings.map(w => `POS: ${w}`),
-            ...negResult.warnings.map(w => `NEG: ${w}`)
-        ];
+        for (const groupId of usedGroups) {
+            const suffix = isMultiMaterial ? `_M${groupId}` : '';
+            const matName = materials[groupId]?.name || `Material ${groupId}`;
 
-        if (allWarnings.length > 0) {
-            console.warn('[Intarsia V2.0] Warnungen:', allWarnings);
+            // NEG filtern
+            const negAll = this._buildIntarsiaExportContours(this.intarsiaNegContours);
+            const negFiltered = isMultiMaterial
+                ? negAll.filter(c => c.isReference || (c.materialGroup ?? 0) === groupId)
+                : negAll;
+
+            const ppNeg = new SinumerikPostprocessor();
+            const negResult = ppNeg.generate(negFiltered, this.cutOrder, {
+                ...commonSettings,
+                planName: baseName + suffix + '_NEG'
+            });
+
+            // POS filtern
+            const posAll = this._buildIntarsiaExportContours(this.intarsiaPosContours);
+            const posFiltered = isMultiMaterial
+                ? posAll.filter(c => c.isReference || (c.materialGroup ?? 0) === groupId)
+                : posAll;
+
+            const ppPos = new SinumerikPostprocessor();
+            const posResult = ppPos.generate(posFiltered, this.cutOrder, {
+                ...commonSettings,
+                planName: baseName + suffix + '_POS'
+            });
+
+            // Downloads
+            this._downloadIntarsiaFile(posResult.code, baseName + suffix + '_POS.CNC');
+            setTimeout(() => {
+                this._downloadIntarsiaFile(negResult.code, baseName + suffix + '_NEG.CNC');
+            }, 300 * (fileCount + 1));
+            fileCount++;
+
+            if (isMultiMaterial) {
+                console.log(`[Intarsia V2.0] ${matName}: POS=${posResult.stats?.contours} NEG=${negResult.stats?.contours}`);
+            }
         }
 
-        this._downloadIntarsiaFile(posResult.code, baseName + '_POS.CNC');
-        setTimeout(() => {
-            this._downloadIntarsiaFile(negResult.code, baseName + '_NEG.CNC');
-        }, 300);
-
+        const groupLabel = isMultiMaterial ? ` (${usedGroups.size} Materialgruppen)` : '';
         this.showToast(
-            `Intarsien: ${baseName}_POS.CNC + ${baseName}_NEG.CNC (${posResult.stats?.contours || 0} Konturen)`,
+            `Intarsien: ${fileCount * 2} Dateien exportiert${groupLabel}`,
             'success'
         );
 
-        console.log(`[Intarsia V2.0] Export abgeschlossen: POS=${posResult.stats?.contours} NEG=${negResult.stats?.contours} Konturen`);
+        console.log(`[Intarsia V2.0] Export abgeschlossen: ${fileCount} Materialgruppen`);
         console.timeEnd('[Intarsia V2.0] Export');
     }
 

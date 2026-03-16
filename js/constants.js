@@ -1,6 +1,8 @@
 /**
- * CeraCUT V2.7 Constants
+ * CeraCUT V2.8 Constants
  * Blaues Farbschema
+ * V2.8: INTARSIA_MATERIALS — 5 Materialgruppen mit Farben
+ * Build: 20260316-material
  */
 
 const CeraCUT = {
@@ -92,7 +94,16 @@ const CeraCUT = {
         MIN_AREA: 0.01,
         MAX_ZOOM: 1000,
         MIN_ZOOM: 0.01
-    }
+    },
+
+    // V2.8: Intarsien-Materialgruppen
+    INTARSIA_MATERIALS: [
+        { id: 0, name: 'Material A', color: '#ff8c00' },
+        { id: 1, name: 'Material B', color: '#2196f3' },
+        { id: 2, name: 'Material C', color: '#4caf50' },
+        { id: 3, name: 'Material D', color: '#9c27b0' },
+        { id: 4, name: 'Material E', color: '#f44336' }
+    ]
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -170,6 +181,7 @@ Object.freeze(CeraCUT.COLORS);
 Object.freeze(CeraCUT.RENDER);
 Object.freeze(CeraCUT.DEFAULTS);
 Object.freeze(CeraCUT.LIMITS);
+Object.freeze(CeraCUT.INTARSIA_MATERIALS);
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CeraCUT;

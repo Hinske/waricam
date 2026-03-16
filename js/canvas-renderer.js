@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.24 - Canvas Renderer
+ * CeraCUT V3.25 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.25: Multi-Material Intarsien-Overlay (materialGroup → Farbe aus INTARSIA_MATERIALS)
  * V3.24: interiorPoint() für Hole-Cutout bei konkaven Polygonen
  * V3.23: Disc-Fill in allen Modi sichtbar (nicht nur CAM), Hatch-Rendering
  * V3.22: Disc-Fill Hole-Cutout — Centroid statt points[0] für robuste Even-Odd Erkennung
@@ -652,22 +653,30 @@ class CanvasRenderer {
             visible.filter(c => c.isReference).forEach(c => this.drawContour(ctx, c));
             visible.filter(c => !c.isReference).forEach(c => this.drawContour(ctx, c));
 
-            // V2.0: Intarsien-Konturen als halbtransparentes Overlay
+            // V3.25: Intarsien-Konturen als halbtransparentes Overlay (Multi-Material)
             const intarsiaPreview = this.app?.settings?.intarsiaPreview;
             const isCamMode = (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge');
             if (this.app?.settings?.intarsiaMode && intarsiaPreview && isCamMode) {
+                const materials = (typeof CeraCUT !== 'undefined' && CeraCUT.INTARSIA_MATERIALS) || [];
+                const defaultPosColor = '#ff8c00';
+                const defaultNegColor = '#2196f3';
                 const sets = [];
                 if (intarsiaPreview === 'pos' || intarsiaPreview === 'both')
-                    sets.push({ contours: this.app.intarsiaPosContours, color: '#ff8c00' });
+                    sets.push({ contours: this.app.intarsiaPosContours, isPos: true });
                 if (intarsiaPreview === 'neg' || intarsiaPreview === 'both')
-                    sets.push({ contours: this.app.intarsiaNegContours, color: '#2196f3' });
+                    sets.push({ contours: this.app.intarsiaNegContours, isPos: false });
 
                 ctx.globalAlpha = 0.7;
                 for (const set of sets) {
                     if (!set.contours) continue;
                     for (const c of set.contours) {
                         if (c.isReference) continue;
-                        this.drawContour(ctx, c, { overrideColor: set.color });
+                        // V3.25: Farbe aus materialGroup (POS) oder blasse Variante (NEG)
+                        const matColor = materials[c.materialGroup]?.color;
+                        const color = set.isPos
+                            ? (matColor || defaultPosColor)
+                            : (matColor ? matColor + '88' : defaultNegColor);
+                        this.drawContour(ctx, c, { overrideColor: color });
                     }
                 }
                 ctx.globalAlpha = 1;

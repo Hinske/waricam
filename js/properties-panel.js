@@ -1,20 +1,28 @@
 /**
- * CeraCUT Properties Panel V1.3
+ * CeraCUT Properties Panel V1.4
  * Kontur-Eigenschaften als Kontextmenu-Sektion (Step 4 / CAM)
  * - Generiert editierbare CAM-Felder (Quality, Piercing, Lead-In, Kerf)
  * - Bindet Events mit Undo-Support (PropertyChangeCommand)
  * - Modi: 1 Kontur → Detailansicht / Mehrere → Batch-Editing
+ * - V1.4: Live Preview — Lead-Parameter live auf Canvas während Slider-Drag
  * - V1.3: Hatch-Schraffur im Properties-Panel (Hinzufügen/Entfernen/Bearbeiten)
  * Refactored: 2026-03-13 (Sidebar → Kontextmenu)
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatch
+ * Build: 20260316-preview
  */
 
 class PropertiesPanel {
 
+    // V1.4: Preview-Properties die live auf Canvas aktualisiert werden
+    static PREVIEW_PROPERTIES = new Set([
+        'leadInLength', 'leadInRadius', 'overcutLength', 'leadInAngle'
+    ]);
+
     constructor(options = {}) {
         this.app = options.app;
-        console.log('[PropertiesPanel V1.1] Initialisiert (Kontextmenu-Modus)');
+        this._previewActive = false;
+        this._previewSnapshot = null;  // { contourIndex, property, oldValue }
+        console.log('[PropertiesPanel V1.4] Initialisiert (Kontextmenu-Modus)');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -101,11 +109,62 @@ class PropertiesPanel {
         container.querySelectorAll('.pp-input').forEach(inp => {
             inp.addEventListener('click', e => e.stopPropagation());
             inp.addEventListener('mousedown', e => e.stopPropagation());
+
+            // V1.4: Live Preview — input-Event (Slider-Drag / Tasteneingabe)
+            inp.addEventListener('input', (e) => {
+                const prop = e.target.dataset.prop;
+                const isBatch = e.target.dataset.batch === 'true';
+                if (isBatch || !PropertiesPanel.PREVIEW_PROPERTIES.has(prop)) return;
+
+                const newValue = parseFloat(e.target.value);
+                if (isNaN(newValue)) return;
+
+                const idx = parseInt(e.target.dataset.idx, 10);
+                const contour = this.app?.contours?.[idx];
+                if (!contour) return;
+
+                // Snapshot beim ersten Input erfassen
+                if (!this._previewActive) {
+                    this._previewSnapshot = { contourIndex: idx, property: prop, oldValue: contour[prop] };
+                    this._previewActive = true;
+                }
+
+                // Temporär setzen + rendern (kein Undo-Command)
+                contour[prop] = newValue;
+                contour.invalidate?.();
+                if (typeof ModificationTool !== 'undefined') {
+                    ModificationTool.invalidateCache?.(contour);
+                }
+                this.app.renderer?.render();
+            });
+
             inp.addEventListener('change', (e) => {
                 const prop = e.target.dataset.prop;
                 const isBatch = e.target.dataset.batch === 'true';
                 const newValue = parseFloat(e.target.value);
                 if (isNaN(newValue)) return;
+
+                // V1.4: Preview-Commit — alten Wert wiederherstellen, dann normal via Undo
+                if (this._previewActive && this._previewSnapshot?.property === prop) {
+                    const snap = this._previewSnapshot;
+                    const contour = this.app?.contours?.[snap.contourIndex];
+                    if (contour) {
+                        // Alten Wert restaurieren, damit PropertyChangeCommand korrekt arbeitet
+                        contour[prop] = snap.oldValue;
+                        contour.invalidate?.();
+                        if (typeof ModificationTool !== 'undefined') {
+                            ModificationTool.invalidateCache?.(contour);
+                        }
+                    }
+                    this._previewActive = false;
+                    this._previewSnapshot = null;
+                    // Jetzt normales _setProperty mit korrektem oldValue
+                    this._setProperty(snap.contourIndex, prop, newValue);
+                    return;
+                }
+
+                this._previewActive = false;
+                this._previewSnapshot = null;
 
                 if (isBatch) this._batchSetProperty(prop, newValue);
                 else this._setProperty(parseInt(e.target.dataset.idx, 10), prop, newValue);
@@ -113,6 +172,22 @@ class PropertiesPanel {
             inp.addEventListener('keydown', (e) => {
                 e.stopPropagation();
                 if (e.key === 'Enter') e.target.blur();
+                // V1.4: Escape = Preview abbrechen
+                if (e.key === 'Escape' && this._previewActive && this._previewSnapshot) {
+                    const snap = this._previewSnapshot;
+                    const contour = this.app?.contours?.[snap.contourIndex];
+                    if (contour) {
+                        contour[snap.property] = snap.oldValue;
+                        contour.invalidate?.();
+                        if (typeof ModificationTool !== 'undefined') {
+                            ModificationTool.invalidateCache?.(contour);
+                        }
+                        this.app.renderer?.render();
+                    }
+                    e.target.value = snap.oldValue;
+                    this._previewActive = false;
+                    this._previewSnapshot = null;
+                }
             });
         });
     }
@@ -135,6 +210,20 @@ class PropertiesPanel {
         html += `<div class="pp-group">
             <div class="pp-row"><span class="pp-label">CAM: ${contour.name || 'K' + (idx + 1)}</span><span class="pp-type-badge">${type}</span></div>
         </div>`;
+
+        // ── Material-Gruppe (nur bei Intarsien-Modus) ──
+        if (this.app?.settings?.intarsiaMode) {
+            const materials = (typeof CeraCUT !== 'undefined' && CeraCUT.INTARSIA_MATERIALS) || [];
+            const currentMat = contour.materialGroup ?? 0;
+            html += `<div class="pp-group">
+                <div class="pp-row">
+                    <span class="pp-key">Material:</span>
+                    <select class="pp-select" data-prop="materialGroup" data-idx="${idx}">
+                        ${materials.map(m => `<option value="${m.id}" ${m.id === currentMat ? 'selected' : ''}>${m.name}</option>`).join('')}
+                    </select>
+                </div>
+            </div>`;
+        }
 
         // ── Quality + Kerf ──
         html += `<div class="pp-group">

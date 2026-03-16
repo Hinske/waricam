@@ -1,8 +1,9 @@
 /**
- * CeraCUT V3.4 - Processing Pipeline
+ * CeraCUT V3.5 - Processing Pipeline
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-interior
+ * Build: 20260316-validate
  *
+ * V3.5: Validation Engine — Pre-Export-Prüfung (Gap, Ecken, Waisen, Kollisionen, Offene Konturen)
  * V3.4: interiorPoint() für robuste Topologie-Erkennung (konkave Formen)
  * V3.1: Physikalisch motivierte Geometry-Pipeline (CamPreProcessor, robuste Referenz)
  * V2.9: Referenz NUR bei Rechteck-Konturen
@@ -13,7 +14,7 @@ const CeraCutPipeline = {
     healingStats: null,
 
     autoProcess(contours, config = {}) {
-        console.log('[Pipeline V3.4] autoProcess starting...');
+        console.log('[Pipeline V3.5] autoProcess starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
         this.healingStats = null;
         this.preProcessStats = null;
@@ -22,7 +23,7 @@ const CeraCutPipeline = {
             return { success: false, contours: [], error: 'No contours' };
         }
 
-        console.log(`[Pipeline V3.4] Input: ${contours.length} contours`);
+        console.log(`[Pipeline V3.5] Input: ${contours.length} contours`);
 
         const camContours = contours.map(c => {
             if (typeof CamContour !== 'undefined' && c instanceof CamContour) {
@@ -45,7 +46,7 @@ const CeraCutPipeline = {
         });
 
         const healed = this._microHeal(camContours, config);
-        console.log(`[Pipeline V3.4] After micro-healing: ${healed.length} contours`);
+        console.log(`[Pipeline V3.5] After micro-healing: ${healed.length} contours`);
 
         // V3.0: Optional Arc-Fitting
         if (config.enableArcFitting) {
@@ -58,7 +59,7 @@ const CeraCutPipeline = {
         const openPaths = healed.filter(c => !c.isClosed);
         openPaths.forEach(c => { c.cuttingMode = 'slit'; });
         if (openPaths.length > 0) {
-            console.log(`[Pipeline V3.4] Slit: ${openPaths.length} open paths`);
+            console.log(`[Pipeline V3.5] Slit: ${openPaths.length} open paths`);
         }
 
         this._computeOffsets(healed);
@@ -69,7 +70,7 @@ const CeraCutPipeline = {
         const refContours = closedContours.filter(c => c.isReference).length;
 
         const slitContours = openPaths.length;
-        console.log(`[Pipeline V3.4] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit`);
+        console.log(`[Pipeline V3.5] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit`);
 
         return {
             success: true,
@@ -84,7 +85,7 @@ const CeraCutPipeline = {
     },
 
     async process(dxfData, config = {}) {
-        console.log('[Pipeline V3.4] process starting...');
+        console.log('[Pipeline V3.5] process starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
 
         let contours = [];
@@ -101,7 +102,7 @@ const CeraCutPipeline = {
     _camPreProcess(contours, config = {}) {
         if (config.camPreProcess === false || typeof CamPreProcessor === 'undefined') {
             if (typeof CamPreProcessor === 'undefined') {
-                console.warn('[Pipeline V3.4] CamPreProcessor not available');
+                console.warn('[Pipeline V3.5] CamPreProcessor not available');
             }
             return contours;
         }
@@ -131,7 +132,7 @@ const CeraCutPipeline = {
             this.healingStats = result.stats;
             return result.healed;
         }
-        console.warn('[Pipeline V3.4] MicroHealing not available');
+        console.warn('[Pipeline V3.5] MicroHealing not available');
         return this._healGeometryLegacy(contours);
     },
 
@@ -254,10 +255,10 @@ const CeraCutPipeline = {
         if (!options.skipReference) {
             this._detectReference(sorted);
         } else {
-            console.log('[Pipeline V3.4] Referenz-Erkennung übersprungen (skipReference)');
+            console.log('[Pipeline V3.5] Referenz-Erkennung übersprungen (skipReference)');
         }
         
-        console.log(`[Pipeline V3.4] Topology: ${discCount} discs, ${holeCount} holes`);
+        console.log(`[Pipeline V3.5] Topology: ${discCount} discs, ${holeCount} holes`);
     },
 
     /**
@@ -279,7 +280,7 @@ const CeraCutPipeline = {
 
         // Regel 1: Mindestens 2 Konturen
         if (sortedContours.length <= 1) {
-            console.log('[Pipeline V3.4] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
+            console.log('[Pipeline V3.5] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
             return;
         }
 
@@ -293,7 +294,7 @@ const CeraCutPipeline = {
         const isRect = this._isRectangle(largest);
         if (isRect) {
             detected = true;
-            console.log('[Pipeline V3.4] ✓ Referenz erkannt: Rechteck-Kontur');
+            console.log('[Pipeline V3.5] ✓ Referenz erkannt: Rechteck-Kontur');
         } else {
             // Regel 3: Kein Rechteck — prüfe ob Fläche signifikant größer als zweitgrößte
             const second = sortedContours[1];
@@ -302,9 +303,9 @@ const CeraCutPipeline = {
 
             if (areaSecond > 0 && areaLargest / areaSecond >= 1.5) {
                 detected = true;
-                console.log(`[Pipeline V3.4] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
+                console.log(`[Pipeline V3.5] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
             } else {
-                console.log(`[Pipeline V3.4] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
+                console.log(`[Pipeline V3.5] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
             }
         }
 
@@ -410,6 +411,156 @@ const CeraCutPipeline = {
             }
         }
         return inside;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // V3.5: Validation Engine — Pre-Export-Prüfung
+    // ═══════════════════════════════════════════════════════════════
+
+    validate(contours, settings = {}) {
+        console.log('[Pipeline V3.5] validate() gestartet...');
+        const errors = [];
+        const warnings = [];
+        const kerfWidth = settings.kerfWidth || 0.8;
+
+        const cuttable = (contours || []).filter(c => !c.isReference);
+
+        // ── Check 1: Gap < Kerf (Loch zu nah an Außenkante) ──
+        const holes = cuttable.filter(c => c.cuttingMode === 'hole');
+        const discs = cuttable.filter(c => c.cuttingMode === 'disc');
+
+        for (const hole of holes) {
+            const holeTP = typeof Geometry !== 'undefined'
+                ? Geometry.interiorPoint(hole.points) : hole.points[0];
+
+            // Parent-Disc finden: Kleinste Disc die den Hole-Testpunkt enthält
+            let parentDisc = null;
+            let parentArea = Infinity;
+            for (const disc of discs) {
+                if (this._pointInPolygon(holeTP, disc.points)) {
+                    const area = Math.abs(typeof disc.getArea === 'function'
+                        ? disc.getArea() : this._computeArea(disc.points));
+                    if (area < parentArea) {
+                        parentArea = area;
+                        parentDisc = disc;
+                    }
+                }
+            }
+
+            if (!parentDisc) continue;
+
+            // Min-Abstand zwischen Hole und Parent-Disc berechnen
+            let minDist = Infinity;
+            for (const hp of hole.points) {
+                if (typeof Geometry !== 'undefined' && Geometry.closestPointOnPolyline) {
+                    const cp = Geometry.closestPointOnPolyline(hp, parentDisc.points);
+                    if (cp) {
+                        const d = Math.hypot(hp.x - cp.x, hp.y - cp.y);
+                        if (d < minDist) minDist = d;
+                    }
+                } else {
+                    // Fallback: Punkt-zu-Segment
+                    const dpts = parentDisc.points;
+                    for (let s = 0; s < dpts.length - 1; s++) {
+                        const d = this._pointToSegDist(hp, dpts[s], dpts[s + 1]);
+                        if (d < minDist) minDist = d;
+                    }
+                }
+            }
+
+            if (minDist < kerfWidth) {
+                errors.push({
+                    severity: 'critical',
+                    code: 'GAP_TOO_SMALL',
+                    message: `Abstand ${minDist.toFixed(2)}mm < Kerf ${kerfWidth.toFixed(2)}mm — Teil wird zerstoert`,
+                    contourName: hole.name || 'Unbenannt'
+                });
+            }
+        }
+
+        // ── Check 2: Scharfe Ecken (<30° Innenwinkel) ──
+        for (const c of cuttable) {
+            if (!c.isClosed || !c.points || c.points.length < 3) continue;
+            if (typeof Geometry !== 'undefined' && Geometry.findCorners) {
+                const corners = Geometry.findCorners(c.points, 10);
+                const sharpCorners = corners.filter(corner => {
+                    // Deflektionswinkel > 150° = Innenwinkel < 30°
+                    return corner.deflection > 150;
+                });
+                if (sharpCorners.length > 0) {
+                    warnings.push({
+                        severity: 'warning',
+                        code: 'SHARP_CORNER',
+                        message: `${sharpCorners.length} scharfe Ecke(n) (<30° Innenwinkel) — Bruchgefahr`,
+                        contourName: c.name || 'Unbenannt'
+                    });
+                }
+            }
+        }
+
+        // ── Check 3: Intarsien-Waisen (POS/NEG Mismatch) ──
+        if (settings.intarsiaMode) {
+            const posCount = (settings.intarsiaPosContours || []).length;
+            const negCount = (settings.intarsiaNegContours || []).length;
+            if (posCount === 0 && negCount === 0) {
+                errors.push({
+                    severity: 'critical',
+                    code: 'INTARSIA_EMPTY',
+                    message: 'Intarsien-Modus aktiv, aber keine POS/NEG-Konturen erzeugt',
+                    contourName: '—'
+                });
+            } else if (posCount !== negCount) {
+                warnings.push({
+                    severity: 'warning',
+                    code: 'INTARSIA_MISMATCH',
+                    message: `POS/NEG Anzahl unterschiedlich: ${posCount} POS vs. ${negCount} NEG`,
+                    contourName: '—'
+                });
+            }
+        }
+
+        // ── Check 4: Lead-Kollisionen (stark verkürzte Leads) ──
+        for (const c of cuttable) {
+            if (!c.isClosed || c.cuttingMode === 'slit') continue;
+            if (typeof c.getLeadInPath === 'function') {
+                const leadPath = c.getLeadInPath();
+                if (leadPath && leadPath.shortened && c.leadInLength > 0) {
+                    const ratio = (leadPath.effectiveLength || 0) / c.leadInLength;
+                    if (ratio < 0.3) {
+                        warnings.push({
+                            severity: 'warning',
+                            code: 'LEAD_COLLISION',
+                            message: `Lead-In auf ${(ratio * 100).toFixed(0)}% verkuerzt (Kollision)`,
+                            contourName: c.name || 'Unbenannt'
+                        });
+                    }
+                }
+            }
+        }
+
+        // ── Check 5: Offene Konturen ohne Slit-Modus ──
+        for (const c of cuttable) {
+            if (!c.isClosed && c.cuttingMode !== 'slit') {
+                warnings.push({
+                    severity: 'warning',
+                    code: 'OPEN_CONTOUR',
+                    message: 'Offene Kontur ohne Slit-Modus — wird beim Export uebersprungen',
+                    contourName: c.name || 'Unbenannt'
+                });
+            }
+        }
+
+        console.log(`[Pipeline V3.5] Validation: ${errors.length} errors, ${warnings.length} warnings`);
+        return { errors, warnings };
+    },
+
+    _pointToSegDist(p, a, b) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y);
+        let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
     },
 
     _computeOffsets(contours) {
