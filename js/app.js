@@ -4622,9 +4622,16 @@ class CeraCutApp {
         const activeLayer = this.layerManager.getActiveLayer();
         const activeColor = activeLayer?.color || '#fff';
 
+        // Live-Zählung: Layer mit Konturen ermitteln (unabhängig von entityCount-Cache)
+        const usedLayers = new Set();
+        const allContours = this.contours || [];
+        const dxfContours = this.dxfResult?.contours || [];
+        for (const c of allContours) usedLayers.add(c.layer || '0');
+        for (const c of dxfContours) usedLayers.add(c.layer || '0');
+
         // Leere Layer ausblenden (außer Layer "0" und aktiver Layer)
         const visibleLayers = layers.filter(l =>
-            l.name === '0' || l.name === active || (l.entityCount || 0) > 0
+            l.name === '0' || l.name === active || usedLayers.has(l.name)
         );
 
         // Row-HTML generieren (für beide Dropdowns)
