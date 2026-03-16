@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.7 - Main Application
+ * CeraCUT V6.8 - Main Application
+ * V6.8: Console Cleanup — Init-Logs auf console.debug, sauberer Startup-Output
  * V6.7: Undo-Fix — addDrawnEntities erstellt pro Kontur einen eigenen Undo-Step
  * V6.5: Hatch-Fix — _drawHatch ctx.fill() statt ctx.clip(), Toast/Panel-Refresh
  * V6.4: Validation Engine — Pre-Export-Prüfung mit Modal (Gap, Ecken, Waisen, Kollisionen)
@@ -141,17 +142,10 @@ class CeraCutApp {
         this.imageUnderlayManager = new ImageUnderlayManager(this);
         
         // V3.1: Verifikation dass Undo-Integration geladen ist
-        console.log(`[App V3.5] UndoManager: ${this.undoManager ? '✅ OK' : '❌ FEHLT'}, Clipboard: ${this.clipboardManager ? '✅ OK' : '❌ FEHLT'}`);
-        
         this.init();
     }
     
     init() {
-        console.log('%c╔══════════════════════════════════════════════╗', 'color: #00aaff; font-weight: bold');
-        console.log('%c║  CeraCUT Wasserstrahl-CAM V3.8               ║', 'color: #00aaff; font-weight: bold');
-        console.log('%c║  V3.8: Layer-System + DXF-Writer R12         ║', 'color: #00aaff; font-weight: bold');
-        console.log('%c╚══════════════════════════════════════════════╝', 'color: #00aaff; font-weight: bold');
-        
         this.initRenderer();
         this.initDrawingTools();  // V3.4
         this.bindNavigationEvents();
@@ -397,7 +391,7 @@ class CeraCutApp {
             }
         };
         
-        console.log('✓ CanvasRenderer initialized');
+        console.debug('✓ CanvasRenderer initialized');
     }
     
     // ════════════════════════════════════════════════════════════════
@@ -451,7 +445,7 @@ class CeraCutApp {
             this.snapManager.setContours(this.contours);
         }
         
-        console.log(`[V3.5] ToolManager: CmdLine=${this.commandLine ? '✅' : '❌'}, Snap=${this.snapManager ? '✅' : '❌'}, Tools=${this.toolManager ? '✅' : '❌'}`);
+        console.debug(`[V3.5] ToolManager: CmdLine=${this.commandLine ? '✅' : '❌'}, Snap=${this.snapManager ? '✅' : '❌'}, Tools=${this.toolManager ? '✅' : '❌'}`);
     }
     
     bindDrawingEvents() {
@@ -3730,7 +3724,7 @@ class CeraCutApp {
             this._applyBatchRules();
         });
 
-        console.log('[App V6.0] Lead-Profile initialisiert');
+        console.debug('[App V6.0] Lead-Profile initialisiert');
     }
 
     _populateProfileDropdown() {

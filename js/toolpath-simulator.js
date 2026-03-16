@@ -1310,4 +1310,4 @@ const ToolpathSimulator = {
 };
 
 // Modul-Registrierung
-console.log('[ToolpathSim V1.0] Loaded — Build 20260309');
+console.debug('[ToolpathSim V1.0] Loaded — Build 20260309');

@@ -276,7 +276,7 @@ const LeadProfiles = (() => {
                         p.isBuiltin = false;
                         _profiles.push(p);
                     });
-                    console.log(`${PREFIX} ${custom.length} Benutzerprofile geladen`);
+                    console.debug(`${PREFIX} ${custom.length} Benutzerprofile geladen`);
                 }
             }
         } catch (e) {
@@ -285,7 +285,7 @@ const LeadProfiles = (() => {
 
         // Aktives Profil laden
         _activeProfileId = localStorage.getItem(ACTIVE_KEY) || 'builtin-stahl-mittel';
-        console.log(`${PREFIX} Initialisiert — ${_profiles.length} Profile, aktiv: ${_activeProfileId}`);
+        console.debug(`${PREFIX} Initialisiert — ${_profiles.length} Profile, aktiv: ${_activeProfileId}`);
     }
 
     function _saveCustomToStorage() {

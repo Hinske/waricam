@@ -533,7 +533,7 @@ const BridgeCutting = (() => {
     //  EXPORT
     // ════════════════════════════════════════════════════════════════════════
 
-    console.log(`${LOG_PREFIX} Modul geladen — Build 20260309`);
+    console.debug(`${LOG_PREFIX} Modul geladen — Build 20260309`);
 
     return {
         // Kern-API

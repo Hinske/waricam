@@ -29,7 +29,7 @@ class ImageUnderlayManager {
         this._selectedUnderlay = null;
 
         this._initDB();
-        console.log('[ImageUnderlay V1.0] Manager initialisiert');
+        console.debug('[ImageUnderlay V1.0] Manager initialisiert');
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -46,7 +46,7 @@ class ImageUnderlayManager {
         };
         req.onsuccess = (e) => {
             this._db = e.target.result;
-            console.log('[ImageUnderlay V1.0] IndexedDB bereit');
+            console.debug('[ImageUnderlay V1.0] IndexedDB bereit');
         };
         req.onerror = (e) => {
             console.error('[ImageUnderlay V1.0] IndexedDB Fehler:', e.target.error);

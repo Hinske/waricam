@@ -1,17 +1,17 @@
 /**
- * CeraCUT Build Info V6.7
- * Version: V6.7
- * Last Modified: 2026-03-16, 21:00 MEZ
- * Build: 20260316-undofix
+ * CeraCUT Build Info V6.8
+ * Version: V6.8
+ * Last Modified: 2026-03-16, 22:00 MEZ
+ * Build: 20260316-quietlogs
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.7',
-    build: '20260316-undofix',
+    version: '6.8',
+    build: '20260316-quietlogs',
     date: '2026-03-16',
-    time: '21:00 MEZ',
+    time: '22:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
@@ -32,7 +32,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.7', build: '20260316-undofix' },
+        'app':                { version: '6.8', build: '20260316-quietlogs' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },

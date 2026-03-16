@@ -32,7 +32,7 @@ class CommandLine {
         this.onBackspace = options.onBackspace || null;  // () => void — Backspace Undo
 
         this._init();
-        console.log('[CommandLine V1.0] ✅ Initialisiert');
+        console.debug('[CommandLine V1.0] ✅ Initialisiert');
     }
 
     _init() {

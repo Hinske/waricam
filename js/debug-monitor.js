@@ -27,8 +27,7 @@
 (function() {
     'use strict';
 
-    console.time('[DebugMonitor V1.0] Init');
-    console.log('%c[DebugMonitor V1.0] Startet — Strg+Shift+D für Overlay', 'color: #ff9800; font-weight: bold');
+    console.debug('[DebugMonitor V1.0] Strg+Shift+D für Overlay');
 
     // ═══════════════════════════════════════════════════════
     // BEKANNTE CeraCUT-FALLEN (aus system-anweisung V16)
@@ -284,7 +283,7 @@
             }
         }, true);
 
-        console.log('[DebugMonitor V1.0] Action-Tracking aktiv');
+        console.debug('[DebugMonitor V1.0] Action-Tracking aktiv');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -302,8 +301,8 @@
             const delta = now - _lastFrameTime;
             _lastFrameTime = now;
 
-            // Frame >50ms = potentieller Lag (3× 16ms Schwelle)
-            if (delta > 50 && delta < 5000) {
+            // Frame >100ms = potentieller Lag (6× 16ms Schwelle)
+            if (delta > 100 && delta < 5000) {
                 _frameDropCount++;
 
                 // Nur erste 20 Frame-Drops loggen (danach nur zählen)
@@ -316,7 +315,7 @@
                     _perfWarnings.push(warn);
 
                     if (_frameDropCount <= 5) {
-                        console.warn(`[DebugMonitor V1.0] 🐢 Frame-Drop: ${Math.round(delta)}ms (Schwelle: 50ms)`);
+                        console.warn(`[DebugMonitor V1.0] 🐢 Frame-Drop: ${Math.round(delta)}ms (Schwelle: 100ms)`);
                     }
                 }
             }
@@ -333,7 +332,7 @@
             }
         }, 30000);
 
-        console.log('[DebugMonitor V1.0] Performance-Monitor aktiv (Schwelle: 50ms)');
+        console.debug('[DebugMonitor V1.0] Performance-Monitor aktiv (Schwelle: 100ms)');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -663,7 +662,7 @@
                 _toggleOverlay();
             }
         }, true); // capture phase — vor allem anderen
-        console.log('[DebugMonitor V1.0] Shortcut: Strg+Shift+D');
+        console.debug('[DebugMonitor V1.0] Shortcut registriert');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -747,6 +746,6 @@
         console.warn(`[DebugMonitor V1.0] ⚠ ${_sessionLog.length} Fehler aus vorheriger Session geladen — Strg+Shift+D zum Anzeigen`);
     }
 
-    console.timeEnd('[DebugMonitor V1.0] Init');
+    // Init-Timer entfernt — kein Rauschen in der Console
 
 })();

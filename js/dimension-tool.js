@@ -51,7 +51,7 @@ class DimensionManager {
         this.dimScale = 1.0;
 
         this._ensureLayer();
-        console.log('[DimensionManager V2.3] ✅ Initialisiert (DIMSCALE=' + this.dimScale + ')');
+        console.debug('[DimensionManager V2.3] ✅ Initialisiert (DIMSCALE=' + this.dimScale + ')');
     }
 
     /** Skalierte DIMSTYLE-Werte (alle mm-Werte × dimScale) */
@@ -93,7 +93,7 @@ class DimensionManager {
                 color: DimensionManager.LAYER_COLOR,
                 visible: true, locked: false, lineType: 'Continuous'
             });
-            console.log(`[DimensionManager] Layer "${DimensionManager.LAYER_NAME}" angelegt (Cyan)`);
+            console.debug(`[DimensionManager] Layer "${DimensionManager.LAYER_NAME}" angelegt (Cyan)`);
         }
     }
 

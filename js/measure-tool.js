@@ -19,7 +19,7 @@ class MeasureManager {
         this.materialThickness = 8.0; // mm (Standard)
         this.materialDensity = 2.7;   // g/cm³ (Aluminium Standard)
         
-        console.log('[MeasureManager] V1.0 initialisiert');
+        console.debug('[MeasureManager] V1.0 initialisiert');
     }
     
     // ════════════════════════════════════════════════════════════════

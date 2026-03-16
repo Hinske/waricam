@@ -759,4 +759,4 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = { ArcFitting, ArcFittingUtils };
 }
 
-console.log('[ARC-FITTING V3.0] Module loaded');
+console.debug('[ARC-FITTING V3.0] Module loaded');

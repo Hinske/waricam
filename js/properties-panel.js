@@ -23,7 +23,7 @@ class PropertiesPanel {
         this.app = options.app;
         this._previewActive = false;
         this._previewSnapshot = null;  // { contourIndex, property, oldValue }
-        console.log('[PropertiesPanel V1.4] Initialisiert (Kontextmenu-Modus)');
+        console.debug('[PropertiesPanel V1.4] Initialisiert (Kontextmenu-Modus)');
     }
 
     // ════════════════════════════════════════════════════════════════

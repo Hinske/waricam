@@ -924,4 +924,4 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = SinumerikPostprocessor;
 }
 
-console.log(`[PP V${SinumerikPostprocessor.VERSION}] Sinumerik 840D Postprozessor geladen`);
+console.debug(`[PP V${SinumerikPostprocessor.VERSION}] Sinumerik 840D Postprozessor geladen`);

@@ -1633,5 +1633,5 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolAdv.call(this, shortcut);
     };
 
-    console.log('[AdvancedTools V1.3] ✅ Lazy-Patch installiert');
+    console.debug('[AdvancedTools V1.3] ✅ Lazy-Patch installiert');
 }

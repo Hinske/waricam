@@ -1006,11 +1006,11 @@
         <!-- ═══ Design / Theme ═══ -->
         <div class="ribbon-group">
             <div class="ribbon-group-content">
-                <div class="ribbon-btn-lg" id="btn-theme-light" title="Hell-Modus (Light)" onclick="document.documentElement.removeAttribute('data-theme');localStorage.setItem('ceracut-theme','light');document.getElementById('btn-theme-light').classList.add('active');document.getElementById('btn-theme-dark').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('light');else if(window.renderer)window.renderer.setTheme('light');console.log('[CeraCUT] Theme: light');">
+                <div class="ribbon-btn-lg" id="btn-theme-light" title="Hell-Modus (Light)" onclick="document.documentElement.removeAttribute('data-theme');localStorage.setItem('ceracut-theme','light');document.getElementById('btn-theme-light').classList.add('active');document.getElementById('btn-theme-dark').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('light');else if(window.renderer)window.renderer.setTheme('light');console.debug('[CeraCUT] Theme: light');">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#f5c842" stroke="#e8a020" stroke-width="1.5"/><line x1="16" y1="2" x2="16" y2="6" stroke="#e8a020" stroke-width="2"/><line x1="16" y1="26" x2="16" y2="30" stroke="#e8a020" stroke-width="2"/><line x1="2" y1="16" x2="6" y2="16" stroke="#e8a020" stroke-width="2"/><line x1="26" y1="16" x2="30" y2="16" stroke="#e8a020" stroke-width="2"/><line x1="6.1" y1="6.1" x2="8.9" y2="8.9" stroke="#e8a020" stroke-width="2"/><line x1="23.1" y1="23.1" x2="25.9" y2="25.9" stroke="#e8a020" stroke-width="2"/><line x1="23.1" y1="6.1" x2="25.9" y2="8.9" stroke="#e8a020" stroke-width="2"/><line x1="6.1" y1="23.1" x2="8.9" y2="25.9" stroke="#e8a020" stroke-width="2"/></svg></div>
                     <span class="label">Hell</span>
                 </div>
-                <div class="ribbon-btn-lg" id="btn-theme-dark" title="Dunkel-Modus (Dark)" onclick="document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('ceracut-theme','dark');document.getElementById('btn-theme-dark').classList.add('active');document.getElementById('btn-theme-light').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('dark');else if(window.renderer)window.renderer.setTheme('dark');console.log('[CeraCUT] Theme: dark');">
+                <div class="ribbon-btn-lg" id="btn-theme-dark" title="Dunkel-Modus (Dark)" onclick="document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('ceracut-theme','dark');document.getElementById('btn-theme-dark').classList.add('active');document.getElementById('btn-theme-light').classList.remove('active');if(window.app?.renderer)window.app.renderer.setTheme('dark');else if(window.renderer)window.renderer.setTheme('dark');console.debug('[CeraCUT] Theme: dark');">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M10 6 A12 12 0 1 0 26 22 A9 9 0 1 1 10 6z" fill="#4fc3f7" stroke="#2196f3" stroke-width="1.5"/></svg></div>
                     <span class="label">Dunkel</span>
                 </div>
@@ -1428,48 +1428,48 @@
 
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
-<script src="js/debug-monitor.js?v=20260315-bugfix35"></script>
-<script src="js/build-info.js?v=20260316-hatchentity"></script>
+<script src="js/debug-monitor.js?v=20260316-quietlogs"></script>
+<script src="js/build-info.js?v=20260316-quietlogs"></script>
 <script src="js/constants.js?v=20260316-material"></script>
 <script src="js/geometry.js?v=20260316-interior"></script>
-<script src="js/arc-fitting.js?v=20260315-bugfix35"></script>
+<script src="js/arc-fitting.js?v=20260316-quietlogs"></script>
 <script src="js/dxf-parser.js?v=20260316-hatchskip"></script>
-<script src="js/cam-contour.js?v=20260316-hatchentity"></script>
-<script src="js/lead-profiles.js?v=20260315-intarsia20"></script>
-<script src="js/cerajet-engine.js?v=20260315-bugfix35"></script>
+<script src="js/cam-contour.js?v=20260316-quietlogs"></script>
+<script src="js/lead-profiles.js?v=20260316-quietlogs"></script>
+<script src="js/cerajet-engine.js?v=20260316-quietlogs"></script>
 <script src="js/ceracut-pipeline.js?v=20260316-hatchentity"></script>
 <script src="js/canvas-renderer.js?v=20260316-discfill-cam"></script>
-<script src="js/undo-manager.js?v=20260315-bugfix35"></script>
-<script src="js/sinumerik-postprocessor.js?v=20260316-hatchentity"></script>
-<script src="js/command-line.js?v=20260315-bugfix35"></script>
-<script src="js/dynamic-input.js?v=20260315-bugfix35"></script>
-<script src="js/snap-manager.js?v=20260315-bugfix35"></script>
+<script src="js/undo-manager.js?v=20260316-quietlogs"></script>
+<script src="js/sinumerik-postprocessor.js?v=20260316-quietlogs"></script>
+<script src="js/command-line.js?v=20260316-quietlogs"></script>
+<script src="js/dynamic-input.js?v=20260316-quietlogs"></script>
+<script src="js/snap-manager.js?v=20260316-quietlogs"></script>
 <script src="js/geometry-ops.js?v=20260315-bugfix35"></script>
-<script src="js/drawing-tools.js?v=20260316-enterconfirm"></script>
-<script src="js/layer-manager.js?v=20260316-layerlock"></script>
+<script src="js/drawing-tools.js?v=20260316-quietlogs"></script>
+<script src="js/layer-manager.js?v=20260316-quietlogs"></script>
 <script src="js/dxf-writer.js?v=20260315-bugfix35"></script>
-<script src="js/tool-manager.js?v=20260315-bugfix35"></script>
-<script src="js/advanced-tools.js?v=20260315-bugfix35"></script>
-<script src="js/cam-tools.js?v=20260316-hittest"></script>
-<script src="js/drawing-tools-ext.js?v=20260316-hatchpalette"></script>
+<script src="js/tool-manager.js?v=20260316-quietlogs"></script>
+<script src="js/advanced-tools.js?v=20260316-quietlogs"></script>
+<script src="js/cam-tools.js?v=20260316-quietlogs"></script>
+<script src="js/drawing-tools-ext.js?v=20260316-quietlogs"></script>
 <script src="js/opentype.min.js"></script>
 <script src="js/default-font.js?v=20260315-bugfix35"></script>
-<script src="js/text-tool.js?v=20260315-bugfix35"></script>
-<script src="js/image-underlay.js?v=20260315-bugfix35"></script>
-<script src="js/dimension-tool.js?v=20260315-bugfix35"></script>
-<script src="js/measure-tool.js?v=20260315-bugfix35"></script>
-<script src="js/cnc-reader.js?v=20260315-bugfix35"></script>
-<script src="js/svg-parser.js?v=20260315-bugfix35"></script>
-<script src="js/properties-panel.js?v=20260316-hatchfix"></script>
-<script src="js/nesting.js?v=20260315-bugfix35"></script>
-<script src="js/toolpath-simulator.js?v=20260315-bugfix35"></script>
-<script src="js/cost-calculator.js?v=20260315-bugfix35"></script>
-<script src="js/machine-profiles.js?v=20260315-bugfix35"></script>
-<script src="js/bridge-cutting.js?v=20260315-bugfix35"></script>
-<script src="js/quality-zones.js?v=20260315-bugfix35"></script>
-<script src="js/project-manager.js?v=20260315-bugfix35"></script>
-<script src="js/dxf-browser.js?v=20260315-bugfix35"></script>
-<script src="js/app.js?v=20260316-undofix"></script>
+<script src="js/text-tool.js?v=20260316-quietlogs"></script>
+<script src="js/image-underlay.js?v=20260316-quietlogs"></script>
+<script src="js/dimension-tool.js?v=20260316-quietlogs"></script>
+<script src="js/measure-tool.js?v=20260316-quietlogs"></script>
+<script src="js/cnc-reader.js?v=20260316-quietlogs"></script>
+<script src="js/svg-parser.js?v=20260316-quietlogs"></script>
+<script src="js/properties-panel.js?v=20260316-quietlogs"></script>
+<script src="js/nesting.js?v=20260316-quietlogs"></script>
+<script src="js/toolpath-simulator.js?v=20260316-quietlogs"></script>
+<script src="js/cost-calculator.js?v=20260316-quietlogs"></script>
+<script src="js/machine-profiles.js?v=20260316-quietlogs"></script>
+<script src="js/bridge-cutting.js?v=20260316-quietlogs"></script>
+<script src="js/quality-zones.js?v=20260316-quietlogs"></script>
+<script src="js/project-manager.js?v=20260316-quietlogs"></script>
+<script src="js/dxf-browser.js?v=20260316-quietlogs"></script>
+<script src="js/app.js?v=20260316-quietlogs"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1576,7 +1576,7 @@
                     }
                     origCancelTool();
                 };
-                console.log('%c[CeraCUT Shim] Auto-Apply bei Tool-Ende aktiviert', 'color: #22c55e');
+                console.debug('%c[CeraCUT Shim] Auto-Apply bei Tool-Ende aktiviert', 'color: #22c55e');
             }
             
             // Ribbon-Tab-Wechsel triggert passende Modi
@@ -1588,7 +1588,7 @@
                     // V5.0: DrawMode beenden wenn Tab gewechselt wird (sonst keine Selektion möglich!)
                     if (ribbon !== 'draw' && window.app.drawingTools?.drawMode) {
                         window.app.drawingTools.exitDrawMode();
-                        console.log('[V5.0] DrawMode beendet (Tab-Wechsel)');
+                        console.debug('[V5.0] DrawMode beendet (Tab-Wechsel)');
                     }
                     
                     switch (ribbon) {
@@ -2066,7 +2066,7 @@
                     origApp.showToast('Klicke auf Canvas für neuen Nullpunkt (Snap aktiv)', 'info');
                 }
             });
-            console.log('[CeraCUT] Canvas-Toolbar verdrahtet');
+            console.debug('[CeraCUT] Canvas-Toolbar verdrahtet');
 
             // ═══ V3.14: CAM-Tab Innen-Lead "= Außen" Toggle ═══
             document.getElementById('int-like-ext')?.addEventListener('change', (e) => {
@@ -2075,7 +2075,7 @@
                     el.disabled = disabled;
                     el.style.opacity = disabled ? '0.4' : '1';
                 });
-                console.log('[CAM V3.14] Innen-Lead:', disabled ? '= Außen (sync)' : 'eigene Parameter');
+                console.debug('[CAM V3.14] Innen-Lead:', disabled ? '= Außen (sync)' : 'eigene Parameter');
             });
 
             // ═══ V5.0: CeraJet Technologie-Bindings ═══
@@ -2162,7 +2162,7 @@
                     // CeraJet-Result im App cachen für Postprozessor
                     origApp._cerajetResult = result;
 
-                    console.log(`[CeraJet UI] Update: ${result.material.name}, Q${(origApp.settings.quality||2)}, V=${feed}mm/min`);
+                    console.debug(`[CeraJet UI] Update: ${result.material.name}, Q${(origApp.settings.quality||2)}, V=${feed}mm/min`);
                 }
 
                 // Bindings: Material
@@ -2212,10 +2212,10 @@
                 // Initial-Update
                 updateTechPreview();
 
-                console.log('%c[CeraJet V1.0] Technologie-UI initialisiert', 'color: #0ea5e9; font-weight: bold');
+                console.debug('%c[CeraJet V1.0] Technologie-UI initialisiert', 'color: #0ea5e9; font-weight: bold');
             })();
 
-            console.log('%c[CeraCUT V5.0] CAM-Tab Bindings (Innen/Außen, Technologie)', 'color: #e8a020; font-weight: bold');
+            console.debug('%c[CeraCUT V5.0] CAM-Tab Bindings (Innen/Außen, Technologie)', 'color: #e8a020; font-weight: bold');
 
             // ═══ V5.2: Intarsien-Modus Bindings ═══
             (() => {
@@ -2232,11 +2232,11 @@
                     if (on) {
                         updateIntarsiaInfo();
                         origApp.regenerateIntarsiaContours?.();
-                        console.log('[Intarsia V2.0] Modus aktiviert');
+                        console.debug('[Intarsia V2.0] Modus aktiviert');
                     } else {
                         origApp.intarsiaPosContours = null;
                         origApp.intarsiaNegContours = null;
-                        console.log('[Intarsia V2.0] Modus deaktiviert');
+                        console.debug('[Intarsia V2.0] Modus deaktiviert');
                     }
                     origApp.renderer?.render();
                 }
@@ -2288,18 +2288,18 @@
                         if (origApp.settings.intarsiaPreview === view) {
                             origApp.settings.intarsiaPreview = null;
                             previewBtns.forEach(b => b.classList.remove('active'));
-                            console.log('[Intarsia V2.0] Vorschau: AUS');
+                            console.debug('[Intarsia V2.0] Vorschau: AUS');
                         } else {
                             previewBtns.forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
                             origApp.settings.intarsiaPreview = view;
-                            console.log(`[Intarsia V2.0] Vorschau: ${view.toUpperCase()}`);
+                            console.debug(`[Intarsia V2.0] Vorschau: ${view.toUpperCase()}`);
                         }
                         origApp.renderer?.render();
                     });
                 });
 
-                console.log('[Intarsia V2.0] UI-Bindings initialisiert');
+                console.debug('[Intarsia V2.0] UI-Bindings initialisiert');
             })();
 
             // ═══ V3.11: Image Underlay Bindings ═══
@@ -2397,7 +2397,7 @@
                 };
             }
 
-            console.log('[CeraCUT] Image Underlay verdrahtet');
+            console.debug('[CeraCUT] Image Underlay verdrahtet');
 
             // ═══ V3.12: Dimension Tool Bindings ═══
             // DimensionManager initialisieren
@@ -2446,7 +2446,7 @@
                         if (mode) dimMgr.startTool(mode);
                     });
                 });
-                console.log('%c[CeraCUT Shim] Bemaßungs-Flyout aktiviert (5 Modi)', 'color: #00ffff');
+                console.debug('%c[CeraCUT Shim] Bemaßungs-Flyout aktiviert (5 Modi)', 'color: #00ffff');
             }
 
             // Bemaßungen löschen
@@ -2549,7 +2549,7 @@
                 }
             }
 
-            console.log('%c[CeraCUT] Dimension Tool V2.2 verdrahtet (DIMSCALE)', 'color: #00ffff; font-weight: bold');
+            console.debug('%c[CeraCUT] Dimension Tool V2.2 verdrahtet (DIMSCALE)', 'color: #00ffff; font-weight: bold');
 
             // ═══ V3.12: Gesamtlänge-Werkzeug (TOTLEN) ═══
             /**
@@ -2664,7 +2664,7 @@
             origApp.calcContourLength = calcContourLength;
             origApp.totalLength = totalLengthAction;
 
-            console.log('%c[CeraCUT] \u03a3 Gesamtl\u00e4nge-Werkzeug (TOTLEN) verdrahtet', 'color: #22c55e; font-weight: bold');
+            console.debug('%c[CeraCUT] \u03a3 Gesamtl\u00e4nge-Werkzeug (TOTLEN) verdrahtet', 'color: #22c55e; font-weight: bold');
 
             // ═══ V3.12: MeasureManager (IGEMS 5-Modi) ═══
             if (!origApp.measureManager) {
@@ -2717,7 +2717,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCUT] Messen-Flyout aktiviert (5 Modi, Hover)', 'color: #ffc800');
+                console.debug('%c[CeraCUT] Messen-Flyout aktiviert (5 Modi, Hover)', 'color: #ffc800');
             }
 
             // MeasureManager in Click-Pipeline einhängen
@@ -2756,7 +2756,7 @@
                 }
             }, true);
 
-            console.log('%c[CeraCUT] MeasureManager V1.0 (5 IGEMS-Modi, Click-Flyout)', 'color: #ffc800; font-weight: bold');
+            console.debug('%c[CeraCUT] MeasureManager V1.0 (5 IGEMS-Modi, Click-Flyout)', 'color: #ffc800; font-weight: bold');
 
             // ═══════════════════════════════════════════════════════════
             //  IMPORT: CNC-READER + SVG-PARSER
@@ -3047,9 +3047,9 @@
                 _svgImportPendingContent = null;
             });
 
-            console.log('%c[CeraCUT] Import: CNC-Reader + SVG-Parser verdrahtet', 'color:#e8a020; font-weight:bold');
+            console.debug('%c[CeraCUT] Import: CNC-Reader + SVG-Parser verdrahtet', 'color:#e8a020; font-weight:bold');
 
-            console.log('%c[CeraCUT Shim] App-Methoden gepatcht (Step=4, Layer, CNC)', 'color: #22c55e');
+            console.debug('%c[CeraCUT Shim] App-Methoden gepatcht (Step=4, Layer, CNC)', 'color: #22c55e');
 
             // ═══ V3.11: Kreis-Flyout-Menü ═══
             const circleBtn = document.querySelector('.draw-tool-btn[data-tool="C"]');
@@ -3094,7 +3094,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCUT Shim] Kreis-Flyout aktiviert (6 Modi)', 'color: #22c55e');
+                console.debug('%c[CeraCUT Shim] Kreis-Flyout aktiviert (6 Modi)', 'color: #22c55e');
             }
 
             // ═══ V3.12: Linien-Flyout-Menü ═══
@@ -3128,7 +3128,7 @@
                         }
                     });
                 });
-                console.log('%c[CeraCUT Shim] Linien-Flyout aktiviert (3 Modi)', 'color: #0078d4');
+                console.debug('%c[CeraCUT Shim] Linien-Flyout aktiviert (3 Modi)', 'color: #0078d4');
             }
 
             // ═══ V5.2: Intarsien-Modus UI Bindings — entfernt (bereits als IIFE in Zeile ~2117) ═══
@@ -3146,7 +3146,7 @@
                     const val = piercingSelect.value;
                     piercingStatFields.forEach(el => el.style.display = (val === 'stationary') ? 'flex' : 'none');
                     piercingCircFields.forEach(el => el.style.display = (val === 'circular') ? 'flex' : 'none');
-                    console.log(`[Phase B.1] Piercing-Typ: ${val}`);
+                    console.debug(`[Phase B.1] Piercing-Typ: ${val}`);
                 };
                 piercingSelect.addEventListener('change', updatePiercingFields);
                 // Live-Update: Piercing-Type Änderungen -> Lead-Preview aktualisieren
@@ -3169,7 +3169,7 @@
                         });
                     }
                 });
-                console.log('%c[Phase B.1] Piercing-Typ UI aktiviert (5 Typen + R924-R926)', 'color: #ff6b6b');
+                console.debug('%c[Phase B.1] Piercing-Typ UI aktiviert (5 Typen + R924-R926)', 'color: #ff6b6b');
             }
 
             // ---- B.2: Dynamic Lead Show/Hide + Binding ----
@@ -3182,7 +3182,7 @@
                     // Feste Länge ausblenden wenn dynamisch
                     const fixedLen = document.getElementById('lead-in-length');
                     if (fixedLen) fixedLen.parentElement.style.opacity = on ? '0.4' : '1';
-                    console.log(`[Phase B.2] Dynamische Leads: ${on ? 'AN' : 'AUS'}`);
+                    console.debug(`[Phase B.2] Dynamische Leads: ${on ? 'AN' : 'AUS'}`);
                 };
                 dynLeadExt.addEventListener('change', () => {
                     updateDynFields();
@@ -3204,7 +3204,7 @@
                         });
                     }
                 });
-                console.log('%c[Phase B.2] Dynamic Lead UI aktiviert', 'color: #f0a030');
+                console.debug('%c[Phase B.2] Dynamic Lead UI aktiviert', 'color: #f0a030');
             }
 
             // ---- B.3: Flächenklassen ----
@@ -3282,7 +3282,7 @@
                     origApp._captureLeadSnapshot?.();
                     origApp._applyLeadValues?.();
                     origApp._commitLeadChanges?.();
-                    console.log(`[Phase B.3] Flächenklassen: ${areaClassCb.checked ? 'AN' : 'AUS'}`);
+                    console.debug(`[Phase B.3] Flächenklassen: ${areaClassCb.checked ? 'AN' : 'AUS'}`);
                 });
             }
             if (areaClassEditBtn && areaClassPopup) {
@@ -3297,7 +3297,7 @@
             areaClassResetBtn?.addEventListener('click', () => {
                 origApp.settings.areaClasses = JSON.parse(JSON.stringify(defaultAreaClasses));
                 renderAreaClassTable();
-                console.log('[Phase B.3] Flächenklassen auf Standard zurückgesetzt');
+                console.debug('[Phase B.3] Flächenklassen auf Standard zurückgesetzt');
             });
             areaClassApplyBtn?.addEventListener('click', () => {
                 readAreaClassTable();
@@ -3306,9 +3306,9 @@
                 origApp._captureLeadSnapshot?.();
                 origApp._applyLeadValues?.();
                 origApp._commitLeadChanges?.();
-                console.log('[Phase B.3] Flächenklassen gespeichert + angewandt');
+                console.debug('[Phase B.3] Flächenklassen gespeichert + angewandt');
             });
-            console.log('%c[Phase B.3] Flächenklassen-UI aktiviert (6 IGEMS-Klassen)', 'color: #8bc34a');
+            console.debug('%c[Phase B.3] Flächenklassen-UI aktiviert (6 IGEMS-Klassen)', 'color: #8bc34a');
 
             // ---- B.5: Single-Mode (Manuelle Fahne) ----
             const singleLeadBtn = document.getElementById('btn-single-lead');
@@ -3331,7 +3331,7 @@
                                 if (origApp.renderer) origApp.renderer.currentMode = null;
                                 origApp.renderer?.render();
                                 document.removeEventListener('keydown', escHandler);
-                                console.log('[Phase B.5] Single-Mode beendet (ESC)');
+                                console.debug('[Phase B.5] Single-Mode beendet (ESC)');
                             }
                         };
                         document.addEventListener('keydown', escHandler);
@@ -3378,12 +3378,12 @@
                         delete origApp.renderer._savedOnContourClick;
                     }
                     origApp.renderer?.render();
-                    console.log(`[Phase B.5] Single-Mode: ${singleLeadActive ? 'AN' : 'AUS'}`);
+                    console.debug(`[Phase B.5] Single-Mode: ${singleLeadActive ? 'AN' : 'AUS'}`);
                 });
-                console.log('%c[Phase B.5] Single-Mode Button aktiviert', 'color: #e040fb');
+                console.debug('%c[Phase B.5] Single-Mode Button aktiviert', 'color: #e040fb');
             }
 
-            console.log('%c═══ PHASE B KOMPLETT: B.1-B.5 alle UI-Handler aktiv ═══', 'color: #00e676; font-weight: bold');
+            console.debug('%c═══ PHASE B KOMPLETT: B.1-B.5 alle UI-Handler aktiv ═══', 'color: #00e676; font-weight: bold');
 
             // ═══ V5.5: Neue Feature-Handler ═══
 
@@ -3514,7 +3514,7 @@
                 }
             }
 
-            console.log('%c[CeraCUT V5.5] Neue Features aktiviert: Nesting, Simulation, Kosten, Maschinen, Q-Zonen, Bridges, Multi-Collision', 'color: #22c55e; font-weight: bold');
+            console.debug('%c[CeraCUT V5.5] Neue Features aktiviert: Nesting, Simulation, Kosten, Maschinen, Q-Zonen, Bridges, Multi-Collision', 'color: #22c55e; font-weight: bold');
 
             // ═══ V5.1: Generische Tool-Flyouts (Abrunden, Stutzen, Struktur, CAM-Geo) ═══
             document.querySelectorAll('.tool-flyout').forEach(flyout => {
@@ -3548,7 +3548,7 @@
                     });
                 });
             });
-            console.log('%c[CeraCUT Shim] Tool-Flyouts aktiviert (Abrund., Stutzen, Struktur, CAM-Geo)', 'color: #22c55e');
+            console.debug('%c[CeraCUT Shim] Tool-Flyouts aktiviert (Abrund., Stutzen, Struktur, CAM-Geo)', 'color: #22c55e');
         }, 0);
     });
     
@@ -3568,10 +3568,10 @@
                 document.getElementById('btn-theme-light')?.classList.add('active');
             });
         }
-        console.log('[CeraCUT] Theme geladen:', saved || 'light (default)');
+        console.debug('[CeraCUT] Theme geladen:', saved || 'light (default)');
     })();
     
-    console.log('%c[CeraCUT UI] AutoCAD 2017 Layout geladen', 'color: #0078d4; font-weight: bold');
+    console.debug('%c[CeraCUT UI] AutoCAD 2017 Layout geladen', 'color: #0078d4; font-weight: bold');
 })();
 </script>
 </body>

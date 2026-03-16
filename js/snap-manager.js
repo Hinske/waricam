@@ -63,7 +63,7 @@ class SnapManager {
         try {
             this._computeCentroid([{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10},{x:0,y:0}]);
             this._bulgeToArcInfo({x:0,y:0,bulge:1},{x:10,y:0}, 1);
-            console.log('[SnapManager V1.2] ✅ Initialisiert (9 Snap-Typen: Endpoint, Midpoint, Center, GeoCenter, Quadrant, Intersection, Perpendicular, Tangent, Nearest)');
+            console.debug('[SnapManager V1.2] ✅ Initialisiert (9 Snap-Typen: Endpoint, Midpoint, Center, GeoCenter, Quadrant, Intersection, Perpendicular, Tangent, Nearest)');
         } catch(e) {
             console.error('[SnapManager V1.2] ❌ Smoke-Test FEHLER:', e);
         }

@@ -1221,7 +1221,7 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['HULL']       = () => new ConvexHullTool(this);
             this.tools['CONVEXHULL'] = () => new ConvexHullTool(this);
 
-            console.log('[CAM-Tools V1.1] ✅ 7 CAM-Vorbereitungstools registriert (EF, REP, AN, BT, PJ, VZ, HULL)');
+            console.debug('[CAM-Tools V1.1] ✅ 7 CAM-Vorbereitungstools registriert (EF, REP, AN, BT, PJ, VZ, HULL)');
         }
 
         // Auto-Apply gezeichnete Entities bei Mod-Tool-Start
@@ -1236,7 +1236,7 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolCam.call(this, shortcut);
     };
 
-    console.log('[CAM-Tools V1.1] ✅ Lazy-Patch installiert');
+    console.debug('[CAM-Tools V1.1] ✅ Lazy-Patch installiert');
 } else {
     console.warn('[CAM-Tools V1.1] ⚠️ DrawingToolManager nicht gefunden — Lazy-Patch übersprungen');
 }
@@ -1284,5 +1284,5 @@ if (typeof CanvasRenderer !== 'undefined') {
         return result;
     };
 
-    console.log('[CAM-Tools V1.1] ✅ Renderer-Patch für Analyze-Markierungen installiert');
+    console.debug('[CAM-Tools V1.1] ✅ Renderer-Patch für Analyze-Markierungen installiert');
 }

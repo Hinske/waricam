@@ -505,7 +505,7 @@ const CostCalculator = (() => {
     // PUBLIC API
     // ════════════════════════════════════════════════════════════════
 
-    console.log(`${LOG_PREFIX} Modul geladen`);
+    console.debug(`${LOG_PREFIX} Modul geladen`);
 
     return {
         VERSION,

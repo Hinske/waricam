@@ -1228,7 +1228,7 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolExt.call(this, shortcut);
     };
 
-    console.log('[DrawingToolsExt V1.2] Lazy-Patch auf startTool() installiert');
+    console.debug('[DrawingToolsExt V1.2] Lazy-Patch auf startTool() installiert');
 } else {
     console.error('[DrawingToolsExt V1.2] ❌ DrawingToolManager nicht gefunden! drawing-tools.js VOR drawing-tools-ext.js laden.');
 }

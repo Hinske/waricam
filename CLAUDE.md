@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-16
-> **Version:** V6.7
-> **Build:** 20260316-undofix
+> **Version:** V6.8
+> **Build:** 20260316-quietlogs
 
 ---
 
@@ -180,7 +180,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | Feld | Wert |
 |------|------|
 | Name | CeraCUT / CeraCUT |
-| Version | **V6.7** — Build 20260316-undofix (2026-03-16, 21:00 MEZ) |
+| Version | **V6.8** — Build 20260316-quietlogs (2026-03-16, 22:00 MEZ) |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -191,7 +191,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V6.7** | Wizard, Kontextmenu, Export-Modal, Undo (Granular per Kontur), ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline, Validation Engine, Multi-Material Export, Hatch-Entity |
+| **App** | `app.js` | **V6.8** | Wizard, Kontextmenu, Export-Modal, Undo (Granular per Kontur), ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline, Validation Engine, Multi-Material Export, Hatch-Entity |
 | **Geometry** | `geometry.js` | **V2.10** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace, interiorPoint |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.10** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table, HATCH-Skip |
@@ -483,10 +483,14 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 ## Sync-Pruefung
 
-Console-Ausgabe beim Laden:
+Console-Ausgabe beim Laden (V6.8: nur 1 Zeile + collapsed Gruppe):
 ```
-CeraCUT/CeraCUT V6.7 - Build 20260316-undofix
-[BUILD] Modules:
+CeraCUT V6.8 — Build 20260316-quietlogs (2026-03-16) — 31 Module
+▶ [BUILD] Module-Versionen    ← aufklappbar per Klick
+```
+
+Module-Details (in collapsed Gruppe, per Klick sichtbar):
+```
   dxf-parser: V3.10 (20260316-hatchskip)
   geometry: V2.10 (20260316-centroid)
   pipeline: V3.6 (20260316-hatchentity)
@@ -505,7 +509,7 @@ CeraCUT/CeraCUT V6.7 - Build 20260316-undofix
   text-tool: V1.2 (20260312-textimport)
   dxf-writer: V1.2 (20260315-bugfix35)
   lead-profiles: V1.1 (20260315-intarsia20)
-  app: V6.7 (20260316-undofix)
+  app: V6.8 (20260316-quietlogs)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.5 (20260316-hatchentity)
   debug-monitor: V1.0 (20260219-dm10)
@@ -520,7 +524,8 @@ CeraCUT/CeraCUT V6.7 - Build 20260316-undofix
   arc-fitting: V3.1 (20260315-bugfix35)
 ```
 
-**Fehlt diese Ausgabe?** → Alte Version im Cache! `?v=` Parameter pruefen.
+**Keine Ausgabe?** → Alte Version im Cache! `?v=` Parameter pruefen.
+**Init-Logs unsichtbar?** → Sind jetzt `console.debug` — im DevTools-Filter "Verbose" aktivieren.
 
 ---
 

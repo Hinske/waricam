@@ -402,7 +402,7 @@ class UndoManager {
         this._groupCommands = null;
         this._groupDescription = null;
 
-        console.log(`[UndoManager V1.0] Initialisiert (max. ${this.maxHistory} Schritte)`);
+        console.debug(`[UndoManager V1.0] Initialisiert (max. ${this.maxHistory} Schritte)`);
     }
 
     // ----- Haupt-API -----
@@ -434,13 +434,13 @@ class UndoManager {
             // Edge Case: Redo-Stack leeren nach neuer Aktion
             if (this.redoStack.length > 0) {
                 this.redoStack.length = 0;
-                console.log('[UndoManager V1.1] Redo-Stack geleert (neue Aktion nach Undo)');
+                console.debug('[UndoManager V1.1] Redo-Stack geleert (neue Aktion nach Undo)');
             }
 
             this._notifyStateChange();
         }
 
-        console.log(`[UndoManager V1.1] Ausgeführt: "${command.description}"`);
+        console.debug(`[UndoManager V1.1] Ausgeführt: "${command.description}"`);
     }
 
     /**
@@ -449,7 +449,7 @@ class UndoManager {
      */
     undo() {
         if (!this.canUndo()) {
-            console.log('[UndoManager V1.0] Undo-Stack leer');
+            console.debug('[UndoManager V1.0] Undo-Stack leer');
             return false;
         }
 
@@ -457,7 +457,7 @@ class UndoManager {
         command.undo();
         this.redoStack.push(command);
 
-        console.log(`[UndoManager V1.0] Undo: "${command.description}"`);
+        console.debug(`[UndoManager V1.0] Undo: "${command.description}"`);
         this._notifyStateChange();
         return true;
     }
@@ -468,7 +468,7 @@ class UndoManager {
      */
     redo() {
         if (!this.canRedo()) {
-            console.log('[UndoManager V1.0] Redo-Stack leer');
+            console.debug('[UndoManager V1.0] Redo-Stack leer');
             return false;
         }
 
@@ -476,7 +476,7 @@ class UndoManager {
         command.redo();
         this.undoStack.push(command);
 
-        console.log(`[UndoManager V1.0] Redo: "${command.description}"`);
+        console.debug(`[UndoManager V1.0] Redo: "${command.description}"`);
         this._notifyStateChange();
         return true;
     }
@@ -531,7 +531,7 @@ class UndoManager {
         }
 
         this._notifyStateChange();
-        console.log(`[UndoManager V1.0] Gruppe: "${description}" (${commands.length} Schritte)`);
+        console.debug(`[UndoManager V1.0] Gruppe: "${description}" (${commands.length} Schritte)`);
     }
 
     // ----- Verwaltung -----
@@ -542,7 +542,7 @@ class UndoManager {
         this.redoStack.length = 0;
         this._groupCommands = null;
         this._notifyStateChange();
-        console.log('[UndoManager V1.0] Historie gelöscht');
+        console.debug('[UndoManager V1.0] Historie gelöscht');
     }
 
     /**
@@ -595,7 +595,7 @@ class WizardStepUndo {
         this.undoManager = undoManager;
         this._stepMarkers = {};   // step → undoStack-Index beim Betreten
         this._currentStep = null;
-        console.log('[WizardStepUndo V1.1] Initialisiert');
+        console.debug('[WizardStepUndo V1.1] Initialisiert');
     }
 
     /**
@@ -605,7 +605,7 @@ class WizardStepUndo {
     enterStep(stepNumber) {
         this._stepMarkers[stepNumber] = this.undoManager.undoStack.length;
         this._currentStep = stepNumber;
-        console.log(`[WizardStepUndo V1.1] Step ${stepNumber} betreten (Marker bei Index ${this._stepMarkers[stepNumber]})`);
+        console.debug(`[WizardStepUndo V1.1] Step ${stepNumber} betreten (Marker bei Index ${this._stepMarkers[stepNumber]})`);
     }
 
     /**
@@ -634,7 +634,7 @@ class WizardStepUndo {
         delete this._stepMarkers[stepNumber];
 
         if (undoneCount > 0) {
-            console.log(`[WizardStepUndo V1.1] Step ${stepNumber}: ${undoneCount} Aktionen rückgängig gemacht`);
+            console.debug(`[WizardStepUndo V1.1] Step ${stepNumber}: ${undoneCount} Aktionen rückgängig gemacht`);
         }
         return undoneCount;
     }
@@ -663,7 +663,7 @@ class WizardStepUndo {
     reset() {
         this._stepMarkers = {};
         this._currentStep = null;
-        console.log('[WizardStepUndo V1.1] Reset');
+        console.debug('[WizardStepUndo V1.1] Reset');
     }
 
     get currentStep() { return this._currentStep; }
@@ -690,7 +690,7 @@ class ClipboardManager {
         /** Offset für Paste-Verschiebung (damit nicht exakt übereinander) */
         this._pasteOffset = { x: 5, y: -5 };
 
-        console.log('[Clipboard V1.0] Initialisiert');
+        console.debug('[Clipboard V1.0] Initialisiert');
     }
 
     /**

@@ -604,4 +604,4 @@ class SVGParser {
 
 // Singleton exportieren
 window.SVGParser = SVGParser;
-console.log('%c[SVGParser V1.0] geladen — path/rect/circle/ellipse/polyline/polygon + Bezier + SVG-A', 'color:#22c55e; font-weight:bold');
+console.debug('%c[SVGParser V1.0] geladen — path/rect/circle/ellipse/polyline/polygon + Bezier + SVG-A', 'color:#22c55e; font-weight:bold');

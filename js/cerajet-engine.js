@@ -178,7 +178,7 @@ class CeraJetEngine {
      * @returns {TechnologyResult}
      */
     static calculate(config) {
-        console.time('[CeraJet V1.0] calculate');
+        console.debug('[CeraJet V1.0] calculate — start');
 
         const mat = this.getMaterial(config.materialId);
         const noz = this.getNozzle(config.nozzleId);
@@ -187,7 +187,7 @@ class CeraJetEngine {
         const optMode = config.optMode || 'minKosten';
         const abr = this.getAbrasive(noz, optMode, config.abrasiveOverride);
 
-        console.log(`[CeraJet V1.0] calculate: ${mat.name}, ${h}mm, ${P}bar, ${noz.label}, ${abr}g/min (${optMode})`);
+        console.debug(`[CeraJet V1.0] calculate: ${mat.name}, ${h}mm, ${P}bar, ${noz.label}, ${abr}g/min (${optMode})`);
 
         // Q4-Vorschub skaliert
         const q4 = this.scaleQ4(mat.refQ4, h, P, noz.abr, abr);
@@ -226,7 +226,7 @@ class CeraJetEngine {
             verified: mat.v,
         };
 
-        console.timeEnd('[CeraJet V1.0] calculate');
+        console.debug('[CeraJet V1.0] calculate — done');
         return result;
     }
 
@@ -311,4 +311,4 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = CeraJetEngine;
 }
 
-console.log(`[CeraJet V${CeraJetEngine.VERSION}] Engine geladen — ${CeraJetEngine.MATERIALS.length} Materialien, ${CeraJetEngine.NOZZLES.length} Düsen`);
+console.debug(`[CeraJet V${CeraJetEngine.VERSION}] Engine geladen — ${CeraJetEngine.MATERIALS.length} Materialien, ${CeraJetEngine.NOZZLES.length} Düsen`);

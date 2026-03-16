@@ -483,7 +483,7 @@ const MachineProfiles = (() => {
                 _activeProfileId = null;
             }
 
-            console.log(`${PREFIX} Geladen: ${loaded} Profile aus LocalStorage`);
+            console.debug(`${PREFIX} Geladen: ${loaded} Profile aus LocalStorage`);
             return loaded > 0;
         } catch (e) {
             console.error(`${PREFIX} Fehler beim Laden:`, e);
@@ -902,7 +902,7 @@ const MachineProfiles = (() => {
             }
             if (added > 0) {
                 _saveToStorage();
-                console.log(`${PREFIX} ${added} fehlende Default-Profile wiederhergestellt`);
+                console.debug(`${PREFIX} ${added} fehlende Default-Profile wiederhergestellt`);
             }
         }
 
@@ -913,7 +913,7 @@ const MachineProfiles = (() => {
         }
 
         const active = _profiles.get(_activeProfileId);
-        console.log(`${PREFIX} Bereit — ${_profiles.size} Profile, aktiv: "${active?.name || 'keins'}"`);
+        console.debug(`${PREFIX} Bereit — ${_profiles.size} Profile, aktiv: "${active?.name || 'keins'}"`);
     }
 
     // ════════════════════════════════════════════════════════════════

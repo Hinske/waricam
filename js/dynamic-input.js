@@ -34,7 +34,7 @@ const DynamicInput = (() => {
             line-height: 1.4;
         `;
         document.body.appendChild(hudEl);
-        console.log('[DynamicInput V1.0] Initialisiert');
+        console.debug('[DynamicInput V1.0] Initialisiert');
     }
 
     function update(screenX, screenY, worldX, worldY, basePoint) {

@@ -520,4 +520,4 @@ if (typeof window !== 'undefined') {
     window.TransformUtils = TransformUtils;
 }
 
-console.log('[ToolManager V2.2] ✅ Tier 4 Erweiterung geladen (CL2D, CLND, CLDCL)');
+console.debug('[ToolManager V2.2] ✅ Tier 4 Erweiterung geladen (CL2D, CLND, CLDCL)');

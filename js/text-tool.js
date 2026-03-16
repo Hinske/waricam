@@ -774,7 +774,7 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolTxt.call(this, shortcut);
     };
 
-    console.log('[TextTool V1.2] Lazy-Patch auf startTool() installiert');
+    console.debug('[TextTool V1.2] Lazy-Patch auf startTool() installiert');
 } else {
     console.error('[TextTool V1.2] ❌ DrawingToolManager nicht gefunden!');
 }
@@ -805,7 +805,7 @@ TextTool.loadDefaultFont = function() {
             var font = opentype.parse(buffer);
             TextTool._loadedFont = font;
             TextTool._fontName = 'Liberation Sans (eingebettet)';
-            console.log('[TextTool V1.2] ✅ Default-Font geladen: Liberation Sans (' + font.numGlyphs + ' Glyphen, eingebettet)');
+            console.debug('[TextTool V1.2] ✅ Default-Font geladen: Liberation Sans (' + font.numGlyphs + ' Glyphen, eingebettet)');
             return;
         } catch (e) {
             console.warn('[TextTool V1.2] Base64-Font fehlerhaft:', e.message);

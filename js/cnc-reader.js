@@ -507,4 +507,4 @@ class CNCReader {
 
 // Singleton exportieren
 window.CNCReader = CNCReader;
-console.log('%c[CNCReader V1.3] geladen — G41/G42/G40 Lead-Tracking + Referenzrahmen aus R611/R612', 'color:#e8a020; font-weight:bold');
+console.debug('%c[CNCReader V1.3] geladen — G41/G42/G40 Lead-Tracking + Referenzrahmen aus R611/R612', 'color:#e8a020; font-weight:bold');

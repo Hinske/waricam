@@ -95,7 +95,7 @@ class LayerManager {
         // Default-Layer "0" anlegen
         this._addDefaultLayer();
 
-        console.log('[LayerManager V1.0] ✅ Initialisiert');
+        console.debug('[LayerManager V1.0] ✅ Initialisiert');
     }
 
     // ═══ INTERNE HELFER ═══

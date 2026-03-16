@@ -25,7 +25,7 @@ class ProjectManager {
         this._dbStore = 'handles';
         this._isScanning = false;
 
-        console.log('[ProjectManager V1.0] Initialisiert');
+        console.debug('[ProjectManager V1.0] Initialisiert');
     }
 
     // ═══════════════════════════════════════════════════════════════

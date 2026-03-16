@@ -547,4 +547,4 @@ const QualityZones = {
     }
 };
 
-console.log('[QualityZones V1.0] Modul geladen — Build 20260309');
+console.debug('[QualityZones V1.0] Modul geladen — Build 20260309');
