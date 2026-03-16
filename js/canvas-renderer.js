@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.26 - Canvas Renderer
+ * CeraCUT V3.27 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.27: Flächen-Hit — Point-in-Polygon Fallback in findContourAtPoint() für Klick IN Konturen
  * V3.26: Hatch-Fix — ctx.fill() statt ctx.clip()+fillRect() für robustes Solid-Fill, Try-Catch
  * V3.25: Multi-Material Intarsien-Overlay (materialGroup → Farbe aus INTARSIA_MATERIALS)
  * V3.24: interiorPoint() für Hole-Cutout bei konkaven Polygonen
@@ -1783,6 +1784,7 @@ class CanvasRenderer {
         // V3.11: LayerManager für Sichtbarkeits-Check
         const lm = this.app?.layerManager;
 
+        // === Pass 1: Kanten-Hit (exakte Linien-Nähe) — hat Priorität ===
         // V5.0: Rückwärts iterieren (AutoCAD-Konvention: zuletzt gezeichnet = oben)
         for (let ci = this.contours.length - 1; ci >= 0; ci--) {
             const contour = this.contours[ci];
@@ -1811,6 +1813,33 @@ class CanvasRenderer {
                 }
             } catch(e) {}
         }
+
+        // === Pass 2: Flächen-Hit — Klick IN geschlossene Kontur (V3.27) ===
+        // Löst das Problem: Klick in die Mitte einer großen Kontur wurde nicht erkannt
+        if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon) {
+            const point = { x: worldX, y: worldY };
+            const candidates = [];
+
+            for (let ci = this.contours.length - 1; ci >= 0; ci--) {
+                const contour = this.contours[ci];
+                if (!contour.isClosed) continue;
+                if (!contour.points || contour.points.length < 3) continue;
+                if (lm) {
+                    const ld = lm.getLayer(contour.layer || '0');
+                    if (ld && !ld.visible) continue;
+                }
+                if (GeometryOps.pointInPolygon(point, contour.points)) {
+                    candidates.push(contour);
+                }
+            }
+
+            if (candidates.length > 0) {
+                // Kleinste Fläche = innerste Kontur (Nesting-Hierarchie)
+                candidates.sort((a, b) => a.getArea() - b.getArea());
+                return candidates[0];
+            }
+        }
+
         return null;
     }
 
