@@ -211,20 +211,22 @@ class CamContour {
      * Hole: Verschnitt INNEN  -> Normale zum Centroid
      */
     _getWasteSideNormal(point, tangent) {
+        // V5.3: Shoelace-basierte Windungsrichtung (robust, auch bei nicht-konvexen Konturen)
+        // Links-Normale der Tangente: (-tangent.y, tangent.x)
         let nx = -tangent.y;
         let ny = tangent.x;
 
-        const centroid = Geometry.centroid(this.points);
-        const toCenterX = centroid.x - point.x;
-        const toCenterY = centroid.y - point.y;
-        const dot = nx * toCenterX + ny * toCenterY;
-
+        const signedArea = Geometry.getSignedArea(this.points);
+        const isCW = signedArea > 0;
         const isHole = this.cuttingMode === 'hole';
 
+        // CW: Links-Normale zeigt EINWÄRTS, CCW: AUSWÄRTS
+        // Disc (Waste=außen): Normale soll AUSWÄRTS → CW: flip
+        // Hole (Waste=innen): Normale soll EINWÄRTS → CCW: flip
         if (isHole) {
-            if (dot < 0) { nx = -nx; ny = -ny; }
+            if (!isCW) { nx = -nx; ny = -ny; }
         } else {
-            if (dot > 0) { nx = -nx; ny = -ny; }
+            if (isCW) { nx = -nx; ny = -ny; }
         }
 
         return { x: nx, y: ny };

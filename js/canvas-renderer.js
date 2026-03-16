@@ -2,7 +2,7 @@
  * CeraCUT V3.21 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
- * V3.21: Lead-Drag Hit-Test erweitert — Pierce-Punkt + größerer Hit-Bereich
+ * V3.21: Disc-Füllung Fix (World-Koordinaten statt worldToScreen), Hit-Test Revert
  * V3.19: Arc-Lead Rendering Fix — gekürzte Arcs Polylinien-Fallback, breitere Linear-Dashes
  * V3.16: Notebook-Navigation — Trackpad-Pan (Zwei-Finger), Pinch-to-Zoom, Space+Drag Pan
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
@@ -818,38 +818,33 @@ class CanvasRenderer {
             this.drawPath(ctx, points, displayColor, baseWidth);
 
             // V6.0: Disc-Füllung — halbtransparente Fläche für Teile (CAM-Modi)
+            // V3.21 Fix: World-Koordinaten direkt (ctx hat bereits World-Transform)
             if (contour.cuttingMode === 'disc' && isCamMode && points.length >= 3) {
                 ctx.save();
                 ctx.beginPath();
-                const p0 = this.worldToScreen(points[0].x, points[0].y);
-                ctx.moveTo(p0.x, p0.y);
+                ctx.moveTo(points[0].x, points[0].y);
                 for (let i = 1; i < points.length; i++) {
-                    const p = this.worldToScreen(points[i].x, points[i].y);
-                    ctx.lineTo(p.x, p.y);
+                    ctx.lineTo(points[i].x, points[i].y);
                 }
                 ctx.closePath();
 
-                // Holes (nestingLevel 1) innerhalb dieser Disc aussparen
+                // Holes innerhalb dieser Disc aussparen (even-odd)
                 for (const other of (this.app?.contours || [])) {
                     if (other === contour || !other.isClosed || other.isReference) continue;
                     if (other.cuttingMode !== 'hole') continue;
                     if (other.points?.length < 3) continue;
-                    // Schnell-Check: liegt der erste Punkt des Holes in dieser Disc?
                     const tp = other.points[0];
                     if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon?.(tp, points)) {
-                        // Hole-Pfad in Gegenrichtung → wird ausgespart (even-odd)
                         const hp = other.points;
-                        const h0 = this.worldToScreen(hp[hp.length - 1].x, hp[hp.length - 1].y);
-                        ctx.moveTo(h0.x, h0.y);
+                        ctx.moveTo(hp[hp.length - 1].x, hp[hp.length - 1].y);
                         for (let j = hp.length - 2; j >= 0; j--) {
-                            const h = this.worldToScreen(hp[j].x, hp[j].y);
-                            ctx.lineTo(h.x, h.y);
+                            ctx.lineTo(hp[j].x, hp[j].y);
                         }
                         ctx.closePath();
                     }
                 }
 
-                ctx.globalAlpha = 0.08;
+                ctx.globalAlpha = 0.12;
                 ctx.fillStyle = this.colors.disc;
                 ctx.fill('evenodd');
                 ctx.restore();
@@ -1675,7 +1670,7 @@ class CanvasRenderer {
 
     _hitTestStartTriangle(worldPos) {
         if (!this.contours) return null;
-        const hitRadius = CanvasRenderer.MARKER_SIZE.START_TRIANGLE / this.scale * 3; // V3.21: größerer Hit-Bereich
+        const hitRadius = CanvasRenderer.MARKER_SIZE.START_TRIANGLE / this.scale * 2;
         for (const contour of this.contours) {
             if (contour.isReference || (!contour.isClosed && contour.cuttingMode !== 'slit')) continue;
             let startPoint = contour.points[0];
@@ -1686,19 +1681,8 @@ class CanvasRenderer {
                 }
             } catch(e) {}
             if (!startPoint) continue;
-
-            // V3.21: Hit-Test auf Startpunkt (Entry) UND Pierce-Punkt (⊕)
-            const distStart = Math.hypot(worldPos.x - startPoint.x, worldPos.y - startPoint.y);
-            if (distStart < hitRadius) return contour;
-
-            // Auch Pierce-Punkt prüfen (Anfang des Lead-Pfads)
-            try {
-                const leadIn = contour.getLeadInPath?.();
-                if (leadIn?.piercingPoint) {
-                    const distPierce = Math.hypot(worldPos.x - leadIn.piercingPoint.x, worldPos.y - leadIn.piercingPoint.y);
-                    if (distPierce < hitRadius) return contour;
-                }
-            } catch(e) {}
+            const dist = Math.hypot(worldPos.x - startPoint.x, worldPos.y - startPoint.y);
+            if (dist < hitRadius) return contour;
         }
         return null;
     }

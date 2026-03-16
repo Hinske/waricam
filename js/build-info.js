@@ -219,7 +219,8 @@ const CERACUT_BUILD = {
         'V6.1: Lead-Visualisierung — Text-Labels entfernt, Pfeil am Kontureintritt, breitere Leads, grössere Pfeile (canvas-renderer V3.20)',
         'V6.1: Lead-Platzierung — autoPlace bevorzugt Flat-Segments statt Ecken (cam-contour V5.3)',
         'V6.1: Arc-Leads — Degradierung zu Linear nur noch bei >120° (war >90°), Arc bleibt auf flachen Segmenten erhalten',
-        'V6.1: Lead-Drag — Hit-Test auf Pierce-Punkt erweitert + größerer Klickbereich (canvas-renderer V3.21)'
+        'V6.1: Disc-Füllung Fix — worldToScreen durch direkte World-Koordinaten ersetzt (canvas-renderer V3.21)',
+        'V6.1: Waste-Side-Normal — Shoelace-basiert statt centroid-basiert, robust bei nicht-konvexen Konturen (cam-contour V5.3)'
     ],
     
     print() {
