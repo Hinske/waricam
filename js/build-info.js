@@ -43,7 +43,7 @@ const CERACUT_BUILD = {
         'bridge-cutting':     { version: '1.0', build: '20260309' },
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
         'cam-tools':          { version: '1.1', build: '20260316-hittest' },
-        'advanced-tools':     { version: '1.4', build: '20260315-bugfix35' },
+        'advanced-tools':     { version: '1.5', build: '20260316-overkill' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
     },
     

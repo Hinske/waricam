@@ -205,7 +205,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Pipeline** | `ceracut-pipeline.js` | **V3.7** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
 | **Drawing Tools** | `drawing-tools.js` | **V2.7** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.6** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
-| **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
+| **Advanced Tools** | `advanced-tools.js` | **V1.5** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen, Overkill |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
 | **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
 | **Command Line** | `command-line.js` | **V1.2** | AutoCAD-style Prompt, Koordinaten-Parser, History |
@@ -277,7 +277,7 @@ ceraCUT/
 │   ├── snap-manager.js               ← Snap-System V1.3
 │   ├── drawing-tools.js              ← CAD-Tools V2.7 (Auto-Apply pending Entities)
 │   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.6
-│   ├── advanced-tools.js              ← Tier 5 Tools V1.4 (Fillet/Trim/Extend/Offset/Chamfer)
+│   ├── advanced-tools.js              ← Tier 5 Tools V1.5 (Fillet/Trim/Extend/Offset/Chamfer/Overkill)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.0
@@ -382,6 +382,7 @@ Canvas-Click →
 | J | JoinTool |
 | B | BreakTool |
 | OBREAK | OverlapBreakTool (Split + tangentiale Überlappung) |
+| OK | OverkillTool (Duplikate + Überlappungen entfernen) |
 | H | HatchTool (Schraffur) |
 | PAN | PanTool (Verschiebe-Hand) |
 | F8 | Ortho Toggle |
@@ -520,7 +521,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   bridge-cutting: V1.0 (20260309)
   quality-zones: V1.1 (20260315-bugfix35)
   cam-tools: V1.1 (20260316-hittest)
-  advanced-tools: V1.4 (20260315-bugfix35)
+  advanced-tools: V1.5 (20260316-overkill)
   arc-fitting: V3.1 (20260315-bugfix35)
 ```
 

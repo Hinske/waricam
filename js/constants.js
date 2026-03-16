@@ -147,6 +147,7 @@ const TOOL_TOOLTIPS = {
     'BO':    { label: 'Boolesch',    tip: 'Formen verschmelzen/subtrahieren',        shortcut: 'BO',    group: 'edit' },
     'BP':    { label: 'Boundary',    tip: 'Umrandung erkennen',                      shortcut: 'BP',    group: 'edit' },
     'CLDCL': { label: 'Aufteilen',   tip: 'Kontur gleichmaessig aufteilen',          shortcut: 'CLDCL', group: 'edit' },
+    'OK':    { label: 'Overkill',    tip: 'Duplikate und ueberlappende Linien entfernen', shortcut: 'OK', group: 'edit' },
 
     // ── CAM / Analyse ──
     'AN':    { label: 'Analyze',     tip: 'Geometrie auf Fehler pruefen',            shortcut: 'AN',    group: 'cam' },

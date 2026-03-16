@@ -1,7 +1,9 @@
 /**
- * CeraCUT Advanced Tools V1.4 — Tier 5 CAD Tools
- * 13 CAD-Werkzeuge + Ribbon-Alias-Fix
+ * CeraCUT Advanced Tools V1.5 — Tier 5 CAD Tools
+ * 14 CAD-Werkzeuge + Ribbon-Alias-Fix
  *
+ * V1.5: Overkill-Tool (OK) — Duplikate + überlappende Linien entfernen, Toleranz-Dialog
+ * V1.4: Aufteilen-Werkzeuge (CL2D, CLND, CLDCL)
  * V1.3: Offset Ghost-Preview (handleMouseMove), Chamfer Continuous Mode + finish()
  * V1.2: Arabeske-Tool (AB) — Parametrische Laternenfliese, 8 Kreisbögen, Fugen-Offset
  * V1.1: Fillet Continuous Mode + Bogen-Preview, Trim Hover-Preview (Rot gestrichelt)
@@ -9,7 +11,8 @@
  *
  * Tools: Fillet (F), Trim (T), Offset (O), Extend (EX), Chamfer (CH),
  *        Zero Fillet (ZF), Boolean (BO), N-gon (NG), Obround (OB),
- *        Array (AR), Lengthen (LE), Boundary Poly (BP), Arabeske (AB)
+ *        Array (AR), Lengthen (LE), Boundary Poly (BP), Arabeske (AB),
+ *        Overkill (OK)
  *
  * Benötigt: geometry-ops.js V2.2, drawing-tools.js V2.3
  *
@@ -1576,6 +1579,190 @@ class BoundaryPolyTool extends BaseTool {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+//  OVERKILL — Duplikate + überlappende Linien entfernen (OK)
+// ════════════════════════════════════════════════════════════════════════════
+
+class OverkillTool extends ModificationTool {
+    getToolName() { return 'OVERKILL'; }
+
+    start() {
+        super.start();
+    }
+
+    _onSelectionComplete(contours) {
+        this._showToleranceDialog().then(tolerance => {
+            if (tolerance === null) {
+                this.cmd?.log('OVERKILL abgebrochen', 'info');
+                this.cancel();
+                return;
+            }
+            this._executeOverkill(contours, tolerance);
+        });
+    }
+
+    _executeOverkill(contours, tolerance) {
+        const app = this.manager.app;
+        const allContours = app.contours;
+        const toDelete = new Set();
+        let dupeCount = 0;
+
+        // ── Phase 1: Exakte Duplikate ──
+        for (let i = 0; i < contours.length; i++) {
+            if (toDelete.has(contours[i])) continue;
+            for (let j = i + 1; j < contours.length; j++) {
+                if (toDelete.has(contours[j])) continue;
+                const match = SplineUtils._contoursMatch(contours[i], contours[j], tolerance);
+                if (match && match.match) {
+                    toDelete.add(contours[j]);
+                    dupeCount++;
+                }
+            }
+        }
+
+        // ── Phase 2: Teilüberlappende Linien mergen (nur 2-Punkt-Konturen) ──
+        const mergeResult = this._findAndMergeOverlaps(contours, tolerance, toDelete);
+
+        const deleteArr = [...toDelete];
+        const mergedArr = mergeResult.merged;
+        const mergeCount = mergeResult.mergeCount;
+
+        if (deleteArr.length === 0 && mergedArr.length === 0) {
+            this.cmd?.log('Keine Duplikate oder Überlappungen gefunden', 'info');
+            app.showToast?.('Keine Duplikate gefunden', 'info');
+            this.cancel();
+            return;
+        }
+
+        // ── Phase 3: Undo-Gruppe ──
+        const rerender = () => {
+            app.renderer?.setContours(app.contours);
+            app.rebuildCutOrder?.();
+            app.updateContourPanel?.();
+            app.renderer?.render();
+        };
+
+        app.undoManager.beginGroup('Overkill');
+
+        if (deleteArr.length > 0) {
+            app.undoManager.execute(new DeleteContoursCommand(allContours, deleteArr, rerender));
+        }
+        if (mergedArr.length > 0) {
+            app.undoManager.execute(new AddContoursCommand(allContours, mergedArr, -1, rerender));
+        }
+
+        app.undoManager.endGroup();
+
+        // Selektion aufheben
+        allContours.forEach(c => c.isSelected = false);
+        rerender();
+
+        // ── Phase 4: Feedback ──
+        const parts = [];
+        if (dupeCount > 0) parts.push(`${dupeCount} Duplikat(e)`);
+        if (mergeCount > 0) parts.push(`${mergeCount} Überlappung(en) gemergt`);
+        const msg = `✔ Overkill: ${parts.join(', ')} entfernt (Strg+Z)`;
+        this.cmd?.log(msg, 'success');
+        app.showToast?.(msg, 'success');
+
+        console.log(`[AdvancedTools V1.5] OVERKILL: ${dupeCount} Duplikate, ${mergeCount} Merges (Toleranz ${tolerance}mm)`);
+
+        this.cancel();
+    }
+
+    _findAndMergeOverlaps(contours, tolerance, toDelete) {
+        const merged = [];
+        let mergeCount = 0;
+        const consumed = new Set();
+
+        // Nur 2-Punkt-Konturen (einzelne Liniensegmente)
+        const lines = contours.filter(c => c.points && c.points.length === 2 && !toDelete.has(c));
+
+        for (let i = 0; i < lines.length; i++) {
+            if (consumed.has(lines[i])) continue;
+            const a = lines[i];
+            const p1 = a.points[0], p2 = a.points[1];
+
+            for (let j = i + 1; j < lines.length; j++) {
+                if (consumed.has(lines[j])) continue;
+                const b = lines[j];
+                const p3 = b.points[0], p4 = b.points[1];
+
+                if (!SplineUtils._segmentsOverlap(p1, p2, p3, p4, tolerance)) continue;
+
+                // Merge: Projiziere alle 4 Punkte auf Richtungsvektor → min/max
+                const dx = p2.x - p1.x, dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                if (len < tolerance) continue;
+
+                const nx = dx / len, ny = dy / len;
+                const pts = [p1, p2, p3, p4];
+                const projections = pts.map(p => (p.x - p1.x) * nx + (p.y - p1.y) * ny);
+                const minT = Math.min(...projections);
+                const maxT = Math.max(...projections);
+
+                const newP1 = { x: p1.x + nx * minT, y: p1.y + ny * minT };
+                const newP2 = { x: p1.x + nx * maxT, y: p1.y + ny * maxT };
+
+                const newContour = new CamContour([newP1, newP2], {
+                    layer: a.layer || 'DRAW',
+                    name: 'Merged_' + (a.name || 'Line')
+                });
+                newContour.isClosed = false;
+
+                toDelete.add(a);
+                toDelete.add(b);
+                consumed.add(a);
+                consumed.add(b);
+                merged.push(newContour);
+                mergeCount++;
+                break; // a ist konsumiert, nächste
+            }
+        }
+
+        return { merged, mergeCount };
+    }
+
+    _showToleranceDialog() {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = `
+                <div style="background:#1e1e1e;border:1px solid #555;border-radius:8px;width:320px;padding:20px;color:#ddd;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                    <h3 style="margin:0 0 12px;font-size:15px;color:#00aaff;">OVERKILL — Toleranz</h3>
+                    <p style="margin:0 0 12px;font-size:12px;color:#aaa;">Maximaler Abstand (mm) für Duplikat-Erkennung:</p>
+                    <input id="overkill-tol" type="number" value="0.01" min="0.001" max="10" step="0.001"
+                        style="width:100%;padding:6px 10px;background:#2a2a2a;border:1px solid #555;border-radius:4px;color:#fff;font-size:14px;box-sizing:border-box;">
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+                        <button id="ok-cancel" style="padding:6px 16px;background:#555;border:none;border-radius:4px;color:#ddd;cursor:pointer;">Abbrechen</button>
+                        <button id="ok-proceed" style="padding:6px 16px;background:#00aaff;border:none;border-radius:4px;color:#000;cursor:pointer;font-weight:600;">OK</button>
+                    </div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+
+            const input = overlay.querySelector('#overkill-tol');
+            const cleanup = (val) => { overlay.remove(); resolve(val); };
+
+            overlay.querySelector('#ok-cancel').addEventListener('click', () => cleanup(null));
+            overlay.querySelector('#ok-proceed').addEventListener('click', () => {
+                const val = parseFloat(input.value);
+                cleanup(isNaN(val) || val <= 0 ? 0.01 : val);
+            });
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
+
+            // Enter = OK, ESC = Abbrechen
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') overlay.querySelector('#ok-proceed').click();
+                if (e.key === 'Escape') cleanup(null);
+            });
+
+            setTimeout(() => { input.focus(); input.select(); }, 50);
+        });
+    }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
 //  REGISTRIERUNG — Lazy-Patch in DrawingToolManager
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1606,6 +1793,8 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['LE']      = () => new LengthenTool(this);
             this.tools['LENGTHEN']= () => new LengthenTool(this);
             this.tools['BP']      = () => new BoundaryPolyTool(this);
+            this.tools['OK']      = () => new OverkillTool(this);
+            this.tools['OVERKILL']= () => new OverkillTool(this);
 
             // Offset-Stub ersetzen
             this.tools['O']       = () => new OffsetToolAdvanced(this);
@@ -1618,13 +1807,13 @@ if (typeof DrawingToolManager !== 'undefined') {
             if (!this.tools['SC']) this.tools['SC'] = () => new ScaleTool(this);
             if (!this.tools['E'])  this.tools['E']  = () => new EraseTool(this);
 
-            console.log('[AdvancedTools V1.3] ✅ 13 Tier 5 Tools + Arabeske + Alias-Fix registriert');
+            console.log('[AdvancedTools V1.5] ✅ 14 Tier 5 Tools + Overkill + Alias-Fix registriert');
         }
 
         // Auto-Apply Erweiterung
         var key = shortcut.toUpperCase();
         var modTools = ['F','FILLET','T','TRIM','EX','EXTEND','CH','CHAMFER','ZF','BO','BOOLEAN',
-                        'AR','ARRAY','LE','LENGTHEN','BP','O','OFFSET'];
+                        'AR','ARRAY','LE','LENGTHEN','BP','O','OFFSET','OK','OVERKILL'];
         if (modTools.indexOf(key) !== -1 && this.entities.length > 0) {
             this.commandLine?.log('Auto-Apply: ' + this.entities.length + ' Objekte übernommen', 'info');
             this.applyEntities();
@@ -1633,5 +1822,5 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolAdv.call(this, shortcut);
     };
 
-    console.debug('[AdvancedTools V1.3] ✅ Lazy-Patch installiert');
+    console.debug('[AdvancedTools V1.5] ✅ Lazy-Patch installiert');
 }
