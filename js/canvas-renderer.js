@@ -899,14 +899,7 @@ class CanvasRenderer {
                 ctx.restore();
             }
 
-            // V3.26: Hatch-Rendering (Schraffur) — wenn contour.hatch gesetzt
-            if (contour.hatch && points.length >= 3) {
-                try {
-                    this._drawHatch(ctx, contour, points);
-                } catch (e) {
-                    console.error('[CanvasRenderer V3.26] _drawHatch Fehler:', e, contour.name);
-                }
-            }
+            // V3.28: Alter Hatch-Property-Code entfernt — Hatch ist jetzt eigenständige CamContour
 
             const markerPoints = kerfPoints || points;
 
@@ -1866,6 +1859,9 @@ class CanvasRenderer {
             }
 
             if (candidates.length > 0) {
+                // V3.28: Hatch-Konturen haben Priorität (liegen visuell oben)
+                const hatchHit = candidates.find(c => c.isHatchContour || c.cuttingMode === 'none');
+                if (hatchHit) return hatchHit;
                 // Kleinste Fläche = innerste Kontur (Nesting-Hierarchie)
                 candidates.sort((a, b) => a.getArea() - b.getArea());
                 return candidates[0];
