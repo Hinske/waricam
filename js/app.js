@@ -2670,6 +2670,14 @@ class CeraCutApp {
 
         // Print-Button
         document.getElementById('qa-print')?.addEventListener('click', () => this.printCanvas());
+
+        // Undo/Redo-Buttons (V6.9)
+        document.getElementById('btn-undo')?.addEventListener('click', () => {
+            if (this.undoManager.undo()) this._refreshAfterUndoRedo();
+        });
+        document.getElementById('btn-redo')?.addEventListener('click', () => {
+            if (this.undoManager.redo()) this._refreshAfterUndoRedo();
+        });
     }
     
     loadFile(file) {
