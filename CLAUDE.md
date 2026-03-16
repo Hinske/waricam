@@ -203,7 +203,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.6** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
-| **Drawing Tools** | `drawing-tools.js` | **V2.5** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
+| **Drawing Tools** | `drawing-tools.js` | **V2.6** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung), Enter/Rechtsklick-Bestätigung (Rect+Circle) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.6** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
@@ -275,7 +275,7 @@ ceraCUT/
 │   ├── command-line.js                ← Command-Line UI V1.2
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
-│   ├── drawing-tools.js              ← CAD-Tools V2.5 (AutoCAD-Aliases, BreakTool)
+│   ├── drawing-tools.js              ← CAD-Tools V2.6 (Enter/Rechtsklick-Bestätigung)
 │   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.4 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
@@ -497,7 +497,7 @@ CeraCUT/CeraCUT V6.7 - Build 20260316-undofix
   command-line: V1.2 (20260315-ux)
   snap-manager: V1.3 (20260315-bugfix35)
   geometry-ops: V2.4 (20260315-bugfix35)
-  drawing-tools: V2.5 (20260315-bugfix35)
+  drawing-tools: V2.6 (20260316-enterconfirm)
   drawing-tools-ext: V1.6 (20260316-hatchpalette)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)

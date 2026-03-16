@@ -24,7 +24,7 @@ const CERACUT_BUILD = {
         'command-line':       { version: '1.2', build: '20260315-ux' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
-        'drawing-tools':      { version: '2.5', build: '20260315-bugfix35' },
+        'drawing-tools':      { version: '2.6', build: '20260316-enterconfirm' },
         'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
@@ -251,18 +251,18 @@ const CERACUT_BUILD = {
     ],
     
     print() {
-        console.log('%c╔══════════════════════════════════════════════════════════╗', 'color: #00aa00; font-weight: bold');
-        console.log('%c║  CeraCUT/CeraCUT V' + this.version + ' - Build ' + this.build + '            ║', 'color: #00aa00; font-weight: bold');
-        console.log('%c║  Last Modified: ' + this.date + ' ' + this.time + '                   ║', 'color: #00aa00');
-        console.log('%c╚══════════════════════════════════════════════════════════╝', 'color: #00aa00; font-weight: bold');
-        
-        console.log('%c[BUILD] Modules:', 'color: #888');
+        const modCount = Object.keys(this.modules).length;
+        console.log(
+            `%cCeraCUT V${this.version} — Build ${this.build} (${this.date}) — ${modCount} Module`,
+            'color: #00aa00; font-weight: bold; font-size: 13px'
+        );
+
+        // Module als aufklappbare Gruppe (collapsed = nicht sichtbar ohne Klick)
+        console.groupCollapsed('%c[BUILD] Module-Versionen', 'color: #888');
         for (const [name, info] of Object.entries(this.modules)) {
             console.log(`  ${name}: V${info.version} (${info.build})`);
         }
-        
-        console.log('%c[BUILD] Recent Changes:', 'color: #888');
-        this.changes.forEach(c => console.log('  • ' + c));
+        console.groupEnd();
     }
 };
 

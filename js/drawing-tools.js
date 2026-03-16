@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.5
+ * CeraCUT Drawing & Modification Tools V2.6
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -12,14 +12,15 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
+ * V2.6: Enter/Rechtsklick-Bestätigung für RectangleTool + CircleTool (wie LineTool)
  * V2.3: AutoCAD Compliance — Aliases (E/REC/CO/RO/MI/SC/TR/PL/F/CH/EX), Continuous Mode, Previous Selection
  * V2.2: FIX _entityToDxfFormat — points+isClosed statt startX/closed (Linien waren nicht selektierbar)
  * V2.0: Tier 2 Modification Tools, Always-Active ToolManager
  * V1.1: handleRawInput für Linie/Rechteck/Polylinie
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
- * Last Modified: 2026-03-09 MEZ
- * Build: 20260309-autocad
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-enterconfirm
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -115,7 +116,7 @@ class DrawingToolManager {
             this.commandLine.onBackspace = () => this._handleBackspace();
         }
 
-        console.log('[DrawingTools V2.0] ✅ Initialisiert (Tier 1 + Tier 2)');
+        console.debug('[DrawingTools V2.6] ✅ Initialisiert (Tier 1 + Tier 2)');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -2638,13 +2639,13 @@ class CircleTool extends BaseTool {
         this.mode = 'radius';
 
         if (this.subMode === 'center') {
-            this.cmd?.setPrompt('KREIS — Mittelpunkt angeben [2P/3P/TTR] (Enter=Fertig):');
+            this.cmd?.setPrompt('KREIS — Mittelpunkt angeben [2P/3P/TTR] (Enter/Rechtsklick=Fertig):');
         } else if (this.subMode === '2p') {
-            this.cmd?.setPrompt('KREIS 2P — 1. Punkt auf Durchmesser (Enter=Fertig):');
+            this.cmd?.setPrompt('KREIS 2P — 1. Punkt auf Durchmesser (Enter/Rechtsklick=Fertig):');
         } else if (this.subMode === '3p') {
-            this.cmd?.setPrompt('KREIS 3P — 1. Punkt (Enter=Fertig):');
+            this.cmd?.setPrompt('KREIS 3P — 1. Punkt (Enter/Rechtsklick=Fertig):');
         } else if (this.subMode === 'ttr') {
-            this.cmd?.setPrompt('KREIS TTR — 1. Tangenten-Objekt wählen (Enter=Fertig):');
+            this.cmd?.setPrompt('KREIS TTR — 1. Tangenten-Objekt wählen (Enter/Rechtsklick=Fertig):');
         }
     }
 
@@ -2892,6 +2893,23 @@ class CircleTool extends BaseTool {
     }
 
     finish() {
+        if (this.center || this.p1) {
+            // Teilzustand: Reset für neuen Kreis (wie LineTool)
+            this.center = null;
+            this.p1 = null;
+            this.p2 = null;
+            this._ttrObj1 = null;
+            this._ttrObj2 = null;
+            this._ttrClickPt1 = null;
+            this._ttrClickPt2 = null;
+            this.subMode = 'center';
+            this.mode = 'radius';
+            this.manager.rubberBand = null;
+            this.cmd?.setPrompt('KREIS — Mittelpunkt angeben [2P/3P/TTR] (Enter/Rechtsklick=Fertig):');
+            this.manager.renderer?.render();
+            return;
+        }
+        // Kein Zustand: Tool beenden
         this.manager.rubberBand = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;
@@ -2965,10 +2983,19 @@ class RectangleTool extends BaseTool {
         });
         this.manager.rubberBand = null;
         this.corner1 = null;
-        this.cmd?.setPrompt('RECHTECK — Erste Ecke angeben (Enter=Fertig):');
+        this.cmd?.setPrompt('RECHTECK — Erste Ecke angeben (Enter/Rechtsklick=Fertig):');
     }
 
     finish() {
+        if (this.corner1) {
+            // Teilzustand: Reset für neues Rechteck (wie LineTool)
+            this.corner1 = null;
+            this.manager.rubberBand = null;
+            this.cmd?.setPrompt('RECHTECK — Erste Ecke angeben (Enter/Rechtsklick=Fertig):');
+            this.manager.renderer?.render();
+            return;
+        }
+        // Kein Zustand: Tool beenden
         this.manager.rubberBand = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;
