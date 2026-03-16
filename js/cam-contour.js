@@ -429,7 +429,7 @@ class CamContour {
                 const altPath = this._tryAlternativeLeadIn(entry, tangent, normal, pts);
                 if (altPath && (!altPath.shortened || this._pathLength(altPath.points) > primaryLen)) {
                     leadPath = altPath;
-                    console.log(`[CamContour V4.5] Alternativ-Lead verwendet: ${this.name} (primary=${primaryLen.toFixed(1)}mm < 40% von ${requestedLen}mm)`);
+                    console.debug(`[CamContour V5.2] Alt-Lead: ${this.name} (${primaryLen.toFixed(1)}mm < 40% von ${requestedLen}mm)`);
                 }
             }
         }
@@ -440,7 +440,7 @@ class CamContour {
             if (finalLen < 0.5) {
                 leadPath = this._calcCenterPierceLeadIn(entry, pts);
                 leadPath.isFallbackCenterPierce = true;
-                console.log(`[CamContour V4.5] Center-Pierce Fallback: ${this.name} (kein Lead passt)`);
+                console.debug(`[CamContour V5.2] Center-Pierce Fallback: ${this.name}`);
             }
         }
 
