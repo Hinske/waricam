@@ -79,6 +79,12 @@
 - **Regel:** DXF HATCH-Entities sind reine Visualisierung (Schraffur/Füllung), keine Schneidgeometrie. Im CAM-Kontext sollten sie beim Import übersprungen werden (`return null`). Falls sie in Zukunft doch benötigt werden: Boundary-Loops anhand Code 92 (Boundary-Typ) trennen und als separate Konturen zurückgeben — nie alles in ein Array.
 - **Betroffene Module:** `dxf-parser.js` (`_parseHatch`)
 
+### [2026-03-16] Hatch-Rendering: ctx.clip()+fillRect() statt ctx.fill() für Solid-Pattern
+- **Fehler:** Hatch-Schraffur (Solid-Pattern) war nach Klick auf Kontur visuell nicht sichtbar — weder über HatchTool (H) noch über Properties Panel "Schraffur hinzufügen".
+- **Root Cause:** `_drawHatch()` nutzte `ctx.clip('evenodd') + ctx.fillRect()` für das Solid-Pattern. Der funktionierende Disc-Fill direkt darüber nutzt `ctx.fill('evenodd')` direkt. Die Clip+FillRect-Kombination kann bei komplexen/selbstüberschneidenden Pfaden fehlschlagen. Zusätzlich fehlte ein Try-Catch — bei Fehler wurde die gesamte Kontur-Zeichnung abgebrochen. Außerdem kein Toast-Feedback und kein Panel-Refresh nach Hatch-Änderung.
+- **Regel:** Für flächendeckende Fills (Solid) immer `ctx.fill('evenodd')` direkt auf den Pfad verwenden — wie beim Disc-Fill. `ctx.clip()` nur für Pattern (Lines/Cross/Dots) verwenden, wo Einzelstriche geclippt werden müssen. Neue Render-Funktionen immer mit Try-Catch umgeben. UI-Feedback (Toast, Panel-Refresh) nach jeder sichtbaren Datenänderung.
+- **Betroffene Module:** `canvas-renderer.js` (`_drawHatch`), `drawing-tools-ext.js` (HatchTool), `properties-panel.js` (`_setHatchProperty`)
+
 ### [2026-03-16] Falsche disc/hole-Topologie bei konkaven Polygonen (Löwenkopf)
 - **Fehler:** Bei komplexen konkaven Formen (z.B. Löwenmähne mit Zacken) wurden Konturen falsch als disc/hole klassifiziert. Disc-Fill erschien auf Holes und umgekehrt.
 - **Root Cause:** `Geometry.centroid()` war ein simpler arithmetischer Mittelwert aller Punkte. Bei stark konkaven Formen (Sterne, Zacken, Halbmonde) fällt dieser Punkt **außerhalb** des Polygons. `_pointInPolygon(centroid, parent)` lieferte dann falsche Ergebnisse → falsches Nesting-Level → falsche disc/hole-Zuweisung.

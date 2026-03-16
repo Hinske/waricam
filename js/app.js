@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.4 - Main Application
+ * CeraCUT V6.5 - Main Application
+ * V6.5: Hatch-Fix — _drawHatch ctx.fill() statt ctx.clip(), Toast/Panel-Refresh
  * V6.4: Validation Engine — Pre-Export-Prüfung mit Modal (Gap, Ecken, Waisen, Kollisionen)
  * V6.3: interiorPoint() für robuste Topologie
  * V6.2: Layer-Visibility → Pipeline-Rebuild (unsichtbare Layer aus Topology ausgeschlossen)

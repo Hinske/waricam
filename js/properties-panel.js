@@ -1,14 +1,15 @@
 /**
- * CeraCUT Properties Panel V1.4
+ * CeraCUT Properties Panel V1.5
  * Kontur-Eigenschaften als Kontextmenu-Sektion (Step 4 / CAM)
  * - Generiert editierbare CAM-Felder (Quality, Piercing, Lead-In, Kerf)
  * - Bindet Events mit Undo-Support (PropertyChangeCommand)
  * - Modi: 1 Kontur → Detailansicht / Mehrere → Batch-Editing
+ * - V1.5: Hatch-Fix — Panel-Refresh + Toast nach Hinzufügen/Entfernen
  * - V1.4: Live Preview — Lead-Parameter live auf Canvas während Slider-Drag
  * - V1.3: Hatch-Schraffur im Properties-Panel (Hinzufügen/Entfernen/Bearbeiten)
  * Refactored: 2026-03-13 (Sidebar → Kontextmenu)
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-preview
+ * Build: 20260316-hatchfix
  */
 
 class PropertiesPanel {
@@ -519,6 +520,8 @@ class PropertiesPanel {
                 () => { contour.hatch = null; app.renderer?.render(); }
             );
             app.undoManager?.execute(cmd);
+            console.log(`[PropertiesPanel V1.5] Hatch add: ${contour.name}, hatch=`, contour.hatch);
+            app.showToast?.(`Schraffur → ${contour.name}`, 'success');
         } else if (action === 'remove') {
             const cmd = new FunctionCommand(
                 `Schraffur entfernen → ${contour.name}`,
@@ -526,7 +529,11 @@ class PropertiesPanel {
                 () => { contour.hatch = oldHatch ? { ...oldHatch } : null; app.renderer?.render(); }
             );
             app.undoManager?.execute(cmd);
+            console.log(`[PropertiesPanel V1.5] Hatch remove: ${contour.name}`);
         }
+
+        // V1.5: Kontextmenu refreshen damit Hatch-Controls erscheinen/verschwinden
+        app.updateContourPanel?.();
     }
 
     _setHatchSubProperty(contourIndex, subProp, newValue) {

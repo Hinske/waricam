@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.25 - Canvas Renderer
+ * CeraCUT V3.26 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.26: Hatch-Fix — ctx.fill() statt ctx.clip()+fillRect() für robustes Solid-Fill, Try-Catch
  * V3.25: Multi-Material Intarsien-Overlay (materialGroup → Farbe aus INTARSIA_MATERIALS)
  * V3.24: interiorPoint() für Hole-Cutout bei konkaven Polygonen
  * V3.23: Disc-Fill in allen Modi sichtbar (nicht nur CAM), Hatch-Rendering
@@ -863,9 +864,13 @@ class CanvasRenderer {
                 ctx.restore();
             }
 
-            // V3.23: Hatch-Rendering (Schraffur) — wenn contour.hatch gesetzt
+            // V3.26: Hatch-Rendering (Schraffur) — wenn contour.hatch gesetzt
             if (contour.hatch && points.length >= 3) {
-                this._drawHatch(ctx, contour, points);
+                try {
+                    this._drawHatch(ctx, contour, points);
+                } catch (e) {
+                    console.error('[CanvasRenderer V3.26] _drawHatch Fehler:', e, contour.name);
+                }
             }
 
             const markerPoints = kerfPoints || points;
@@ -909,7 +914,7 @@ class CanvasRenderer {
         }
     }
 
-    // ═══ V3.23: HATCH RENDERING ═══
+    // ═══ V3.26: HATCH RENDERING (Fix: ctx.fill statt ctx.clip+fillRect für Solid) ═══
 
     _drawHatch(ctx, contour, points) {
         const h = contour.hatch;
@@ -919,9 +924,11 @@ class CanvasRenderer {
         const layerDef = this.app?.layerManager?.getLayer(layerName);
         const fillColor = h.color || layerDef?.color || this.colors.disc;
 
+        console.log(`[CanvasRenderer V3.26] _drawHatch: ${contour.name}, pattern=${h.pattern}, color=${fillColor}, opacity=${h.opacity}`);
+
         ctx.save();
 
-        // Clip-Path: Kontur (mit Holes via even-odd)
+        // Pfad bauen: Kontur + Holes (even-odd)
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
         for (let i = 1; i < points.length; i++) {
@@ -945,21 +952,25 @@ class CanvasRenderer {
             }
         }
 
-        ctx.clip('evenodd');
-
         ctx.globalAlpha = h.opacity ?? 0.25;
 
         if (h.pattern === 'solid') {
+            // V3.26 Fix: Direkt ctx.fill() statt ctx.clip()+fillRect()
+            // Identisch zur funktionierenden Disc-Fill-Logik (Zeile 860)
             ctx.fillStyle = fillColor;
-            ctx.fillRect(this._hatchBB(points, 'xMin'), this._hatchBB(points, 'yMin'),
-                         this._hatchBB(points, 'w'), this._hatchBB(points, 'h'));
-        } else if (h.pattern === 'lines' || h.pattern === 'cross') {
-            this._drawHatchLines(ctx, points, fillColor, h.angle ?? 45, h.spacing ?? 3);
-            if (h.pattern === 'cross') {
-                this._drawHatchLines(ctx, points, fillColor, (h.angle ?? 45) + 90, h.spacing ?? 3);
+            ctx.fill('evenodd');
+        } else {
+            // Linien/Kreuz/Punkte: Clip-Pfad nötig für Einzelstriche
+            ctx.clip('evenodd');
+
+            if (h.pattern === 'lines' || h.pattern === 'cross') {
+                this._drawHatchLines(ctx, points, fillColor, h.angle ?? 45, h.spacing ?? 3);
+                if (h.pattern === 'cross') {
+                    this._drawHatchLines(ctx, points, fillColor, (h.angle ?? 45) + 90, h.spacing ?? 3);
+                }
+            } else if (h.pattern === 'dots') {
+                this._drawHatchDots(ctx, points, fillColor, h.spacing ?? 3);
             }
-        } else if (h.pattern === 'dots') {
-            this._drawHatchDots(ctx, points, fillColor, h.spacing ?? 3);
         }
 
         ctx.restore();

@@ -1,40 +1,40 @@
 /**
- * CeraCUT Build Info V6.4
- * Version: V6.4
- * Last Modified: 2026-03-16, 17:00 MEZ
- * Build: 20260316-validate
+ * CeraCUT Build Info V6.5
+ * Version: V6.5
+ * Last Modified: 2026-03-16, 19:00 MEZ
+ * Build: 20260316-hatchfix
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.4',
-    build: '20260316-validate',
+    version: '6.5',
+    build: '20260316-hatchfix',
     date: '2026-03-16',
-    time: '17:00 MEZ',
+    time: '19:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.10', build: '20260316-centroid' },
         'pipeline':           { version: '3.5', build: '20260316-validate' },
         'cam-contour':        { version: '5.5', build: '20260316-material' },
-        'canvas-renderer':    { version: '3.25', build: '20260316-material' },
+        'canvas-renderer':    { version: '3.26', build: '20260316-hatchfix' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
         'drawing-tools':      { version: '2.5', build: '20260315-bugfix35' },
-        'drawing-tools-ext':  { version: '1.2', build: '20260316-hatch' },
+        'drawing-tools-ext':  { version: '1.3', build: '20260316-hatchfix' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.4', build: '20260316-validate' },
+        'app':                { version: '6.5', build: '20260316-hatchfix' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
-        'properties-panel':   { version: '1.4', build: '20260316-preview' },
+        'properties-panel':   { version: '1.5', build: '20260316-hatchfix' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.1', build: '20260315-bugfix35' },
         'toolpath-simulator': { version: '1.0', build: '20260309' },

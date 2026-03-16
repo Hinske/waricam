@@ -1,10 +1,11 @@
 /**
- * CeraCUT Drawing Tools Extension V1.2
+ * CeraCUT Drawing Tools Extension V1.3
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
+ * V1.3: Hatch-Fix — Toast-Feedback, Panel-Refresh nach Hatch-Klick
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatch
+ * Build: 20260316-hatchfix
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
@@ -875,7 +876,7 @@ class HatchTool extends BaseTool {
         this.cmd?.setPrompt(`HATCH — Geschlossene Kontur anklicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
         this.cmd?.log('▧ Schraffur: Kontur anklicken → Füllung anwenden', 'info');
         this.cmd?.log('   Optionen: S=Solid  L=Linien  C=Kreuz  D=Punkte', 'info');
-        console.log('[HatchTool V1.0] gestartet, Pattern=' + this.pattern);
+        console.log('[HatchTool V1.3] gestartet, Pattern=' + this.pattern);
     }
 
     acceptsOption(opt) { return ['S', 'L', 'C', 'D'].includes(opt); }
@@ -933,8 +934,12 @@ class HatchTool extends BaseTool {
         }
 
         this.cmd?.log(`✔ Schraffur [${this.pattern}] → ${contour.name}`, 'success');
-        console.log(`[HatchTool V1.0] ✔ ${this.pattern} → ${contour.name}`);
+        console.log(`[HatchTool V1.3] ✔ ${this.pattern} → ${contour.name}, hatch=`, contour.hatch);
         renderer.render();
+
+        // V1.3: Toast-Feedback + Properties-Panel-Refresh
+        app?.showToast?.(`Schraffur [${this.pattern}] → ${contour.name}`, 'success');
+        app?.updateContourPanel?.();
 
         // Continuous Mode — bereit für nächste Kontur
         const patternLabel = { solid: 'Solid', lines: 'Linien', cross: 'Kreuz', dots: 'Punkte' };
