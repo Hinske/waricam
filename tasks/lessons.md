@@ -91,3 +91,33 @@
 - **Lösung:** `centroid()` durch flächengewichteten Centroid (Shoelace-basiert) ersetzt. Neue Methode `interiorPoint()` mit Horizontal-Scan-Fallback — garantiert einen Punkt innerhalb des Polygons, auch bei extrem konkaven Formen.
 - **Regel:** Für Point-in-Polygon-Tests an konkaven Formen NIE den arithmetischen Mittelwert als Testpunkt verwenden. Immer `Geometry.interiorPoint()` nutzen, das einen garantiert-inneren Punkt liefert.
 - **Betroffene Module:** `geometry.js` (centroid, interiorPoint), `ceracut-pipeline.js` (_analyzeTopology), `canvas-renderer.js` (Disc-Fill, Hatch Hole-Cutout)
+
+### [2026-03-16] Undo-Granularität: Batch-Import darf nicht als eine einzige Gruppe auf dem Stack landen
+- **Fehler:** Undo nach DXF-Import oder Zeichnen entfernte ALLE Konturen auf einmal statt einzeln.
+- **Root Cause:** Mehrere Konturen wurden in einer einzigen Undo-Gruppe (`beginGroup/endGroup`) oder als ein Snapshot auf den Stack gelegt. STRG+Z machte die gesamte Gruppe rückgängig.
+- **Regel:** Jede Kontur = ein eigener Undo-Eintrag, es sei denn die Aktion ist semantisch unteilbar (z.B. Explode einer Gruppe). Import-Operationen als Snapshot behandeln, aber mit Einzel-Undo pro Kontur. Bei Batch-Operationen prüfen: Will der User wirklich alles auf einmal rückgängig machen?
+- **Betroffene Module:** `app.js` (Import/applyEntities), `undo-manager.js`
+
+### [2026-03-16] Flächen-Hit-Test: Nur Kanten-Distanz reicht nicht für geschlossene Konturen
+- **Fehler:** Klick innerhalb einer geschlossenen Kontur (z.B. Kreis) wurde nicht erkannt — nur Klicks nahe der Kante funktionierten.
+- **Root Cause:** Hit-Test basierte ausschließlich auf Distanz zur nächsten Kante (`distanceToSegment`). Bei großen geschlossenen Konturen ist die Mitte weit von jeder Kante entfernt → kein Hit.
+- **Regel:** Geschlossene Konturen brauchen zusätzlich Point-in-Polygon-Test. Erst Kanten-Distanz prüfen, dann für geschlossene Konturen `_pointInPolygon()` als Fallback. Das entspricht AutoCAD-Verhalten (Klick in Fläche = Selektion).
+- **Betroffene Module:** `canvas-renderer.js` (`_hitTest`)
+
+### [2026-03-16] Lead-Platzierung: Ecken sind schlechte Startpunkte für Wasserstrahl
+- **Fehler:** Leads wurden an scharfen Ecken platziert statt auf geraden Segmenten. Führte zu schlechter Schnittqualität am Einstichpunkt.
+- **Root Cause:** `autoPlace()` wählte den Startpunkt ohne Bewertung der lokalen Geometrie. Ecken (hoher Winkel zwischen Segmenten) sind beim Wasserstrahlschneiden problematisch weil der Strahl dort die Richtung wechselt.
+- **Regel:** Lead-Platzierung muss Segmentlänge und Geradheit bevorzugen (Flat-Segment-Bonus). Scharfe Ecken bekommen Corner-Penalty. Mindest-Segmentlänge für Lead-Platzierung einhalten. Das ist die `_findBestLeadPosition()`-Logik mit Corner-Penalty und Flat-Segment-Bonus.
+- **Betroffene Module:** `cam-contour.js` (`autoPlace`, `_findBestLeadPosition`)
+
+### [2026-03-16] CSS overflow-Kaskade: Dropdown in overflow:hidden Parent braucht position:fixed
+- **Fehler:** Layer-Dropdown im Ribbon war abgeschnitten — untere Einträge nicht sichtbar. 3 Fixversuche nötig.
+- **Root Cause:** Ribbon-Container hatte `overflow-y: hidden` (oder `auto`). Dropdown als Child erbt diesen Clipping-Kontext. `position: absolute` reicht nicht — das Element bleibt im overflow-Kontext des nächsten positioned Parent.
+- **Regel:** Dropdowns/Popups die über ihren Container hinausragen MÜSSEN `position: fixed` verwenden und Koordinaten via `getBoundingClientRect()` berechnen. `position: absolute` funktioniert nur wenn KEIN Vorfahre `overflow: hidden/auto/scroll` hat. Bei CSS-Bugs: Erst den Overflow-Kontext der gesamten Parent-Kette prüfen.
+- **Betroffene Module:** `index.html` / `styles.css` (Ribbon-Dropdowns)
+
+### [2026-03-16] Drawing Tools: Hardcoded Farbe statt Layer-Farbe für neue Entities
+- **Fehler:** Neu gezeichnete Entities (Linien, Kreise, Rechtecke) erschienen in Weiß statt in der Farbe des aktiven Layers.
+- **Root Cause:** Drawing Tools nutzten eine hardcoded Farbe (`'#FFFFFF'` oder Default) statt die Farbe des aktuell gewählten Layers abzufragen.
+- **Regel:** Neue Entities und Rubber-Band-Vorschauen MÜSSEN die Farbe des aktiven Layers verwenden (`layerManager.getActiveLayer().color`). Hardcoded Farben nur für UI-Elemente (Grips, Selection-Highlights), nie für Geometrie.
+- **Betroffene Module:** `drawing-tools.js` (alle Tools die Entities erstellen)
