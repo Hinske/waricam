@@ -1,5 +1,5 @@
 /**
- * CeraCUT/CeraCUT Sinumerik 840D Postprozessor V1.4
+ * CeraCUT/CeraCUT Sinumerik 840D Postprozessor V1.6
  *
  * Erzeugt CNC-Code im MPF-Format für Sinumerik 840D Steuerungen.
  * Format-Vorlage: 7 echte CNC-Referenzdateien (KERNKREIS, ERBEN, SCHWEDEN, etc.)
@@ -80,9 +80,10 @@ class SinumerikPostprocessor {
         const rp = settings.technologyParams || {};
 
         // Schneidbare Konturen in Reihenfolge sammeln
+        // V1.6: Hatch-Konturen (cuttingMode='none') aus Export ausschließen
         const cuttable = cutOrder
             .map(idx => contours[idx])
-            .filter(c => c && !c.isReference);
+            .filter(c => c && !c.isReference && c.cuttingMode !== 'none' && !c.isHatchContour);
 
         if (cuttable.length === 0) {
             this._warnings.push('Keine schneidbaren Konturen gefunden');
@@ -793,7 +794,7 @@ class SinumerikPostprocessor {
 
         const cuttable = cutOrder
             .map(idx => contours[idx])
-            .filter(c => c && !c.isReference);
+            .filter(c => c && !c.isReference && c.cuttingMode !== 'none' && !c.isHatchContour);
 
         if (cuttable.length === 0) {
             return { code: '', warnings: ['Keine schneidbaren Konturen'], stats: {} };

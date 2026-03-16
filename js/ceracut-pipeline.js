@@ -1,8 +1,9 @@
 /**
- * CeraCUT V3.5 - Processing Pipeline
+ * CeraCUT V3.6 - Processing Pipeline
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-validate
+ * Build: 20260316-hatchentity
  *
+ * V3.6: Hatch-Konturen (cuttingMode='none') von Topologie/Slit/Offset ausgeschlossen
  * V3.5: Validation Engine — Pre-Export-Prüfung (Gap, Ecken, Waisen, Kollisionen, Offene Konturen)
  * V3.4: interiorPoint() für robuste Topologie-Erkennung (konkave Formen)
  * V3.1: Physikalisch motivierte Geometry-Pipeline (CamPreProcessor, robuste Referenz)
@@ -14,7 +15,7 @@ const CeraCutPipeline = {
     healingStats: null,
 
     autoProcess(contours, config = {}) {
-        console.log('[Pipeline V3.5] autoProcess starting...');
+        console.log('[Pipeline V3.6] autoProcess starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
         this.healingStats = null;
         this.preProcessStats = null;
@@ -23,7 +24,7 @@ const CeraCutPipeline = {
             return { success: false, contours: [], error: 'No contours' };
         }
 
-        console.log(`[Pipeline V3.5] Input: ${contours.length} contours`);
+        console.log(`[Pipeline V3.6] Input: ${contours.length} contours`);
 
         const camContours = contours.map(c => {
             if (typeof CamContour !== 'undefined' && c instanceof CamContour) {
@@ -46,7 +47,7 @@ const CeraCutPipeline = {
         });
 
         const healed = this._microHeal(camContours, config);
-        console.log(`[Pipeline V3.5] After micro-healing: ${healed.length} contours`);
+        console.log(`[Pipeline V3.6] After micro-healing: ${healed.length} contours`);
 
         // V3.0: Optional Arc-Fitting
         if (config.enableArcFitting) {
@@ -56,10 +57,11 @@ const CeraCutPipeline = {
         this._analyzeTopology(healed, { skipReference: config.skipReference });
 
         // SLIT: Offene Pfade als schneidbare Slits markieren (IGEMS Quick→Slit)
-        const openPaths = healed.filter(c => !c.isClosed);
+        // V3.6: Hatch-Konturen ausschließen
+        const openPaths = healed.filter(c => !c.isClosed && !c.isHatchContour && c.cuttingMode !== 'none');
         openPaths.forEach(c => { c.cuttingMode = 'slit'; });
         if (openPaths.length > 0) {
-            console.log(`[Pipeline V3.5] Slit: ${openPaths.length} open paths`);
+            console.log(`[Pipeline V3.6] Slit: ${openPaths.length} open paths`);
         }
 
         this._computeOffsets(healed);
@@ -68,9 +70,10 @@ const CeraCutPipeline = {
         const outerContours = closedContours.filter(c => c.cuttingMode === 'disc').length;
         const innerContours = closedContours.filter(c => c.cuttingMode === 'hole').length;
         const refContours = closedContours.filter(c => c.isReference).length;
+        const hatchContours = healed.filter(c => c.isHatchContour || c.cuttingMode === 'none').length;
 
         const slitContours = openPaths.length;
-        console.log(`[Pipeline V3.5] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit`);
+        console.log(`[Pipeline V3.6] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit, ${hatchContours} hatch`);
 
         return {
             success: true,
@@ -85,7 +88,7 @@ const CeraCutPipeline = {
     },
 
     async process(dxfData, config = {}) {
-        console.log('[Pipeline V3.5] process starting...');
+        console.log('[Pipeline V3.6] process starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
 
         let contours = [];
@@ -102,7 +105,7 @@ const CeraCutPipeline = {
     _camPreProcess(contours, config = {}) {
         if (config.camPreProcess === false || typeof CamPreProcessor === 'undefined') {
             if (typeof CamPreProcessor === 'undefined') {
-                console.warn('[Pipeline V3.5] CamPreProcessor not available');
+                console.warn('[Pipeline V3.6] CamPreProcessor not available');
             }
             return contours;
         }
@@ -132,7 +135,7 @@ const CeraCutPipeline = {
             this.healingStats = result.stats;
             return result.healed;
         }
-        console.warn('[Pipeline V3.5] MicroHealing not available');
+        console.warn('[Pipeline V3.6] MicroHealing not available');
         return this._healGeometryLegacy(contours);
     },
 
@@ -223,7 +226,8 @@ const CeraCutPipeline = {
     },
 
     _analyzeTopology(contours, options = {}) {
-        const closed = contours.filter(c => c.isClosed);
+        // V3.6: Hatch-Konturen (cuttingMode='none') von Topologie ausschließen
+        const closed = contours.filter(c => c.isClosed && c.cuttingMode !== 'none' && !c.isHatchContour);
         const sorted = closed.sort((a, b) => {
             const areaA = typeof a.getArea === 'function' ? Math.abs(a.getArea()) : Math.abs(this._computeArea(a.points));
             const areaB = typeof b.getArea === 'function' ? Math.abs(b.getArea()) : Math.abs(this._computeArea(b.points));
@@ -255,10 +259,10 @@ const CeraCutPipeline = {
         if (!options.skipReference) {
             this._detectReference(sorted);
         } else {
-            console.log('[Pipeline V3.5] Referenz-Erkennung übersprungen (skipReference)');
+            console.log('[Pipeline V3.6] Referenz-Erkennung übersprungen (skipReference)');
         }
         
-        console.log(`[Pipeline V3.5] Topology: ${discCount} discs, ${holeCount} holes`);
+        console.log(`[Pipeline V3.6] Topology: ${discCount} discs, ${holeCount} holes`);
     },
 
     /**
@@ -280,7 +284,7 @@ const CeraCutPipeline = {
 
         // Regel 1: Mindestens 2 Konturen
         if (sortedContours.length <= 1) {
-            console.log('[Pipeline V3.5] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
+            console.log('[Pipeline V3.6] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
             return;
         }
 
@@ -294,7 +298,7 @@ const CeraCutPipeline = {
         const isRect = this._isRectangle(largest);
         if (isRect) {
             detected = true;
-            console.log('[Pipeline V3.5] ✓ Referenz erkannt: Rechteck-Kontur');
+            console.log('[Pipeline V3.6] ✓ Referenz erkannt: Rechteck-Kontur');
         } else {
             // Regel 3: Kein Rechteck — prüfe ob Fläche signifikant größer als zweitgrößte
             const second = sortedContours[1];
@@ -303,9 +307,9 @@ const CeraCutPipeline = {
 
             if (areaSecond > 0 && areaLargest / areaSecond >= 1.5) {
                 detected = true;
-                console.log(`[Pipeline V3.5] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
+                console.log(`[Pipeline V3.6] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
             } else {
-                console.log(`[Pipeline V3.5] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
+                console.log(`[Pipeline V3.6] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
             }
         }
 
@@ -418,7 +422,7 @@ const CeraCutPipeline = {
     // ═══════════════════════════════════════════════════════════════
 
     validate(contours, settings = {}) {
-        console.log('[Pipeline V3.5] validate() gestartet...');
+        console.log('[Pipeline V3.6] validate() gestartet...');
         const errors = [];
         const warnings = [];
         const kerfWidth = settings.kerfWidth || 0.8;
@@ -550,7 +554,7 @@ const CeraCutPipeline = {
             }
         }
 
-        console.log(`[Pipeline V3.5] Validation: ${errors.length} errors, ${warnings.length} warnings`);
+        console.log(`[Pipeline V3.6] Validation: ${errors.length} errors, ${warnings.length} warnings`);
         return { errors, warnings };
     },
 
@@ -566,6 +570,7 @@ const CeraCutPipeline = {
     _computeOffsets(contours) {
         for (const contour of contours) {
             if (!contour.isClosed) continue;
+            if (contour.isHatchContour || contour.cuttingMode === 'none') continue;  // V3.6: Hatch überspringen
             if (typeof contour.getKerfOffsetPolyline === 'function') {
                 contour.getKerfOffsetPolyline();
             }

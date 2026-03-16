@@ -1,12 +1,14 @@
 /**
- * CeraCUT Drawing Tools Extension V1.4
+ * CeraCUT Drawing Tools Extension V1.5
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
+ * V1.5: Hatch als eigenständige CamContour (cuttingMode='none') — AutoCAD-konform
+ *        Live-Preview beim Hover, separate Selektion/Löschung/Undo
  * V1.4: Hatch-Bereichsklick — Point-in-Polygon statt Linien-Distanz (Industrie-Standard)
  * V1.3: Hatch-Fix — Toast-Feedback, Panel-Refresh nach Hatch-Klick
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatcharea
+ * Build: 20260316-hatchentity
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
@@ -858,7 +860,7 @@ class OverlapBreakTool extends BaseTool {
 // ════════════════════════════════════════════════════════════════════════════
 //  HATCH TOOL (H) — Schraffur auf geschlossene Konturen
 //  AutoCAD: H → Kontur anklicken → Solid/Lines/Cross/Dots
-//  Reine Visualisierung (nicht CAM-relevant)
+//  V1.5: Hatch als eigenständige CamContour (cuttingMode='none') — wird nie geschnitten
 // ════════════════════════════════════════════════════════════════════════════
 
 class HatchTool extends BaseTool {
@@ -870,6 +872,7 @@ class HatchTool extends BaseTool {
         this.spacing = 3;
         this.opacity = 0.25;
         this.color = null;       // null = Konturfarbe
+        this._previewContour = null;  // V1.5: Live-Preview Kontur
     }
 
     start() {
@@ -877,7 +880,7 @@ class HatchTool extends BaseTool {
         this.cmd?.setPrompt(`HATCH — IN geschlossenen Bereich klicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
         this.cmd?.log('▧ Schraffur: IN einen geschlossenen Bereich klicken → Füllung anwenden', 'info');
         this.cmd?.log('   Optionen: S=Solid  L=Linien  C=Kreuz  D=Punkte', 'info');
-        console.log('[HatchTool V1.4] gestartet, Pattern=' + this.pattern);
+        console.log('[HatchTool V1.5] gestartet, Pattern=' + this.pattern);
     }
 
     acceptsOption(opt) { return ['S', 'L', 'C', 'D'].includes(opt); }
@@ -889,13 +892,14 @@ class HatchTool extends BaseTool {
             this.pattern = map[option];
             this.cmd?.log(`Pattern: ${labels[option]}`, 'info');
             this.cmd?.setPrompt(`HATCH [${labels[option]}] — IN geschlossenen Bereich klicken:`);
-            console.log(`[HatchTool V1.0] Pattern → ${this.pattern}`);
+            console.log(`[HatchTool V1.5] Pattern → ${this.pattern}`);
         }
     }
 
     /**
-     * V1.4: Bereichs-Klick — Point-in-Polygon statt Linien-Distanz.
+     * V1.5: Bereichs-Klick — Point-in-Polygon.
      * Findet die kleinste geschlossene Kontur, die den Klickpunkt umschließt.
+     * Überspringt Hatch-Konturen (cuttingMode='none') um Hatch-auf-Hatch zu verhindern.
      */
     _findEnclosingContour(point) {
         const contours = this.manager.app?.contours;
@@ -907,6 +911,7 @@ class HatchTool extends BaseTool {
 
         for (const c of contours) {
             if (!c.isClosed || c.isReference) continue;
+            if (c.isHatchContour || c.cuttingMode === 'none') continue;  // V1.5: Hatch-Konturen überspringen
             if (!c.points || c.points.length < 3) continue;
             // Unsichtbare Layer überspringen
             if (lm) {
@@ -925,6 +930,35 @@ class HatchTool extends BaseTool {
         return candidates[0];
     }
 
+    /**
+     * V1.5: Erstellt eine eigenständige CamContour als Hatch-Entity.
+     * Die Kontur kopiert die Boundary-Punkte der Eltern-Kontur und wird nie geschnitten.
+     */
+    _createHatchContour(parentContour) {
+        if (typeof CamContour === 'undefined') return null;
+
+        // Deep-Copy der Boundary-Punkte
+        const pts = parentContour.points.map(p => ({ x: p.x, y: p.y }));
+
+        const hatchContour = new CamContour(pts, {
+            name: `Hatch_${parentContour.name}`,
+            cuttingMode: 'none',
+            layer: parentContour.layer || '0',
+            kerfWidth: 0,
+            hatch: {
+                pattern: this.pattern,
+                color: this.color,
+                angle: this.angle,
+                spacing: this.spacing,
+                opacity: this.opacity
+            },
+            isHatchContour: true,
+            parentContourName: parentContour.name
+        });
+
+        return hatchContour;
+    }
+
     handleClick(point) {
         const renderer = this.manager.renderer;
         if (!renderer) return;
@@ -935,34 +969,45 @@ class HatchTool extends BaseTool {
             return;
         }
 
-        const newHatch = {
-            pattern: this.pattern,
-            color: this.color,
-            angle: this.angle,
-            spacing: this.spacing,
-            opacity: this.opacity
-        };
-
-        const oldHatch = contour.hatch ? { ...contour.hatch } : null;
+        // Prüfe ob bereits ein Hatch für diese Kontur existiert
         const app = this.manager.app;
+        const existing = app?.contours?.find(c => c.isHatchContour && c.parentContourName === contour.name);
+        if (existing) {
+            this.cmd?.log(`Kontur "${contour.name}" hat bereits eine Schraffur — erst löschen (DEL)`, 'warning');
+            return;
+        }
 
-        // Undo-Support via PropertyChangeCommand oder FunctionCommand
+        const hatchContour = this._createHatchContour(contour);
+        if (!hatchContour) {
+            this.cmd?.log('CamContour nicht verfügbar', 'error');
+            return;
+        }
+
+        // Undo-Support: Hatch-Kontur hinzufügen/entfernen
         if (typeof FunctionCommand !== 'undefined' && app?.undoManager) {
             const cmd = new FunctionCommand(
                 `Schraffur [${this.pattern}] → ${contour.name}`,
-                () => { contour.hatch = { ...newHatch }; app.renderer?.render(); },
-                () => { contour.hatch = oldHatch ? { ...oldHatch } : null; app.renderer?.render(); }
+                () => {
+                    if (!app.contours.includes(hatchContour)) {
+                        app.contours.push(hatchContour);
+                    }
+                    app.renderer?.render();
+                },
+                () => {
+                    const idx = app.contours.indexOf(hatchContour);
+                    if (idx >= 0) app.contours.splice(idx, 1);
+                    app.renderer?.render();
+                }
             );
             app.undoManager.execute(cmd);
         } else {
-            contour.hatch = newHatch;
+            app?.contours?.push(hatchContour);
         }
 
         this.cmd?.log(`✔ Schraffur [${this.pattern}] → ${contour.name}`, 'success');
-        console.log(`[HatchTool V1.4] ✔ ${this.pattern} → ${contour.name}, hatch=`, contour.hatch);
+        console.log(`[HatchTool V1.5] ✔ Hatch-Kontur erstellt: ${hatchContour.name}, pattern=${this.pattern}`);
         renderer.render();
 
-        // V1.3: Toast-Feedback + Properties-Panel-Refresh
         app?.showToast?.(`Schraffur [${this.pattern}] → ${contour.name}`, 'success');
         app?.updateContourPanel?.();
 
@@ -975,9 +1020,28 @@ class HatchTool extends BaseTool {
         const renderer = this.manager.renderer;
         if (!renderer) return;
 
-        // V1.4: Bereichs-Hover statt Linien-Distanz
+        // V1.5: Live-Preview — Hatch-Pattern auf gehoverte Kontur zeigen
         const hovered = this._findEnclosingContour(point);
-        if (hovered !== renderer.hoveredContour) {
+
+        if (hovered !== this._previewContour) {
+            this._previewContour = hovered;
+
+            // Temporäres Hatch-Objekt für Preview setzen (wird im Renderer genutzt)
+            if (hovered) {
+                renderer._hatchPreview = {
+                    contour: hovered,
+                    hatch: {
+                        pattern: this.pattern,
+                        color: this.color,
+                        angle: this.angle,
+                        spacing: this.spacing,
+                        opacity: Math.min(this.opacity, 0.15)  // Etwas transparenter als final
+                    }
+                };
+            } else {
+                renderer._hatchPreview = null;
+            }
+
             renderer.hoveredContour = hovered;
             renderer.render();
         }
@@ -995,6 +1059,10 @@ class HatchTool extends BaseTool {
     }
 
     finish() {
+        this._previewContour = null;
+        if (this.manager.renderer) {
+            this.manager.renderer._hatchPreview = null;
+        }
         this.manager.rubberBand = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;

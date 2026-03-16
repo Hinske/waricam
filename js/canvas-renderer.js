@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.27 - Canvas Renderer
+ * CeraCUT V3.28 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.28: Hatch als eigenständige CamContour — cuttingMode='none' Rendering, Live-Preview
  * V3.27: Flächen-Hit — Point-in-Polygon Fallback in findContourAtPoint() für Klick IN Konturen
  * V3.26: Hatch-Fix — ctx.fill() statt ctx.clip()+fillRect() für robustes Solid-Fill, Try-Catch
  * V3.25: Multi-Material Intarsien-Overlay (materialGroup → Farbe aus INTARSIA_MATERIALS)
@@ -652,8 +653,22 @@ class CanvasRenderer {
                 ? this.contours.filter(c => lm.isVisible(c.layer))
                 : this.contours;
             
+            // V3.28: Hatch-Konturen zuerst (Hintergrund), dann Reference, dann Rest
+            visible.filter(c => c.isHatchContour || c.cuttingMode === 'none').forEach(c => this.drawContour(ctx, c));
             visible.filter(c => c.isReference).forEach(c => this.drawContour(ctx, c));
-            visible.filter(c => !c.isReference).forEach(c => this.drawContour(ctx, c));
+            visible.filter(c => !c.isReference && !c.isHatchContour && c.cuttingMode !== 'none').forEach(c => this.drawContour(ctx, c));
+
+            // V3.28: Hatch Live-Preview (halbtransparent während HatchTool-Hover)
+            if (this._hatchPreview) {
+                const hp = this._hatchPreview;
+                if (hp.contour?.points?.length >= 3) {
+                    try {
+                        this._drawHatch(ctx, { hatch: hp.hatch, layer: hp.contour.layer }, hp.contour.points);
+                    } catch (e) {
+                        console.error('[CanvasRenderer V3.28] Hatch-Preview Fehler:', e);
+                    }
+                }
+            }
 
             // V3.25: Intarsien-Konturen als halbtransparentes Overlay (Multi-Material)
             const intarsiaPreview = this.app?.settings?.intarsiaPreview;
@@ -794,6 +809,25 @@ class CanvasRenderer {
         let baseWidth = CanvasRenderer.LINE_WIDTH.BASE / this.scale;
         if (isHovered || isSelected) baseWidth = CanvasRenderer.LINE_WIDTH.HOVER / this.scale;
 
+        // V3.28: Hatch-Konturen (cuttingMode='none') — nur Füllung, keine Schneidelinie
+        if (contour.isHatchContour || contour.cuttingMode === 'none') {
+            if (contour.hatch && points.length >= 3) {
+                try {
+                    this._drawHatch(ctx, contour, points);
+                } catch (e) {
+                    console.error('[CanvasRenderer V3.28] Hatch-Kontur Fehler:', e, contour.name);
+                }
+            }
+            // Dünne Boundary-Linie bei Hover/Selected
+            if (isHovered || isSelected) {
+                const color = isSelected ? this.colors.selected : this.colors.hovered;
+                ctx.setLineDash([4 / this.scale, 2 / this.scale]);
+                this.drawPath(ctx, points, color, baseWidth * 0.7);
+                ctx.setLineDash([]);
+            }
+            return;
+        }
+
         if (!contour.isReference && contour.isClosed) {
             // CLOSED CONTOUR: Disc/Hole mit Kerf, Leads, Overcut, Microjoints
             let kerfPoints = null;
@@ -915,7 +949,7 @@ class CanvasRenderer {
         }
     }
 
-    // ═══ V3.26: HATCH RENDERING (Fix: ctx.fill statt ctx.clip+fillRect für Solid) ═══
+    // ═══ V3.28: HATCH RENDERING (eigenständige CamContour + Live-Preview) ═══
 
     _drawHatch(ctx, contour, points) {
         const h = contour.hatch;
@@ -924,8 +958,6 @@ class CanvasRenderer {
         const layerName = contour.layer || '0';
         const layerDef = this.app?.layerManager?.getLayer(layerName);
         const fillColor = h.color || layerDef?.color || this.colors.disc;
-
-        console.log(`[CanvasRenderer V3.26] _drawHatch: ${contour.name}, pattern=${h.pattern}, color=${fillColor}, opacity=${h.opacity}`);
 
         ctx.save();
 

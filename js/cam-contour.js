@@ -14,6 +14,7 @@
  * V5.3: autoPlace bevorzugt Flat-Segments, Arc-Degradierung nur >120°
  * V5.5: materialGroup + intarsiaRole für Multi-Material Intarsien
  * V5.4: Hatch-Property (Schraffur — reine Visualisierung) + clone()-Support
+ * V5.6: Hatch als eigenständige CamContour (cuttingMode='none', isHatchContour)
  * Last Modified: 2026-03-16 UTC
  */
 
@@ -21,7 +22,7 @@ class CamContour {
     constructor(points, options = {}) {
         this.points = points || [];
         this.name = options.name || `Contour_${CamContour.nextId++}`;
-        this.cuttingMode = options.cuttingMode || null;  // 'disc' | 'hole' | null
+        this.cuttingMode = options.cuttingMode || null;  // 'disc' | 'hole' | 'none' | null
         this.kerfWidth = options.kerfWidth ?? 0.8;
         this.kerfSide = 'left';
         this.quality = options.quality ?? 2;
@@ -77,8 +78,11 @@ class CamContour {
         // ═══ LEAD MANUAL OVERRIDE (V5.0 — Batch-Schutz) ═══
         this.leadManualOverride = options.leadManualOverride ?? false;
 
-        // ═══ HATCH (Schraffur — reine Visualisierung) ═══
+        // ═══ HATCH (Schraffur — eigenständige Kontur mit cuttingMode='none') ═══
         this.hatch = options.hatch || null;
+        // Format: { pattern: 'solid'|'lines'|'cross'|'dots', color: null|CSS, angle: 45, spacing: 3, opacity: 0.25 }
+        this.isHatchContour = options.isHatchContour ?? false;  // true = Hatch-Entity (wird nie geschnitten)
+        this.parentContourName = options.parentContourName || null;  // Name der Eltern-Kontur
 
         // ═══ MULTI-MATERIAL INTARSIEN (V5.5) ═══
         this.materialGroup = options.materialGroup ?? 0;       // 0-4 (Index in CeraCUT.INTARSIA_MATERIALS)
@@ -1937,6 +1941,8 @@ class CamContour {
         c._rotationCount = this._rotationCount;
         c.nestingLevel = this.nestingLevel;  // V5.2: Intarsien braucht Nesting-Level
         c.hatch = this.hatch ? { ...this.hatch } : null;
+        c.isHatchContour = this.isHatchContour;  // V5.6: Hatch-Entity
+        c.parentContourName = this.parentContourName;
         c.materialGroup = this.materialGroup;    // V5.5: Multi-Material
         c.intarsiaRole = this.intarsiaRole;      // V5.5: base/insert
         return c;
