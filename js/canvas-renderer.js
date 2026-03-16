@@ -2,6 +2,7 @@
  * CeraCUT V3.28 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.29: Disc-Füllung nur in CAM-Modi (nicht im CAD-Zeichenmodus)
  * V3.28: Hatch als eigenständige CamContour — cuttingMode='none' Rendering, Live-Preview
  * V3.27: Flächen-Hit — Point-in-Polygon Fallback in findContourAtPoint() für Klick IN Konturen
  * V3.26: Hatch-Fix — ctx.fill() statt ctx.clip()+fillRect() für robustes Solid-Fill, Try-Catch
@@ -866,9 +867,9 @@ class CanvasRenderer {
             this.drawPath(ctx, points, displayColor, baseWidth);
 
             // V6.0: Disc-Füllung — halbtransparente Fläche für Teile
-            // V3.23: In allen Modi sichtbar (nicht nur CAM), sobald cuttingMode gesetzt
+            // V3.29: Nur in CAM-Modi (Anschuss/Reihenfolge), nicht im CAD-Zeichenmodus
             // V3.21 Fix: World-Koordinaten direkt (ctx hat bereits World-Transform)
-            if (contour.cuttingMode === 'disc' && points.length >= 3) {
+            if (contour.cuttingMode === 'disc' && points.length >= 3 && isCamMode) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);

@@ -198,7 +198,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **CAMContour** | `cam-contour.js` | **V5.6** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace, Hatch-Entity (cuttingMode='none', isHatchContour), materialGroup, intarsiaRole |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.28** | Canvas-Rendering, Hit-Testing (Kante+Fläche), Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (interiorPoint), Intarsien-Overlay (Multi-Material), Entry-Pfeil, Hatch-Entity-Rendering, Hatch-Live-Preview |
+| **Renderer** | `canvas-renderer.js` | **V3.29** | Canvas-Rendering, Hit-Testing (Kante+Fläche), Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (nur CAM-Modi), Intarsien-Overlay (Multi-Material), Entry-Pfeil, Hatch-Entity-Rendering, Hatch-Live-Preview |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.6** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards, Hatch-Filter |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -491,7 +491,7 @@ CeraCUT/CeraCUT V6.7 - Build 20260316-undofix
   geometry: V2.10 (20260316-centroid)
   pipeline: V3.6 (20260316-hatchentity)
   cam-contour: V5.6 (20260316-hatchentity)
-  canvas-renderer: V3.28 (20260316-hatchentity)
+  canvas-renderer: V3.29 (20260316-discfill-cam)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.6 (20260316-hatchentity)
   command-line: V1.2 (20260315-ux)
