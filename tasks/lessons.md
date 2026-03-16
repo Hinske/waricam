@@ -66,3 +66,9 @@
 - **Root Cause:** Zwei getrennte Layer-Systeme: Import-Checkboxen filtern Pipeline-Input, LayerManager-Visibility steuert nur Renderer-Anzeige. `toggleVisibility()` löste KEINE Pipeline-Neuberechnung aus → `this.contours` und Topology blieben unverändert.
 - **Regel:** Layer-Sichtbarkeitsänderungen MÜSSEN die Pipeline neu auslösen (`applyLayerSelection({ visibilityChange: true })`). LayerManager-Visibility muss als zusätzlicher Filter in `applyLayerSelection()` berücksichtigt werden. Zwei Filter-Systeme dürfen nie unabhängig agieren.
 - **Betroffene Module:** `app.js` (`applyLayerSelection`, `_runPipelineKeepUndo`), `index.html` (Visibility-Toggle Handler)
+
+### [2026-03-16] DXF HATCH-Entities: Multi-Boundary-Loops dürfen nicht in ein Array
+- **Fehler:** Importierte DXF-Dateien mit HATCH-Entities zeigten wirre Verbindungslinien quer durch die Zeichnung.
+- **Root Cause:** `_parseHatch()` las alle `10/20`-Koordinatenpaare aus ALLEN Boundary-Loops in ein einziges `boundaryPoints[]`-Array. HATCH-Entities können mehrere getrennte Pfade haben (äußere Grenze + innere Löcher) — die Punkte verschiedener Pfade wurden zu einer einzigen Polylinie verbunden.
+- **Regel:** DXF HATCH-Entities sind reine Visualisierung (Schraffur/Füllung), keine Schneidgeometrie. Im CAM-Kontext sollten sie beim Import übersprungen werden (`return null`). Falls sie in Zukunft doch benötigt werden: Boundary-Loops anhand Code 92 (Boundary-Typ) trennen und als separate Konturen zurückgeben — nie alles in ein Array.
+- **Betroffene Module:** `dxf-parser.js` (`_parseHatch`)
