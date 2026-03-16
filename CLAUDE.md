@@ -59,7 +59,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **App** | `app.js` | **V6.1** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0 |
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
-| **DXF-Parser** | `dxf-parser.js` | **V3.8** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough |
+| **DXF-Parser** | `dxf-parser.js` | **V3.9** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table |
 | **CAMContour** | `cam-contour.js` | **V5.1** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Clearance-Scored Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
@@ -349,7 +349,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7) |
+| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7), R12-Layer-Table (V3.9) |
 | DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
 | Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
 | Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
@@ -375,7 +375,7 @@ Console-Ausgabe beim Laden:
 ```
 CeraCUT/CeraCUT V6.1 - Build 20260315-intarsia20
 [BUILD] Modules:
-  dxf-parser: V3.8 (20260312-textglyphs)
+  dxf-parser: V3.9 (20260316-layertable)
   geometry: V2.9 (20260128-0645)
   pipeline: V3.2 (20260315-bugfix35)
   cam-contour: V5.1 (20260315-clearance)

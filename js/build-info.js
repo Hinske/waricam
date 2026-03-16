@@ -14,7 +14,7 @@ const CERACUT_BUILD = {
     time: '23:59 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.8', build: '20260312-textglyphs' },
+        'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
         'cam-contour':        { version: '5.1', build: '20260315-clearance' },
@@ -47,6 +47,8 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V3.9: Layer-Table Parser — R12/R14/DXF2000+ kompatibel (ab 0/LAYER statt AcDbLayerTableRecord)',
+        'V3.9: Layer-Dropdown zeigt alle importierten DXF-Layer (auch ohne Entities)',
         'V3.5: Tier 2 Modification Tools — Move (M), Copy (Shift+C), Rotate (R), Mirror (Shift+M), Scale (S), Erase (DEL)',
         'V3.5: Always-Active ToolManager — Zeichnen + Modifikation ohne F2-Toggle',
         'V3.5: Noun-Verb + Verb-Noun Selektion (AutoCAD-Stil)',

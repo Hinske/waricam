@@ -1,7 +1,12 @@
 /**
- * CeraCUT DXF Parser V3.8
- * Last Modified: 2026-03-12 MEZ
- * Build: 20260312-textglyphs
+ * CeraCUT DXF Parser V3.9
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-layertable
+ *
+ * V3.9 Änderungen:
+ *   - _parseLayerTable: Layer-Record ab "0/LAYER" statt "AcDbLayerTableRecord"
+ *   - Funktioniert für R12, R14 UND DXF 2000+ (Code 2 vor/nach Subclass-Marker)
+ *   - ACI-Farben werden korrekt gelesen für alle DXF-Formate
  *
  * V3.8 Änderungen:
  *   - TEXT/MTEXT Glyph-Import: TextTool.textToContours() → echte Buchstaben-Konturen
@@ -112,7 +117,7 @@ const DXFParser = {
             const normResult = this._autoNormalizeEntities(entities);
             if (normResult.normalized) {
                 entities = normResult.entities;
-                console.log(`[DXF V3.8] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
+                console.log(`[DXF V3.9] Normalized by offset (${normResult.offsetX.toFixed(3)}, ${normResult.offsetY.toFixed(3)})`);
             }
 
             // Layer: Entity-Layer + TABLES-Layer zusammenführen
@@ -131,11 +136,11 @@ const DXFParser = {
             
             // V3.3: Detaillierte Entity-Typ-Statistik
             const typeBreakdown = Object.entries(this._entityStats).map(([t,c]) => `${c}\u00d7${t}`).join(', ');
-            console.log(`[DXF V3.8] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
+            console.log(`[DXF V3.9] ${entities.length} entities (${typeBreakdown}) → ${contours.length} contours (${closedCount} closed, ${openCount} open) in ${parseTime}ms`);
             
             // V3.3: Kontur-Details loggen
             contours.forEach((c, i) => {
-                console.log(`[DXF V3.8]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
+                console.log(`[DXF V3.9]   Kontur #${i}: ${c.points?.length || 0} Punkte, ${c.isClosed ? 'geschlossen' : 'offen'}, Layer="${c.layer || '0'}", Typ=${c.sourceType || '?'}`);
             });
 
             // Ignorierte Entities loggen
@@ -346,14 +351,14 @@ const DXFParser = {
             // Ende der LAYER-Tabelle
             if (inLayerTable && line === 'ENDTAB') break;
 
-            // Einzelner LAYER-Record
-            if (inLayerTable && line === 'AcDbLayerTableRecord') {
+            // Einzelner LAYER-Record (ab "0/LAYER" — funktioniert für R12 UND DXF 2000+)
+            if (inLayerTable && line === '0' && lines[i + 1]?.trim() === 'LAYER') {
                 let name = null, aci = 7;
-                let j = i + 1;
+                let j = i + 2; // Nach "0/LAYER"
                 while (j < lines.length) {
                     const code = lines[j]?.trim();
                     const val = lines[j + 1]?.trim();
-                    if (code === '0') break; // Nächster Record
+                    if (code === '0') break; // Nächster Record oder ENDTAB
                     if (code === '2') name = val;
                     if (code === '62') aci = parseInt(val) || 7;
                     j += 2;
@@ -369,7 +374,7 @@ const DXFParser = {
         }
 
         if (layerDefs.names.length > 0) {
-            console.log(`[DXF V3.8] TABLES: ${layerDefs.names.length} Layer gefunden:`,
+            console.log(`[DXF V3.9] TABLES: ${layerDefs.names.length} Layer gefunden:`,
                 layerDefs.names.map(n => `${n}(ACI ${layerDefs.colors[n]})`).join(', '));
         }
         return layerDefs;
@@ -662,7 +667,7 @@ const DXFParser = {
 
         // V3.3: Warnung wenn Vertices nicht der erwarteten Anzahl entsprechen
         if (expectedCount > 0 && vertices.length !== expectedCount) {
-            console.warn(`[DXF V3.8] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
+            console.warn(`[DXF V3.9] LWPOLYLINE: erwartet ${expectedCount} Vertices, gelesen ${vertices.length}`);
         }
 
         const isClosed = (flags & 1) === 1;

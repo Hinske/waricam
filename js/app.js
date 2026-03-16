@@ -4629,6 +4629,13 @@ class CeraCutApp {
         for (const c of allContours) usedLayers.add(c.layer || '0');
         for (const c of dxfContours) usedLayers.add(c.layer || '0');
 
+        // Alle importierten DXF-Layer einbeziehen (auch TABLES-Layer ohne Entities)
+        if (this.dxfResult?.layers) {
+            for (const name of this.dxfResult.layers) {
+                if (name) usedLayers.add(name);
+            }
+        }
+
         // Leere Layer ausblenden (außer Layer "0" und aktiver Layer)
         const visibleLayers = layers.filter(l =>
             l.name === '0' || l.name === active || usedLayers.has(l.name)
