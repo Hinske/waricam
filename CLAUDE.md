@@ -203,7 +203,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.6** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
-| **Drawing Tools** | `drawing-tools.js` | **V2.6** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung), Enter/Rechtsklick-Bestätigung (Rect+Circle) |
+| **Drawing Tools** | `drawing-tools.js` | **V2.6** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe für Entities+Rubber-Band |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.6** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
@@ -230,7 +230,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
 | **DXF Browser** | `dxf-browser.js` | **V1.1** | Server-DXF-Browse Modal, Breadcrumb-Navigation, Pfad-Persistenz (localStorage) |
 | **Server** | `server.js` | **V1.2** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API, Dual-Protocol (HTTP+HTTPS auf einem Port) |
-| **Build-Info** | `build-info.js` | **V6.5** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V6.8** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.8 | Toleranzen, Farben, Defaults, INTARSIA_MATERIALS |
 
 ---
@@ -258,25 +258,25 @@ ceraCUT/
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V6.7
+│   ├── build-info.js                  ← Versions-Banner V6.8
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults, Intarsia-Materialien (V2.8)
-│   ├── app.js                         ← Hauptanwendung V6.5 (Lead-Profiles, Intarsien V2.0)
+│   ├── app.js                         ← Hauptanwendung V6.8 (Lead-Profiles, Intarsien V2.0)
 │   ├── dxf-parser.js                  ← DXF Parser V3.10 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.10
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
-│   ├── ceracut-pipeline.js            ← Pipeline V3.5
-│   ├── cam-contour.js                 ← Kontur-Klasse V5.5 (Flat-Preferred autoPlace)
+│   ├── ceracut-pipeline.js            ← Pipeline V3.6
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.6 (Flat-Preferred autoPlace)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.27 (Flächen-Hit, Disc-Fill Fix)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.29 (Flächen-Hit, Disc-Fill Fix)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
-│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.5 (Safety-Guards)
+│   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.6 (Safety-Guards, Hatch-Filter)
 │   ├── command-line.js                ← Command-Line UI V1.2
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
 │   ├── drawing-tools.js              ← CAD-Tools V2.6 (Enter/Rechtsklick-Bestätigung)
-│   ├── drawing-tools-ext.js           ← Tier 3 (Explode, Join, Break)
+│   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.6
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.4 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
@@ -410,11 +410,11 @@ Canvas-Click →
 
 ### Debug-Logs mit Prefix
 ```javascript
-console.log('[DXF Parser V3.5] Starting parse...');
-console.log('[Pipeline V3.1] Topology: 5 discs, 2 holes');
-console.log('[PP V1.3] Generiert: KERNKREIS.CNC — 12 Konturen');
+console.log('[DXF Parser V3.10] Starting parse...');
+console.log('[Pipeline V3.6] Topology: 5 discs, 2 holes');
+console.log('[PP V1.6] Generiert: KERNKREIS.CNC — 12 Konturen');
 console.log('[UndoManager V1.1] Ausgefuehrt: "Quality → 3"');
-console.log('[DrawingTools V2.3] MoveTool: 3 contours moved');
+console.log('[DrawingTools V2.6] MoveTool: 3 contours moved');
 ```
 
 ### Weitere Patterns
