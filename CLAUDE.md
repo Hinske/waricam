@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-03-16
+> **Letzte Aktualisierung:** 2026-03-16, 14:13 MEZ
 > **Version:** V6.2
 > **Build:** 20260316-hatch
 
