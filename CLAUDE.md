@@ -198,11 +198,11 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **CAMContour** | `cam-contour.js` | **V5.3** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.21** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (Fix), Intarsien-Overlay, Entry-Pfeil |
+| **Renderer** | `canvas-renderer.js` | **V3.22** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (Centroid-Fix), Intarsien-Overlay, Entry-Pfeil |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
-| **Pipeline** | `ceracut-pipeline.js` | **V3.2** | Topologie (disc/hole/reference/slit), Kerf-Offset |
+| **Pipeline** | `ceracut-pipeline.js` | **V3.3** | Topologie (disc/hole/reference/slit), Kerf-Offset, Centroid-basierte Nesting-Erkennung |
 | **Drawing Tools** | `drawing-tools.js` | **V2.5** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.1** | Ellipse, Spline, Donut, XLine, Overlap Break (OB) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
@@ -488,9 +488,9 @@ CeraCUT/CeraCUT V6.1 - Build 20260316-leadfix
 [BUILD] Modules:
   dxf-parser: V3.9 (20260316-layertable)
   geometry: V2.9 (20260128-0645)
-  pipeline: V3.2 (20260315-bugfix35)
+  pipeline: V3.3 (20260316-centroid)
   cam-contour: V5.3 (20260316-flatplace)
-  canvas-renderer: V3.21 (20260316-flatplace)
+  canvas-renderer: V3.22 (20260316-centroid)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.5 (20260315-safety)
   command-line: V1.2 (20260315-ux)

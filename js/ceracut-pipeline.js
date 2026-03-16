@@ -1,7 +1,7 @@
 /**
- * CeraCUT V3.2 - Processing Pipeline
- * Last Modified: 2026-02-11 12:00 UTC
- * Build: 20260211-1200
+ * CeraCUT V3.3 - Processing Pipeline
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-centroid
  *
  * V3.1: Physikalisch motivierte Geometry-Pipeline (CamPreProcessor, robuste Referenz)
  * V2.9: Referenz NUR bei Rechteck-Konturen
@@ -12,7 +12,7 @@ const CeraCutPipeline = {
     healingStats: null,
 
     autoProcess(contours, config = {}) {
-        console.log('[Pipeline V3.1] autoProcess starting...');
+        console.log('[Pipeline V3.3] autoProcess starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
         this.healingStats = null;
         this.preProcessStats = null;
@@ -21,7 +21,7 @@ const CeraCutPipeline = {
             return { success: false, contours: [], error: 'No contours' };
         }
 
-        console.log(`[Pipeline V3.1] Input: ${contours.length} contours`);
+        console.log(`[Pipeline V3.3] Input: ${contours.length} contours`);
 
         const camContours = contours.map(c => {
             if (typeof CamContour !== 'undefined' && c instanceof CamContour) {
@@ -44,7 +44,7 @@ const CeraCutPipeline = {
         });
 
         const healed = this._microHeal(camContours, config);
-        console.log(`[Pipeline V3.1] After micro-healing: ${healed.length} contours`);
+        console.log(`[Pipeline V3.3] After micro-healing: ${healed.length} contours`);
 
         // V3.0: Optional Arc-Fitting
         if (config.enableArcFitting) {
@@ -57,7 +57,7 @@ const CeraCutPipeline = {
         const openPaths = healed.filter(c => !c.isClosed);
         openPaths.forEach(c => { c.cuttingMode = 'slit'; });
         if (openPaths.length > 0) {
-            console.log(`[Pipeline V3.1] Slit: ${openPaths.length} open paths`);
+            console.log(`[Pipeline V3.3] Slit: ${openPaths.length} open paths`);
         }
 
         this._computeOffsets(healed);
@@ -68,7 +68,7 @@ const CeraCutPipeline = {
         const refContours = closedContours.filter(c => c.isReference).length;
 
         const slitContours = openPaths.length;
-        console.log(`[Pipeline V3.1] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit`);
+        console.log(`[Pipeline V3.3] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit`);
 
         return {
             success: true,
@@ -83,7 +83,7 @@ const CeraCutPipeline = {
     },
 
     async process(dxfData, config = {}) {
-        console.log('[Pipeline V3.1] process starting...');
+        console.log('[Pipeline V3.3] process starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
 
         let contours = [];
@@ -100,7 +100,7 @@ const CeraCutPipeline = {
     _camPreProcess(contours, config = {}) {
         if (config.camPreProcess === false || typeof CamPreProcessor === 'undefined') {
             if (typeof CamPreProcessor === 'undefined') {
-                console.warn('[Pipeline V3.1] CamPreProcessor not available');
+                console.warn('[Pipeline V3.3] CamPreProcessor not available');
             }
             return contours;
         }
@@ -130,7 +130,7 @@ const CeraCutPipeline = {
             this.healingStats = result.stats;
             return result.healed;
         }
-        console.warn('[Pipeline V3.1] MicroHealing not available');
+        console.warn('[Pipeline V3.3] MicroHealing not available');
         return this._healGeometryLegacy(contours);
     },
 
@@ -233,7 +233,7 @@ const CeraCutPipeline = {
         for (let i = 0; i < sorted.length; i++) {
             const contour = sorted[i];
             let nestingLevel = 0;
-            const testPoint = contour.points[0];
+            const testPoint = Geometry.centroid(contour.points);
 
             for (let j = 0; j < i; j++) {
                 if (this._pointInPolygon(testPoint, sorted[j].points)) {
@@ -253,10 +253,10 @@ const CeraCutPipeline = {
         if (!options.skipReference) {
             this._detectReference(sorted);
         } else {
-            console.log('[Pipeline V3.1] Referenz-Erkennung übersprungen (skipReference)');
+            console.log('[Pipeline V3.3] Referenz-Erkennung übersprungen (skipReference)');
         }
         
-        console.log(`[Pipeline V3.1] Topology: ${discCount} discs, ${holeCount} holes`);
+        console.log(`[Pipeline V3.3] Topology: ${discCount} discs, ${holeCount} holes`);
     },
 
     /**
@@ -278,7 +278,7 @@ const CeraCutPipeline = {
 
         // Regel 1: Mindestens 2 Konturen
         if (sortedContours.length <= 1) {
-            console.log('[Pipeline V3.1] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
+            console.log('[Pipeline V3.3] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
             return;
         }
 
@@ -292,7 +292,7 @@ const CeraCutPipeline = {
         const isRect = this._isRectangle(largest);
         if (isRect) {
             detected = true;
-            console.log('[Pipeline V3.1] ✓ Referenz erkannt: Rechteck-Kontur');
+            console.log('[Pipeline V3.3] ✓ Referenz erkannt: Rechteck-Kontur');
         } else {
             // Regel 3: Kein Rechteck — prüfe ob Fläche signifikant größer als zweitgrößte
             const second = sortedContours[1];
@@ -301,9 +301,9 @@ const CeraCutPipeline = {
 
             if (areaSecond > 0 && areaLargest / areaSecond >= 1.5) {
                 detected = true;
-                console.log(`[Pipeline V3.1] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
+                console.log(`[Pipeline V3.3] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
             } else {
-                console.log(`[Pipeline V3.1] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
+                console.log(`[Pipeline V3.3] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
             }
         }
 

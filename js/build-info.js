@@ -16,9 +16,9 @@ const CERACUT_BUILD = {
     modules: {
         'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
-        'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
+        'pipeline':           { version: '3.3', build: '20260316-centroid' },
         'cam-contour':        { version: '5.3', build: '20260316-flatplace' },
-        'canvas-renderer':    { version: '3.21', build: '20260316-flatplace' },
+        'canvas-renderer':    { version: '3.22', build: '20260316-centroid' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
