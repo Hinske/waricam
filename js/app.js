@@ -4622,16 +4622,26 @@ class CeraCutApp {
         const activeLayer = this.layerManager.getActiveLayer();
         const activeColor = activeLayer?.color || '#fff';
 
+        // Leere Layer ausblenden (außer Layer "0" und aktiver Layer)
+        const visibleLayers = layers.filter(l =>
+            l.name === '0' || l.name === active || (l.entityCount || 0) > 0
+        );
+
         // Row-HTML generieren (für beide Dropdowns)
-        const rowsHtml = layers.map(l => {
+        const rowsHtml = visibleLayers.map(l => {
             const isActive = l.name === active;
             const cls = ['layer-dd-row'];
             if (isActive) cls.push('active');
             if (!l.visible) cls.push('dimmed');
+            if (l.locked) cls.push('locked');
             const visIcon = l.visible ? '&#128065;' : '&#128065;&#xFE0E;';
             const visTitle = l.visible ? 'Ausblenden' : 'Einblenden';
+            const lockIcon = l.locked ? '&#128274;' : '&#128275;';
+            const lockTitle = l.locked ? 'Entsperren' : 'Sperren';
+            const lockStyle = l.name === '0' ? ' style="visibility:hidden"' : (l.locked ? ' style="color:#e8a020"' : '');
             return `<div class="${cls.join(' ')}" data-layer="${l.name}">` +
                 `<span class="layer-dd-vis" title="${visTitle}" style="opacity:${l.visible ? 1 : 0.3}">${visIcon}</span>` +
+                `<span class="layer-dd-lock" title="${lockTitle}"${lockStyle}>${lockIcon}</span>` +
                 `<span class="layer-dd-row-color" style="background:${l.color}"></span>` +
                 `<span class="layer-dd-row-name">${l.name}</span>` +
                 `</div>`;

@@ -1613,6 +1613,23 @@ html, body {
 .layer-dd-vis:hover {
     background: #b0d0f0;
 }
+.layer-dd-lock {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 1;
+    opacity: 0.6;
+}
+.layer-dd-lock:hover {
+    background: #b0d0f0;
+    opacity: 1;
+}
+.layer-dd-row.locked .layer-dd-row-name {
+    font-style: italic;
+}
 .layer-dd-row-color {
     display: inline-block;
     width: 12px;

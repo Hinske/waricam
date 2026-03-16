@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CeraCUT V5.9 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260315-layerdd">
+    <link rel="stylesheet" href="styles.css?v=20260316-layerlock">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
 </head>
 <body>
@@ -1463,7 +1463,7 @@
 <script src="js/quality-zones.js?v=20260315-bugfix35"></script>
 <script src="js/project-manager.js?v=20260315-bugfix35"></script>
 <script src="js/dxf-browser.js?v=20260315-bugfix35"></script>
-<script src="js/app.js?v=20260315-layerdd"></script>
+<script src="js/app.js?v=20260316-layerlock"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1782,6 +1782,7 @@
 
                 panel.addEventListener('click', (e) => {
                     const visBtn = e.target.closest('.layer-dd-vis');
+                    const lockBtn = e.target.closest('.layer-dd-lock');
                     const row = e.target.closest('.layer-dd-row');
                     if (!row) return;
                     const layerName = row.dataset.layer;
@@ -1789,6 +1790,12 @@
                     if (visBtn) {
                         // Visibility toggle — Panel bleibt offen
                         origApp.layerManager.toggleVisibility(layerName);
+                        origApp.renderer?.render();
+                        return;
+                    }
+                    if (lockBtn) {
+                        // Lock toggle — Panel bleibt offen
+                        origApp.layerManager.toggleLock(layerName);
                         origApp.renderer?.render();
                         return;
                     }
