@@ -360,6 +360,9 @@ class LayerManager {
                 }
             }
         }
+
+        // UI aktualisieren (Dropdown filtert leere Layer)
+        this._notify();
     }
 
     /**
