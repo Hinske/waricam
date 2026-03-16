@@ -32,7 +32,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.1', build: '20260315-intarsia20' },
+        'app':                { version: '6.2', build: '20260316-layervis' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.3', build: '20260316-hatch' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },

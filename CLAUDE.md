@@ -191,7 +191,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V6.2** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0 |
+| **App** | `app.js` | **V6.2** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline |
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.9** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table |
@@ -505,7 +505,7 @@ CeraCUT/CeraCUT V6.2 - Build 20260316-hatch
   text-tool: V1.2 (20260312-textimport)
   dxf-writer: V1.2 (20260315-bugfix35)
   lead-profiles: V1.1 (20260315-intarsia20)
-  app: V6.2 (20260316-hatch)
+  app: V6.2 (20260316-layervis)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.3 (20260316-hatch)
   debug-monitor: V1.0 (20260219-dm10)

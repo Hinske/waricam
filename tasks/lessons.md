@@ -60,3 +60,9 @@
 - **Root Cause:** `_analyzeTopology()` und Disc-Fill-Renderer nutzten `contour.points[0]` als Testpunkt für pointInPolygon. Bei Spline-/Arc-Konturen kann der erste Punkt auf oder nahe der Grenze der Eltern-Kontur liegen → Ray-Casting liefert falsches Ergebnis.
 - **Regel:** Für Containment-Tests immer `Geometry.centroid(points)` statt `points[0]` verwenden. Der Schwerpunkt liegt zuverlässig im Inneren der Kontur und nicht auf der Grenze.
 - **Betroffene Module:** `ceracut-pipeline.js` (`_analyzeTopology`), `canvas-renderer.js` (Disc-Fill Hole-Cutout)
+
+### [2026-03-16] Layer-Visibility ohne Pipeline-Rebuild — unsichtbare Layer kontaminieren Topology
+- **Fehler:** Bemaßungs-Layer (HATCH-Konturen) ausgeschaltet, aber Topology-Klassifikation blieb falsch. Schnitt-Konturen hatten falsche disc/hole-Zuordnung.
+- **Root Cause:** Zwei getrennte Layer-Systeme: Import-Checkboxen filtern Pipeline-Input, LayerManager-Visibility steuert nur Renderer-Anzeige. `toggleVisibility()` löste KEINE Pipeline-Neuberechnung aus → `this.contours` und Topology blieben unverändert.
+- **Regel:** Layer-Sichtbarkeitsänderungen MÜSSEN die Pipeline neu auslösen (`applyLayerSelection({ visibilityChange: true })`). LayerManager-Visibility muss als zusätzlicher Filter in `applyLayerSelection()` berücksichtigt werden. Zwei Filter-Systeme dürfen nie unabhängig agieren.
+- **Betroffene Module:** `app.js` (`applyLayerSelection`, `_runPipelineKeepUndo`), `index.html` (Visibility-Toggle Handler)

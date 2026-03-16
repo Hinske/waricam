@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.1 - Main Application
+ * CeraCUT V6.2 - Main Application
+ * V6.2: Layer-Visibility → Pipeline-Rebuild (unsichtbare Layer aus Topology ausgeschlossen)
  * Wizard Controller + Konturen-Panel
  * V3.8: Layer-System, Layer-Manager Dialog, DXF-Writer R12
  * V3.7: Tier 4 Aufteilen — CL2D (Halbieren), CLND (N-Teilen), CLDCL (Divided Calculation)
@@ -2820,10 +2821,10 @@ class CeraCutApp {
         return `DXF-Fehler: ${msg.substring(0, 120)}${msg.length > 120 ? '...' : ''} — bitte als DXF R12/R14 exportieren und erneut laden`;
     }
 
-    applyLayerSelection() {
+    applyLayerSelection(options = {}) {
         const checkboxes = document.querySelectorAll('#layer-list input[type="checkbox"]');
         const allContours = this.dxfResult?.contours || [];
-        
+
         if (checkboxes.length === 0) {
             // Kein layer-list vorhanden → alle Layer durchlassen
             this.selectedLayers = [...new Set(allContours.map(c => c.layer || ''))];
@@ -2832,12 +2833,55 @@ class CeraCutApp {
                 .filter(cb => cb.checked)
                 .map(cb => cb.value);
         }
-        
-        const filteredContours = allContours.filter(c => 
-            this.selectedLayers.includes(c.layer || '')
-        );
-        
-        this.runPipeline(filteredContours);
+
+        // V6.2: LayerManager-Sichtbarkeit als zusätzlichen Filter
+        const lm = this.layerManager;
+        const filteredContours = allContours.filter(c => {
+            const layer = c.layer || '';
+            if (!this.selectedLayers.includes(layer)) return false;
+            if (lm && !lm.isVisible(layer)) return false;
+            return true;
+        });
+
+        if (options.visibilityChange) {
+            // Visibility-Toggle: Pipeline neu, aber Undo-Stack erhalten
+            this._runPipelineKeepUndo(filteredContours);
+        } else {
+            this.runPipeline(filteredContours);
+        }
+    }
+
+    /**
+     * V6.2: Pipeline-Neuberechnung bei Layer-Sichtbarkeits-Wechsel.
+     * Wie runPipeline(), aber OHNE Undo/Clipboard zu löschen.
+     */
+    _runPipelineKeepUndo(contours) {
+        if (typeof CeraCutPipeline === 'undefined') {
+            this.contours = contours;
+            this.updateRenderer();
+            return;
+        }
+
+        const enableArcFitting = document.getElementById('enable-arc-fitting')?.checked || false;
+        const arcFittingTolerance = parseFloat(document.getElementById('arc-fitting-tolerance')?.value) || 0.01;
+
+        const result = CeraCutPipeline.autoProcess(contours, {
+            kerfWidth: this.settings.kerfWidth,
+            quality: this.settings.quality,
+            enableArcFitting,
+            arcFittingTolerance,
+            skipReference: true
+        });
+
+        if (result.success) {
+            this.contours = result.contours;
+            this.updateStats?.(result);
+            this.updateRenderer();
+            this.updateContourPanel();
+            this.rebuildCutOrder();
+            this.updateStepUI?.();
+            console.log(`[App V6.2] Layer-Visibility Pipeline: ${result.contours.length} Konturen neu klassifiziert`);
+        }
     }
     
     runPipeline(contours) {

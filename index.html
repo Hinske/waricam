@@ -1463,7 +1463,7 @@
 <script src="js/quality-zones.js?v=20260315-bugfix35"></script>
 <script src="js/project-manager.js?v=20260315-bugfix35"></script>
 <script src="js/dxf-browser.js?v=20260315-bugfix35"></script>
-<script src="js/app.js?v=20260316-layerlock"></script>
+<script src="js/app.js?v=20260316-layervis"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
@@ -1729,7 +1729,7 @@
                 if (action === 'toggle-vis') {
                     origApp.layerManager.toggleVisibility(layerName);
                     origApp._renderLayerManagerTable();
-                    origApp.renderer?.render();
+                    origApp.applyLayerSelection({ visibilityChange: true });
                 } else if (action === 'toggle-lock') {
                     origApp.layerManager.toggleLock(layerName);
                     origApp._renderLayerManagerTable();
@@ -1805,9 +1805,9 @@
                     const layerName = row.dataset.layer;
 
                     if (visBtn) {
-                        // Visibility toggle — Panel bleibt offen
+                        // Visibility toggle — Panel bleibt offen, Pipeline neu
                         origApp.layerManager.toggleVisibility(layerName);
-                        origApp.renderer?.render();
+                        origApp.applyLayerSelection({ visibilityChange: true });
                         return;
                     }
                     if (lockBtn) {
