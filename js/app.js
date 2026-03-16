@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.5 - Main Application
+ * CeraCUT V6.7 - Main Application
+ * V6.7: Undo-Fix — addDrawnEntities erstellt pro Kontur einen eigenen Undo-Step
  * V6.5: Hatch-Fix — _drawHatch ctx.fill() statt ctx.clip(), Toast/Panel-Refresh
  * V6.4: Validation Engine — Pre-Export-Prüfung mit Modal (Gap, Ecken, Waisen, Kollisionen)
  * V6.3: interiorPoint() für robuste Topologie
@@ -650,19 +651,23 @@ class CeraCutApp {
             return cam;
         });
         
-        // Über Undo-Manager hinzufügen
-        const addCmd = new AddContoursCommand(
-            this.contours,
-            camContours,
-            this.contours.length,
-            () => {
-                this.rebuildCutOrder();
-                this.renderer?.setContours(this.contours);
-                this.updateContourPanel();
-                this.updateStats({ totalEntities: this.contours.length });
-            }
-        );
-        this.undoManager.execute(addCmd);
+        // Über Undo-Manager hinzufügen — pro Kontur ein eigener Undo-Step (V6.6)
+        // Damit STRG+Z jeweils EINE Kontur entfernt statt alle auf einmal
+        const onChanged = () => {
+            this.rebuildCutOrder();
+            this.renderer?.setContours(this.contours);
+            this.updateContourPanel();
+            this.updateStats({ totalEntities: this.contours.length });
+        };
+        for (const cam of camContours) {
+            const addCmd = new AddContoursCommand(
+                this.contours,
+                [cam],
+                -1,
+                onChanged
+            );
+            this.undoManager.execute(addCmd);
+        }
         
         // V3.5-fix: fileLoaded setzen damit Step-Navigation funktioniert (auch ohne DXF-Import)
         if (!this.fileLoaded) {
