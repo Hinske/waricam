@@ -1,8 +1,9 @@
 /**
- * CeraCUT V3.6 - Processing Pipeline
+ * CeraCUT V3.7 - Processing Pipeline
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatchentity
+ * Build: 20260316-gapdetect
  *
+ * V3.7: Gap Detection — Klassifizierung (healed/healable/open), Gap-Marker-Daten auf CamContour
  * V3.6: Hatch-Konturen (cuttingMode='none') von Topologie/Slit/Offset ausgeschlossen
  * V3.5: Validation Engine — Pre-Export-Prüfung (Gap, Ecken, Waisen, Kollisionen, Offene Konturen)
  * V3.4: interiorPoint() für robuste Topologie-Erkennung (konkave Formen)
@@ -14,8 +15,12 @@ const CeraCutPipeline = {
     kerfWidth: 1.0,
     healingStats: null,
 
+    // V3.7: Gap-Klassifizierungs-Schwellwerte
+    GAP_HEALABLE_MAX: 5.0,       // mm — darüber = nicht automatisch heilbar
+    GAP_PERIMETER_RATIO: 0.05,   // 5% der Umfanglänge
+
     autoProcess(contours, config = {}) {
-        console.log('[Pipeline V3.6] autoProcess starting...');
+        console.log('[Pipeline V3.7] autoProcess starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
         this.healingStats = null;
         this.preProcessStats = null;
@@ -24,7 +29,7 @@ const CeraCutPipeline = {
             return { success: false, contours: [], error: 'No contours' };
         }
 
-        console.log(`[Pipeline V3.6] Input: ${contours.length} contours`);
+        console.log(`[Pipeline V3.7] Input: ${contours.length} contours`);
 
         const camContours = contours.map(c => {
             if (typeof CamContour !== 'undefined' && c instanceof CamContour) {
@@ -47,7 +52,10 @@ const CeraCutPipeline = {
         });
 
         const healed = this._microHeal(camContours, config);
-        console.log(`[Pipeline V3.6] After micro-healing: ${healed.length} contours`);
+        console.log(`[Pipeline V3.7] After micro-healing: ${healed.length} contours`);
+
+        // V3.7: Gap-Klassifizierung
+        this._classifyGaps(healed);
 
         // V3.0: Optional Arc-Fitting
         if (config.enableArcFitting) {
@@ -61,7 +69,7 @@ const CeraCutPipeline = {
         const openPaths = healed.filter(c => !c.isClosed && !c.isHatchContour && c.cuttingMode !== 'none');
         openPaths.forEach(c => { c.cuttingMode = 'slit'; });
         if (openPaths.length > 0) {
-            console.log(`[Pipeline V3.6] Slit: ${openPaths.length} open paths`);
+            console.log(`[Pipeline V3.7] Slit: ${openPaths.length} open paths`);
         }
 
         this._computeOffsets(healed);
@@ -73,7 +81,7 @@ const CeraCutPipeline = {
         const hatchContours = healed.filter(c => c.isHatchContour || c.cuttingMode === 'none').length;
 
         const slitContours = openPaths.length;
-        console.log(`[Pipeline V3.6] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit, ${hatchContours} hatch`);
+        console.log(`[Pipeline V3.7] Result: ${outerContours} disc, ${innerContours} hole, ${refContours} reference, ${slitContours} slit, ${hatchContours} hatch`);
 
         return {
             success: true,
@@ -88,7 +96,7 @@ const CeraCutPipeline = {
     },
 
     async process(dxfData, config = {}) {
-        console.log('[Pipeline V3.6] process starting...');
+        console.log('[Pipeline V3.7] process starting...');
         this.kerfWidth = config.kerfWidth ?? 0.8;
 
         let contours = [];
@@ -105,7 +113,7 @@ const CeraCutPipeline = {
     _camPreProcess(contours, config = {}) {
         if (config.camPreProcess === false || typeof CamPreProcessor === 'undefined') {
             if (typeof CamPreProcessor === 'undefined') {
-                console.warn('[Pipeline V3.6] CamPreProcessor not available');
+                console.warn('[Pipeline V3.7] CamPreProcessor not available');
             }
             return contours;
         }
@@ -135,7 +143,7 @@ const CeraCutPipeline = {
             this.healingStats = result.stats;
             return result.healed;
         }
-        console.warn('[Pipeline V3.6] MicroHealing not available');
+        console.warn('[Pipeline V3.7] MicroHealing not available');
         return this._healGeometryLegacy(contours);
     },
 
@@ -259,10 +267,10 @@ const CeraCutPipeline = {
         if (!options.skipReference) {
             this._detectReference(sorted);
         } else {
-            console.log('[Pipeline V3.6] Referenz-Erkennung übersprungen (skipReference)');
+            console.log('[Pipeline V3.7] Referenz-Erkennung übersprungen (skipReference)');
         }
         
-        console.log(`[Pipeline V3.6] Topology: ${discCount} discs, ${holeCount} holes`);
+        console.log(`[Pipeline V3.7] Topology: ${discCount} discs, ${holeCount} holes`);
     },
 
     /**
@@ -284,7 +292,7 @@ const CeraCutPipeline = {
 
         // Regel 1: Mindestens 2 Konturen
         if (sortedContours.length <= 1) {
-            console.log('[Pipeline V3.6] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
+            console.log('[Pipeline V3.7] Keine Referenz: nur ' + sortedContours.length + ' Kontur(en)');
             return;
         }
 
@@ -298,7 +306,7 @@ const CeraCutPipeline = {
         const isRect = this._isRectangle(largest);
         if (isRect) {
             detected = true;
-            console.log('[Pipeline V3.6] ✓ Referenz erkannt: Rechteck-Kontur');
+            console.log('[Pipeline V3.7] ✓ Referenz erkannt: Rechteck-Kontur');
         } else {
             // Regel 3: Kein Rechteck — prüfe ob Fläche signifikant größer als zweitgrößte
             const second = sortedContours[1];
@@ -307,9 +315,9 @@ const CeraCutPipeline = {
 
             if (areaSecond > 0 && areaLargest / areaSecond >= 1.5) {
                 detected = true;
-                console.log(`[Pipeline V3.6] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
+                console.log(`[Pipeline V3.7] ✓ Referenz erkannt: Kein Rechteck, aber Fläche ${(areaLargest / areaSecond).toFixed(1)}× größer als nächste Kontur`);
             } else {
-                console.log(`[Pipeline V3.6] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
+                console.log(`[Pipeline V3.7] Keine Referenz: Größte Kontur ist kein Rechteck und Flächen-Verhältnis ${areaSecond > 0 ? (areaLargest / areaSecond).toFixed(1) : '∞'}× zu gering (< 1.5×)`);
             }
         }
 
@@ -422,7 +430,7 @@ const CeraCutPipeline = {
     // ═══════════════════════════════════════════════════════════════
 
     validate(contours, settings = {}) {
-        console.log('[Pipeline V3.6] validate() gestartet...');
+        console.log('[Pipeline V3.7] validate() gestartet...');
         const errors = [];
         const warnings = [];
         const kerfWidth = settings.kerfWidth || 0.8;
@@ -542,19 +550,34 @@ const CeraCutPipeline = {
             }
         }
 
-        // ── Check 5: Offene Konturen ohne Slit-Modus ──
+        // ── Check 5: Offene Konturen ohne Slit-Modus + Gap-Details ──
         for (const c of cuttable) {
             if (!c.isClosed && c.cuttingMode !== 'slit') {
+                const gapCount = c.gaps?.length || 0;
+                const maxGap = gapCount > 0 ? Math.max(...c.gaps.map(g => g.distance)) : 0;
+                const detail = gapCount > 0 ? ` (${gapCount} Gaps, groesster: ${maxGap.toFixed(1)}mm)` : '';
                 warnings.push({
                     severity: 'warning',
                     code: 'OPEN_CONTOUR',
-                    message: 'Offene Kontur ohne Slit-Modus — wird beim Export uebersprungen',
+                    message: `Offene Kontur ohne Slit-Modus${detail} — wird beim Export uebersprungen`,
                     contourName: c.name || 'Unbenannt'
                 });
             }
+            // V3.7: Heilbare Gaps als eigene Warnung
+            if (c.gaps?.length > 0) {
+                const healable = c.gaps.filter(g => g.type === 'healable');
+                if (healable.length > 0) {
+                    warnings.push({
+                        severity: 'warning',
+                        code: 'OPEN_CONTOUR_HEALABLE',
+                        message: `${healable.length} heilbare Luecke(n) erkannt (max. ${Math.max(...healable.map(g => g.distance)).toFixed(1)}mm)`,
+                        contourName: c.name || 'Unbenannt'
+                    });
+                }
+            }
         }
 
-        console.log(`[Pipeline V3.6] Validation: ${errors.length} errors, ${warnings.length} warnings`);
+        console.log(`[Pipeline V3.7] Validation: ${errors.length} errors, ${warnings.length} warnings`);
         return { errors, warnings };
     },
 
@@ -565,6 +588,84 @@ const CeraCutPipeline = {
         let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
         t = Math.max(0, Math.min(1, t));
         return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+    },
+
+    /**
+     * V3.7: Gap-Klassifizierung — befüllt gaps[] und healedGaps[] auf jeder CamContour
+     */
+    _classifyGaps(contours) {
+        if (typeof MicroHealing === 'undefined') return;
+
+        const gapReports = this.healingStats?.gapReports || [];
+        let healedCount = 0, healableCount = 0, openCount = 0;
+
+        // 1. Geheilte Gaps aus MicroHealing-Reports auf Konturen übertragen
+        for (const report of gapReports) {
+            if (report.type === 'healed' && report.contourIndex < contours.length) {
+                const c = contours[report.contourIndex];
+                if (c && typeof c.healedGaps !== 'undefined') {
+                    c.healedGaps.push({
+                        x1: report.x1, y1: report.y1,
+                        x2: report.x2, y2: report.y2,
+                        originalDistance: report.distance
+                    });
+                    healedCount++;
+                }
+            }
+        }
+
+        // 2. Offene Konturen analysieren — Start/End-Gap + interne Gaps
+        for (const c of contours) {
+            if (c.isHatchContour || c.cuttingMode === 'none') continue;
+            if (typeof c.gaps === 'undefined') continue;
+
+            // Start/End-Gap bei offenen Konturen
+            if (!c.isClosed && c.points.length >= 2) {
+                const first = c.points[0];
+                const last = c.points[c.points.length - 1];
+                const gap = Math.hypot(last.x - first.x, last.y - first.y);
+                if (gap > 0.01) {  // Nicht quasi-geschlossen
+                    const perimeter = this._calculatePerimeter(c.points);
+                    const isHealable = gap <= this.GAP_HEALABLE_MAX &&
+                                       gap < perimeter * this.GAP_PERIMETER_RATIO;
+                    c.gaps.push({
+                        x1: last.x, y1: last.y, x2: first.x, y2: first.y,
+                        distance: gap, type: isHealable ? 'healable' : 'open'
+                    });
+                    if (isHealable) healableCount++;
+                    else openCount++;
+                }
+            }
+
+            // Interne Gaps (Sprünge innerhalb der Punktliste)
+            const internalGaps = MicroHealing.findInternalGaps(c.points);
+            for (const ig of internalGaps) {
+                const perimeter = this._calculatePerimeter(c.points);
+                const isHealable = ig.distance <= this.GAP_HEALABLE_MAX &&
+                                   ig.distance < perimeter * this.GAP_PERIMETER_RATIO;
+                c.gaps.push({
+                    x1: ig.x1, y1: ig.y1, x2: ig.x2, y2: ig.y2,
+                    distance: ig.distance, type: isHealable ? 'healable' : 'open'
+                });
+                if (isHealable) healableCount++;
+                else openCount++;
+            }
+        }
+
+        if (healedCount > 0 || healableCount > 0 || openCount > 0) {
+            console.log(`[Pipeline V3.7] Gaps: ${healedCount} healed, ${healableCount} healable, ${openCount} open`);
+        }
+    },
+
+    /**
+     * V3.7: Berechnet die Gesamtlänge einer Punktliste
+     */
+    _calculatePerimeter(points) {
+        let len = 0;
+        for (let i = 0; i < points.length - 1; i++) {
+            len += Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+        }
+        return len;
     },
 
     _computeOffsets(contours) {

@@ -1,24 +1,24 @@
 /**
- * CeraCUT Build Info V6.8
- * Version: V6.8
- * Last Modified: 2026-03-16, 22:00 MEZ
- * Build: 20260316-quietlogs
+ * CeraCUT Build Info V6.9
+ * Version: V6.9
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-gapdetect
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.8',
-    build: '20260316-quietlogs',
+    version: '6.9',
+    build: '20260316-gapdetect',
     date: '2026-03-16',
-    time: '22:00 MEZ',
+    time: '23:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
-        'geometry':           { version: '2.10', build: '20260316-centroid' },
-        'pipeline':           { version: '3.6', build: '20260316-hatchentity' },
-        'cam-contour':        { version: '5.6', build: '20260316-hatchentity' },
-        'canvas-renderer':    { version: '3.29', build: '20260316-discfill-cam' },
+        'geometry':           { version: '2.11', build: '20260316-gapdetect' },
+        'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
+        'cam-contour':        { version: '5.7', build: '20260316-gapdetect' },
+        'canvas-renderer':    { version: '3.30', build: '20260316-gapdetect' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -247,7 +247,12 @@ const CERACUT_BUILD = {
         'V6.6: Pipeline V3.6 — Hatch-Konturen von Topologie/Slit/Offset ausgeschlossen',
         'V6.6: Renderer V3.28 — Hatch-Konturen als Hintergrund-Layer, gestrichelte Boundary bei Hover/Select',
         'V6.6: Sinumerik PP V1.6 — Hatch-Konturen aus CNC-Export gefiltert',
-        'V6.6: HatchTool V1.6 — Floating Farbpalette (8 AutoCAD-Farben + ByLayer) + Pattern-Buttons'
+        'V6.6: HatchTool V1.6 — Floating Farbpalette (8 AutoCAD-Farben + ByLayer) + Pattern-Buttons',
+        'V6.9: Gap Detection — offene/heilbare/geheilte Gaps visuell markiert (Rot/Amber/Grün)',
+        'V6.9: MicroHealing V2.9 — gapReports[] + findInternalGaps() für Gap-Reporting',
+        'V6.9: Pipeline V3.7 — Gap-Klassifizierung (healable vs. open), Validation erweitert',
+        'V6.9: Renderer V3.30 — Gap-Marker (gefüllte Kreise + Strichlinien, screen-space)',
+        'V6.9: CamContour V5.7 — gaps[]/healedGaps[] Properties + hasGaps()/clearGapData()'
     ],
     
     print() {

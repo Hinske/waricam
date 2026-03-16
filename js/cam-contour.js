@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.5 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.7 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -15,6 +15,7 @@
  * V5.5: materialGroup + intarsiaRole für Multi-Material Intarsien
  * V5.4: Hatch-Property (Schraffur — reine Visualisierung) + clone()-Support
  * V5.6: Hatch als eigenständige CamContour (cuttingMode='none', isHatchContour)
+ * V5.7: Gap Detection — gaps[], healedGaps[] Properties + hasGaps()/clearGapData()
  * Last Modified: 2026-03-16 UTC
  */
 
@@ -89,6 +90,10 @@ class CamContour {
         this.intarsiaRole = options.intarsiaRole || null;      // 'base'|'insert'|null
         // Format: { pattern: 'solid'|'lines'|'cross'|'dots', color: null|CSS, angle: 45, spacing: 3, opacity: 0.25 }
 
+        // ═══ GAP DETECTION (Offene Konturen) ═══
+        this.gaps = [];           // [{x1,y1, x2,y2, distance, type:'open'|'healable'}]
+        this.healedGaps = [];     // [{x1,y1, x2,y2, originalDistance}]
+
         // ═══ KERF FLIP (Kompensationsseite umkehren) ═══
         this.kerfFlipped = false;  // true = Kerf auf Gegenseite
 
@@ -112,6 +117,14 @@ class CamContour {
         const first = this.points[0];
         const last = this.points[this.points.length - 1];
         return Geometry.distance(first, last) < 0.01;
+    }
+
+    // ═══ GAP DETECTION HELPERS ═══
+    hasGaps() { return this.gaps.length > 0; }
+
+    clearGapData() {
+        this.gaps = [];
+        this.healedGaps = [];
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -1945,6 +1958,8 @@ class CamContour {
         c.parentContourName = this.parentContourName;
         c.materialGroup = this.materialGroup;    // V5.5: Multi-Material
         c.intarsiaRole = this.intarsiaRole;      // V5.5: base/insert
+        c.gaps = this.gaps.map(g => ({ ...g }));           // V5.7: Gap Detection
+        c.healedGaps = this.healedGaps.map(g => ({ ...g })); // V5.7: Gap Detection
         return c;
     }
 

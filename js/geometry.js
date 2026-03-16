@@ -1,7 +1,7 @@
 /**
- * CeraCUT V2.10 - Geometry Kernel
- * Last Modified: 2026-03-16 15:20 UTC
- * Build: 20260316-centroid
+ * CeraCUT V2.11 - Geometry Kernel
+ * Last Modified: 2026-03-16 UTC
+ * Build: 20260316-gapdetect
  *
  * Mathematics over Guesswork
  */
@@ -967,8 +967,9 @@ const SplineUtils = {
 };
 
 /**
- * CeraCUT V2.8 - Micro-Healing
+ * CeraCUT V2.9 - Micro-Healing
  * Geometrie-Bereinigung nach IGEMS-Standard
+ * V2.9: Gap Reporting — gapReports[] in stats, findInternalGaps()
  */
 const MicroHealing = {
   
@@ -1003,7 +1004,8 @@ const MicroHealing = {
       autoClosed: 0,
       dirtRemoved: 0,
       tinyAreasRemoved: 0,
-      duplicatesRemoved: 0     // V3.0 NEU
+      duplicatesRemoved: 0,    // V3.0 NEU
+      gapReports: []           // V2.9: Gap-Reporting [{type, x1,y1, x2,y2, distance, contourIndex}]
     };
     
     console.log(`[MICRO-HEALING] Input: ${contours.length} contours`);
@@ -1045,8 +1047,21 @@ const MicroHealing = {
       if (wasOpen && nowClosed) {
         stats.autoClosed++;
         console.log(`[MICRO-HEALING] Auto-closed contour (gap: ${closeResult.gap.toFixed(3)}mm)`);
+        // V2.9: Geheilten Gap reportieren
+        const first = points[0], last = points[points.length - 1];
+        stats.gapReports.push({
+          type: 'healed', x1: last.x, y1: last.y, x2: first.x, y2: first.y,
+          distance: closeResult.gap, contourIndex: healed.length
+        });
+      } else if (wasOpen && !nowClosed && closeResult.gap > 0) {
+        // V2.9: Offenen Gap reportieren
+        const first = points[0], last = points[points.length - 1];
+        stats.gapReports.push({
+          type: 'open', x1: last.x, y1: last.y, x2: first.x, y2: first.y,
+          distance: closeResult.gap, contourIndex: healed.length
+        });
       }
-      
+
       // 4. Dreck-Filter (offene Pfade)
       if (!nowClosed && !contour.isClosed) {
         const pathLength = this._calculatePathLength(points);
@@ -1102,7 +1117,30 @@ const MicroHealing = {
 
     return { healed: finalHealed, stats };
   },
-  
+
+  /**
+   * V2.9: Findet interne Gaps (Sprünge) in einer Punktliste
+   * @param {Array} points - Punktliste
+   * @param {number} threshold - Mindestabstand für Gap (default: 2.0mm)
+   * @returns {Array} [{index, x1,y1, x2,y2, distance}]
+   */
+  findInternalGaps(points, threshold = 2.0) {
+    if (!points || points.length < 2) return [];
+    const gaps = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+      if (d > threshold) {
+        gaps.push({
+          index: i,
+          x1: points[i].x, y1: points[i].y,
+          x2: points[i + 1].x, y2: points[i + 1].y,
+          distance: d
+        });
+      }
+    }
+    return gaps;
+  },
+
   /**
    * Entfernt aufeinanderfolgende doppelte Punkte
    * @param {Array} points - Punktliste

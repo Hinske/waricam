@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.28 - Canvas Renderer
+ * CeraCUT V3.30 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.30: Gap-Marker — visuelle Darstellung offener/heilbarer/geheilter Gaps (Kreis + Strichlinie)
  * V3.29: Disc-Füllung nur in CAM-Modi (nicht im CAD-Zeichenmodus)
  * V3.28: Hatch als eigenständige CamContour — cuttingMode='none' Rendering, Live-Preview
  * V3.27: Flächen-Hit — Point-in-Polygon Fallback in findContourAtPoint() für Klick IN Konturen
@@ -61,7 +62,10 @@ const CANVAS_THEMES = {
         nullPoint:      '#00ff88',
         grip:           '#4488FF',
         gripHot:        '#FF4444',
-        gripHover:      '#FFFF00'
+        gripHover:      '#FFFF00',
+        gapOpen:        '#FF0044',     // Rot — offener Gap
+        gapHealable:    '#FFAA00',     // Amber — heilbarer Gap
+        gapHealed:      '#44FF88'      // Grün — auto-geheilt
     },
     light: {
         background:     '#e8e8e8',
@@ -97,7 +101,10 @@ const CANVAS_THEMES = {
         nullPoint:      '#008844',
         grip:           '#1155cc',
         gripHot:        '#cc2200',
-        gripHover:      '#cc8800'
+        gripHover:      '#cc8800',
+        gapOpen:        '#CC0033',
+        gapHealable:    '#CC8800',
+        gapHealed:      '#229955'
     }
 };
 
@@ -902,6 +909,11 @@ class CanvasRenderer {
 
             // V3.28: Alter Hatch-Property-Code entfernt — Hatch ist jetzt eigenständige CamContour
 
+            // V3.30: Geheilte Gap-Marker bei geschlossenen Konturen (subtile grüne Dots)
+            if (contour.healedGaps?.length > 0) {
+                this._drawGapMarkers(ctx, contour);
+            }
+
             const markerPoints = kerfPoints || points;
 
             // V3.10: Anschussfahnen nur in CAM-Modi (nicht im CAD-Zeichenmodus)
@@ -933,6 +945,9 @@ class CanvasRenderer {
             if (isSelected) displayColor = this.colors.selected;
             this.drawPath(ctx, points, displayColor, baseWidth);
 
+            // V3.30: Gap-Marker bei offenen Konturen
+            this._drawGapMarkers(ctx, contour);
+
             // V3.10: Anschussfahnen nur in CAM-Modi
             if (this.currentMode === 'anschuss' || this.currentMode === 'reihenfolge') {
                 this.drawStartTriangle(ctx, points[0], this.colors.leadIn);
@@ -941,6 +956,44 @@ class CanvasRenderer {
                 this.drawOvercut(ctx, contour, points);
             }
         }
+    }
+
+    // ═══ V3.30: GAP MARKER RENDERING ═══
+
+    _drawGapMarkers(ctx, contour) {
+        const allGaps = [
+            ...(contour.gaps || []).map(g => ({ ...g, color: g.type === 'healable' ? this.colors.gapHealable : this.colors.gapOpen })),
+            ...(contour.healedGaps || []).map(g => ({ ...g, type: 'healed', color: this.colors.gapHealed }))
+        ];
+        if (allGaps.length === 0) return;
+
+        const dotRadius = 4 / this.scale;  // Screen-space konstant
+        const dashLen = 6 / this.scale;
+        const gapLen = 4 / this.scale;
+
+        ctx.save();
+        for (const gap of allGaps) {
+            const color = gap.color;
+
+            // Gestrichelte Linie zwischen den Endpunkten
+            ctx.beginPath();
+            ctx.setLineDash([dashLen, gapLen]);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5 / this.scale;
+            ctx.moveTo(gap.x1, gap.y1);
+            ctx.lineTo(gap.x2, gap.y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Gefüllte Kreise an beiden Endpunkten
+            for (const pt of [{x: gap.x1, y: gap.y1}, {x: gap.x2, y: gap.y2}]) {
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, dotRadius, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
+        ctx.restore();
     }
 
     // ═══ V3.28: HATCH RENDERING (eigenständige CamContour + Live-Preview) ═══
