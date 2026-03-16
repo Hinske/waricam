@@ -1,5 +1,6 @@
 /**
  * CeraCUT V6.8 - Main Application
+ * V6.9: Auto-Apply Rechtsklick + fitToContent nur beim ersten Zeichnen (kein View-Sprung)
  * V6.8: Console Cleanup — Init-Logs auf console.debug, sauberer Startup-Output
  * V6.7: Undo-Fix — addDrawnEntities erstellt pro Kontur einen eigenen Undo-Step
  * V6.5: Hatch-Fix — _drawHatch ctx.fill() statt ctx.clip(), Toast/Panel-Refresh
@@ -673,7 +674,13 @@ class CeraCutApp {
         document.getElementById('start-hint')?.classList.add('hidden');
         document.getElementById('drop-zone')?.classList.remove('visible');
         this.updateStepUI();
-        this.renderer?.fitToContent();
+        // V6.9: fitToContent nur beim ersten Mal — sonst verspringt die Ansicht
+        if (!this._drawFitDone) {
+            this._drawFitDone = true;
+            this.renderer?.fitToContent();
+        } else {
+            this.renderer?.render();
+        }
         
         this.showToast(`✓ ${camContours.length} gezeichnete Kontur(en) hinzugefügt (STRG+Z = Rückgängig)`, 'success');
         this._updateDrawEntityCount();
