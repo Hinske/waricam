@@ -1,13 +1,16 @@
 /**
- * CeraCUT Drawing Tools Extension V1.1
- * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine
+ * CeraCUT Drawing Tools Extension V1.2
+ * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
- * Build: 20260216-1700 MEZ
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-hatch
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
  *   - geometry.js (SplineUtils)
+ *   - cam-contour.js (CamContour — Hatch-Property)
+ *   - canvas-renderer.js (findContourAtPoint)
  *
  * Laden: NACH advanced-tools.js, VOR app.js
  */
@@ -851,6 +854,127 @@ class OverlapBreakTool extends BaseTool {
 
 
 // ════════════════════════════════════════════════════════════════════════════
+//  HATCH TOOL (H) — Schraffur auf geschlossene Konturen
+//  AutoCAD: H → Kontur anklicken → Solid/Lines/Cross/Dots
+//  Reine Visualisierung (nicht CAM-relevant)
+// ════════════════════════════════════════════════════════════════════════════
+
+class HatchTool extends BaseTool {
+    constructor(manager) {
+        super(manager);
+        this.state = 'select';
+        this.pattern = 'solid';  // 'solid' | 'lines' | 'cross' | 'dots'
+        this.angle = 45;
+        this.spacing = 3;
+        this.opacity = 0.25;
+        this.color = null;       // null = Konturfarbe
+    }
+
+    start() {
+        const patternLabel = { solid: 'Solid', lines: 'Linien', cross: 'Kreuz', dots: 'Punkte' };
+        this.cmd?.setPrompt(`HATCH — Geschlossene Kontur anklicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
+        this.cmd?.log('▧ Schraffur: Kontur anklicken → Füllung anwenden', 'info');
+        this.cmd?.log('   Optionen: S=Solid  L=Linien  C=Kreuz  D=Punkte', 'info');
+        console.log('[HatchTool V1.0] gestartet, Pattern=' + this.pattern);
+    }
+
+    acceptsOption(opt) { return ['S', 'L', 'C', 'D'].includes(opt); }
+
+    handleOption(option) {
+        const map = { S: 'solid', L: 'lines', C: 'cross', D: 'dots' };
+        const labels = { S: 'Solid', L: 'Linien', C: 'Kreuz', D: 'Punkte' };
+        if (map[option]) {
+            this.pattern = map[option];
+            this.cmd?.log(`Pattern: ${labels[option]}`, 'info');
+            this.cmd?.setPrompt(`HATCH [${labels[option]}] — Geschlossene Kontur anklicken:`);
+            console.log(`[HatchTool V1.0] Pattern → ${this.pattern}`);
+        }
+    }
+
+    handleClick(point) {
+        const renderer = this.manager.renderer;
+        if (!renderer) return;
+
+        const contour = renderer.findContourAtPoint(point.x, point.y);
+        if (!contour) {
+            this.cmd?.log('Keine Kontur getroffen', 'warning');
+            return;
+        }
+        if (!contour.isClosed) {
+            this.cmd?.log('Nur geschlossene Konturen können schraffiert werden', 'warning');
+            return;
+        }
+        if (contour.isReference) {
+            this.cmd?.log('Referenz-Kontur kann nicht schraffiert werden', 'warning');
+            return;
+        }
+
+        const newHatch = {
+            pattern: this.pattern,
+            color: this.color,
+            angle: this.angle,
+            spacing: this.spacing,
+            opacity: this.opacity
+        };
+
+        const oldHatch = contour.hatch ? { ...contour.hatch } : null;
+        const app = this.manager.app;
+
+        // Undo-Support via PropertyChangeCommand oder FunctionCommand
+        if (typeof FunctionCommand !== 'undefined' && app?.undoManager) {
+            const cmd = new FunctionCommand(
+                `Schraffur [${this.pattern}] → ${contour.name}`,
+                () => { contour.hatch = { ...newHatch }; app.renderer?.render(); },
+                () => { contour.hatch = oldHatch ? { ...oldHatch } : null; app.renderer?.render(); }
+            );
+            app.undoManager.execute(cmd);
+        } else {
+            contour.hatch = newHatch;
+        }
+
+        this.cmd?.log(`✔ Schraffur [${this.pattern}] → ${contour.name}`, 'success');
+        console.log(`[HatchTool V1.0] ✔ ${this.pattern} → ${contour.name}`);
+        renderer.render();
+
+        // Continuous Mode — bereit für nächste Kontur
+        const patternLabel = { solid: 'Solid', lines: 'Linien', cross: 'Kreuz', dots: 'Punkte' };
+        this.cmd?.setPrompt(`HATCH [${patternLabel[this.pattern]}] — Nächste Kontur (ESC=Beenden):`);
+    }
+
+    handleMouseMove(point) {
+        const renderer = this.manager.renderer;
+        if (!renderer) return;
+
+        const hovered = renderer.findContourAtPoint(point.x, point.y);
+        if (hovered !== renderer.hoveredContour) {
+            renderer.hoveredContour = hovered;
+            renderer.render();
+        }
+    }
+
+    /** Zahlen-Eingabe ändert Spacing (für Lines/Cross/Dots) */
+    handleRawInput(value) {
+        const num = parseFloat(value);
+        if (!isNaN(num) && num > 0 && num <= 50) {
+            this.spacing = num;
+            this.cmd?.log(`Linienabstand: ${num.toFixed(1)} mm`, 'info');
+            return true;
+        }
+        return false;
+    }
+
+    finish() {
+        this.manager.rubberBand = null;
+        this.manager._setDefaultPrompt();
+        this.manager.activeTool = null;
+        this.manager.renderer?.render();
+    }
+
+    getLastPoint() { return null; }
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
 //  LAZY-PATCH REGISTRATION (gleiches Pattern wie advanced-tools.js)
 //  Patcht startTool() um Tools beim ersten Aufruf zu registrieren
 // ════════════════════════════════════════════════════════════════════════════
@@ -869,14 +993,17 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['XLINE']    = () => new XLineTool(this);
             this.tools['OBREAK']       = () => new OverlapBreakTool(this);
             this.tools['OVERLAPBREAK'] = () => new OverlapBreakTool(this);
+            this.tools['H']            = () => new HatchTool(this);
+            this.tools['HT']           = () => new HatchTool(this);
+            this.tools['HATCH']        = () => new HatchTool(this);
 
-            console.log('[DrawingToolsExt V1.1] ✅ 5 Tools registriert: EL, SP, DO, XL, OBREAK');
+            console.log('[DrawingToolsExt V1.2] ✅ 6 Tools registriert: EL, SP, DO, XL, OBREAK, H');
         }
 
         return _origStartToolExt.call(this, shortcut);
     };
 
-    console.log('[DrawingToolsExt V1.1] Lazy-Patch auf startTool() installiert');
+    console.log('[DrawingToolsExt V1.2] Lazy-Patch auf startTool() installiert');
 } else {
-    console.error('[DrawingToolsExt V1.1] ❌ DrawingToolManager nicht gefunden! drawing-tools.js VOR drawing-tools-ext.js laden.');
+    console.error('[DrawingToolsExt V1.2] ❌ DrawingToolManager nicht gefunden! drawing-tools.js VOR drawing-tools-ext.js laden.');
 }

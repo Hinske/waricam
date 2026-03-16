@@ -115,6 +115,7 @@ const TOOL_TOOLTIPS = {
     'SP':    { label: 'Spline',     tip: 'Freiform-Kurve (Spline)',                  shortcut: 'SP',    group: 'draw' },
     'DO':    { label: 'Donut',      tip: 'Ring / Donut',                             shortcut: 'DO',    group: 'draw' },
     'TX':    { label: 'Text',       tip: 'Text als schneidbare Konturen',            shortcut: 'TX',    group: 'draw' },
+    'H':     { label: 'Schraffur',  tip: 'Flaeche fuellen / schraffieren (Solid, Linien, Kreuz, Punkte)', shortcut: 'H', group: 'draw' },
 
     // ── Bearbeiten ──
     'M':     { label: 'Verschieben', tip: 'Objekte verschieben',                     shortcut: 'M',     group: 'edit' },

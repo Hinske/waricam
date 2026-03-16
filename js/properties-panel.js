@@ -1,11 +1,13 @@
 /**
- * CeraCUT Properties Panel V1.2
+ * CeraCUT Properties Panel V1.3
  * Kontur-Eigenschaften als Kontextmenu-Sektion (Step 4 / CAM)
  * - Generiert editierbare CAM-Felder (Quality, Piercing, Lead-In, Kerf)
  * - Bindet Events mit Undo-Support (PropertyChangeCommand)
  * - Modi: 1 Kontur → Detailansicht / Mehrere → Batch-Editing
+ * - V1.3: Hatch-Schraffur im Properties-Panel (Hinzufügen/Entfernen/Bearbeiten)
  * Refactored: 2026-03-13 (Sidebar → Kontextmenu)
- * Build: 20260313-ctxmenu
+ * Last Modified: 2026-03-16 MEZ
+ * Build: 20260316-hatch
  */
 
 class PropertiesPanel {
@@ -64,6 +66,10 @@ class PropertiesPanel {
                     } else {
                         this.app.showToast?.('Keine passende Flaechenklasse', 'warning');
                     }
+                } else if (action === 'addHatch') {
+                    this._setHatchProperty(idx, 'add');
+                } else if (action === 'removeHatch') {
+                    this._setHatchProperty(idx, 'remove');
                 }
             });
         });
@@ -251,6 +257,60 @@ class PropertiesPanel {
             html += `</div>`; // close lead-in group
         }
 
+        // ── Schraffur (Hatch) ──
+        if (contour.isClosed) {
+            const hasHatch = !!contour.hatch;
+            const hatchPattern = contour.hatch?.pattern || 'solid';
+            const hatchOpacity = ((contour.hatch?.opacity ?? 0.25) * 100).toFixed(0);
+            const hatchAngle = contour.hatch?.angle ?? 45;
+            const hatchSpacing = contour.hatch?.spacing ?? 3;
+
+            html += `<div class="pp-group">
+                <div class="pp-row"><span class="pp-label">Schraffur</span></div>`;
+
+            if (hasHatch) {
+                html += `<div class="pp-row">
+                    <span class="pp-key">Pattern:</span>
+                    <select class="pp-select" data-prop="hatch.pattern" data-idx="${idx}">
+                        <option value="solid" ${hatchPattern === 'solid' ? 'selected' : ''}>Solid</option>
+                        <option value="lines" ${hatchPattern === 'lines' ? 'selected' : ''}>Linien</option>
+                        <option value="cross" ${hatchPattern === 'cross' ? 'selected' : ''}>Kreuz</option>
+                        <option value="dots" ${hatchPattern === 'dots' ? 'selected' : ''}>Punkte</option>
+                    </select>
+                </div>
+                <div class="pp-row">
+                    <span class="pp-key">Deckkraft:</span>
+                    <input type="number" class="pp-input" data-prop="hatch.opacity" data-idx="${idx}" value="${hatchOpacity}" step="5" min="5" max="100">
+                    <span class="pp-unit">%</span>
+                </div>`;
+
+                if (hatchPattern === 'lines' || hatchPattern === 'cross') {
+                    html += `<div class="pp-row">
+                        <span class="pp-key">Winkel:</span>
+                        <input type="number" class="pp-input" data-prop="hatch.angle" data-idx="${idx}" value="${hatchAngle}" step="15" min="0" max="360">
+                        <span class="pp-unit">\u00B0</span>
+                    </div>`;
+                }
+                if (hatchPattern !== 'solid') {
+                    html += `<div class="pp-row">
+                        <span class="pp-key">Abstand:</span>
+                        <input type="number" class="pp-input" data-prop="hatch.spacing" data-idx="${idx}" value="${hatchSpacing}" step="0.5" min="0.5" max="50">
+                        <span class="pp-unit">mm</span>
+                    </div>`;
+                }
+
+                html += `<div class="pp-row">
+                    <button class="pp-btn" data-action="removeHatch" data-idx="${idx}">Schraffur entfernen</button>
+                </div>`;
+            } else {
+                html += `<div class="pp-row">
+                    <button class="pp-btn" data-action="addHatch" data-idx="${idx}">Schraffur hinzufuegen</button>
+                </div>`;
+            }
+
+            html += `</div>`;
+        }
+
         html += `</div>`; // close ctx-cam-section
         return html;
     }
@@ -301,6 +361,13 @@ class PropertiesPanel {
     _setProperty(contourIndex, property, newValue) {
         const contour = this.app?.contours?.[contourIndex];
         if (!contour) return;
+
+        // Hatch Sub-Properties (hatch.pattern, hatch.opacity, etc.)
+        if (property.startsWith('hatch.')) {
+            this._setHatchSubProperty(contourIndex, property.slice(6), newValue);
+            return;
+        }
+
         if (contour[property] === newValue) return;
 
         console.log(`[PropertiesPanel V1.2] ${contour.name}: ${property} ${contour[property]} \u2192 ${newValue}`);
@@ -342,6 +409,51 @@ class PropertiesPanel {
         };
 
         const cmd = new FunctionCommand(`Batch: ${property} \u2192 ${newValue}`, doFn, undoFn);
+        app.undoManager?.execute(cmd);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // PRIVATE: Hatch-Property Helpers
+    // ════════════════════════════════════════════════════════════════
+
+    _setHatchProperty(contourIndex, action) {
+        const contour = this.app?.contours?.[contourIndex];
+        if (!contour) return;
+        const app = this.app;
+        const oldHatch = contour.hatch ? { ...contour.hatch } : null;
+
+        if (action === 'add') {
+            const newHatch = { pattern: 'solid', color: null, angle: 45, spacing: 3, opacity: 0.25 };
+            const cmd = new FunctionCommand(
+                `Schraffur hinzufuegen → ${contour.name}`,
+                () => { contour.hatch = { ...newHatch }; app.renderer?.render(); },
+                () => { contour.hatch = null; app.renderer?.render(); }
+            );
+            app.undoManager?.execute(cmd);
+        } else if (action === 'remove') {
+            const cmd = new FunctionCommand(
+                `Schraffur entfernen → ${contour.name}`,
+                () => { contour.hatch = null; app.renderer?.render(); },
+                () => { contour.hatch = oldHatch ? { ...oldHatch } : null; app.renderer?.render(); }
+            );
+            app.undoManager?.execute(cmd);
+        }
+    }
+
+    _setHatchSubProperty(contourIndex, subProp, newValue) {
+        const contour = this.app?.contours?.[contourIndex];
+        if (!contour || !contour.hatch) return;
+        const app = this.app;
+
+        // Opacity kommt als % (0-100), speichern als 0-1
+        if (subProp === 'opacity') newValue = newValue / 100;
+
+        const oldHatch = { ...contour.hatch };
+        const cmd = new FunctionCommand(
+            `Schraffur ${subProp} → ${newValue}`,
+            () => { if (contour.hatch) contour.hatch[subProp] = newValue; app.renderer?.render(); },
+            () => { contour.hatch = { ...oldHatch }; app.renderer?.render(); }
+        );
         app.undoManager?.execute(cmd);
     }
 

@@ -1,31 +1,31 @@
 /**
- * CeraCUT Build Info V6.1
- * Version: V6.1
- * Last Modified: 2026-03-16, 12:00 MEZ
- * Build: 20260316-leadfix
+ * CeraCUT Build Info V6.2
+ * Version: V6.2
+ * Last Modified: 2026-03-16, 14:00 MEZ
+ * Build: 20260316-hatch
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.1',
-    build: '20260316-flatplace',
+    version: '6.2',
+    build: '20260316-hatch',
     date: '2026-03-16',
-    time: '12:00 MEZ',
+    time: '14:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.3', build: '20260316-centroid' },
-        'cam-contour':        { version: '5.3', build: '20260316-flatplace' },
-        'canvas-renderer':    { version: '3.22', build: '20260316-centroid' },
+        'cam-contour':        { version: '5.4', build: '20260316-hatch' },
+        'canvas-renderer':    { version: '3.23', build: '20260316-hatch' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
         'drawing-tools':      { version: '2.5', build: '20260315-bugfix35' },
-        'drawing-tools-ext':  { version: '1.1', build: '20260311-overlapbreak' },
+        'drawing-tools-ext':  { version: '1.2', build: '20260316-hatch' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
@@ -34,7 +34,7 @@ const CERACUT_BUILD = {
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
         'app':                { version: '6.1', build: '20260315-intarsia20' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
-        'properties-panel':   { version: '1.2', build: '20260315-ctxmenu' },
+        'properties-panel':   { version: '1.3', build: '20260316-hatch' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
         'nesting':            { version: '1.1', build: '20260315-bugfix35' },
         'toolpath-simulator': { version: '1.0', build: '20260309' },
@@ -220,7 +220,11 @@ const CERACUT_BUILD = {
         'V6.1: Lead-Platzierung — autoPlace bevorzugt Flat-Segments statt Ecken (cam-contour V5.3)',
         'V6.1: Arc-Leads — Degradierung zu Linear nur noch bei >120° (war >90°), Arc bleibt auf flachen Segmenten erhalten',
         'V6.1: Disc-Füllung Fix — worldToScreen durch direkte World-Koordinaten ersetzt (canvas-renderer V3.21)',
-        'V6.1: Waste-Side-Normal — Shoelace-basiert statt centroid-basiert, robust bei nicht-konvexen Konturen (cam-contour V5.3)'
+        'V6.1: Waste-Side-Normal — Shoelace-basiert statt centroid-basiert, robust bei nicht-konvexen Konturen (cam-contour V5.3)',
+        'V6.2: HatchTool (H) — Schraffur-Werkzeug: Solid/Lines/Cross/Dots auf geschlossene Konturen (drawing-tools-ext V1.2)',
+        'V6.2: Hatch-Rendering — Clip-Path mit Even-Odd, Holes automatisch ausgespart (canvas-renderer V3.23)',
+        'V6.2: Hatch als Contour-Property — cam-contour V5.4 mit clone()-Support',
+        'V6.2: Properties-Panel V1.3 — Schraffur hinzufuegen/entfernen/bearbeiten im Kontextmenu'
     ],
     
     print() {

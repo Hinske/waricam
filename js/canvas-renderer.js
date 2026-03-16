@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.22 - Canvas Renderer
+ * CeraCUT V3.23 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.23: Hatch-Rendering — Solid/Lines/Cross/Dots mit Clip-Path und Even-Odd
  * V3.22: Disc-Fill Hole-Cutout — Centroid statt points[0] für robuste Even-Odd Erkennung
  * V3.21: Disc-Füllung Fix (World-Koordinaten statt worldToScreen), Hit-Test Revert
  * V3.19: Arc-Lead Rendering Fix — gekürzte Arcs Polylinien-Fallback, breitere Linear-Dashes
@@ -851,6 +852,11 @@ class CanvasRenderer {
                 ctx.restore();
             }
 
+            // V3.23: Hatch-Rendering (Schraffur) — wenn contour.hatch gesetzt
+            if (contour.hatch && points.length >= 3) {
+                this._drawHatch(ctx, contour, points);
+            }
+
             const markerPoints = kerfPoints || points;
 
             // V3.10: Anschussfahnen nur in CAM-Modi (nicht im CAD-Zeichenmodus)
@@ -888,6 +894,123 @@ class CanvasRenderer {
                 this.drawSingleDirectionArrow(ctx, points);
                 this.drawLeadIn(ctx, contour, points);
                 this.drawOvercut(ctx, contour, points);
+            }
+        }
+    }
+
+    // ═══ V3.23: HATCH RENDERING ═══
+
+    _drawHatch(ctx, contour, points) {
+        const h = contour.hatch;
+        if (!h) return;
+
+        const layerName = contour.layer || '0';
+        const layerDef = this.app?.layerManager?.getLayer(layerName);
+        const fillColor = h.color || layerDef?.color || this.colors.disc;
+
+        ctx.save();
+
+        // Clip-Path: Kontur (mit Holes via even-odd)
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.closePath();
+
+        // Holes innerhalb dieser Kontur aussparen
+        for (const other of (this.app?.contours || [])) {
+            if (other === contour || !other.isClosed || other.isReference) continue;
+            if (other.cuttingMode !== 'hole') continue;
+            if (other.points?.length < 3) continue;
+            const tp = typeof Geometry !== 'undefined' ? Geometry.centroid(other.points) : other.points[0];
+            if (typeof GeometryOps !== 'undefined' && GeometryOps.pointInPolygon?.(tp, points)) {
+                const hp = other.points;
+                ctx.moveTo(hp[hp.length - 1].x, hp[hp.length - 1].y);
+                for (let j = hp.length - 2; j >= 0; j--) {
+                    ctx.lineTo(hp[j].x, hp[j].y);
+                }
+                ctx.closePath();
+            }
+        }
+
+        ctx.clip('evenodd');
+
+        ctx.globalAlpha = h.opacity ?? 0.25;
+
+        if (h.pattern === 'solid') {
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(this._hatchBB(points, 'xMin'), this._hatchBB(points, 'yMin'),
+                         this._hatchBB(points, 'w'), this._hatchBB(points, 'h'));
+        } else if (h.pattern === 'lines' || h.pattern === 'cross') {
+            this._drawHatchLines(ctx, points, fillColor, h.angle ?? 45, h.spacing ?? 3);
+            if (h.pattern === 'cross') {
+                this._drawHatchLines(ctx, points, fillColor, (h.angle ?? 45) + 90, h.spacing ?? 3);
+            }
+        } else if (h.pattern === 'dots') {
+            this._drawHatchDots(ctx, points, fillColor, h.spacing ?? 3);
+        }
+
+        ctx.restore();
+    }
+
+    _hatchBB(points, key) {
+        // Cache-freie BB-Berechnung
+        let xMin = Infinity, yMin = Infinity, xMax = -Infinity, yMax = -Infinity;
+        for (const p of points) {
+            if (p.x < xMin) xMin = p.x;
+            if (p.y < yMin) yMin = p.y;
+            if (p.x > xMax) xMax = p.x;
+            if (p.y > yMax) yMax = p.y;
+        }
+        if (key === 'xMin') return xMin;
+        if (key === 'yMin') return yMin;
+        if (key === 'w') return xMax - xMin;
+        if (key === 'h') return yMax - yMin;
+        return { xMin, yMin, xMax, yMax };
+    }
+
+    _drawHatchLines(ctx, points, color, angleDeg, spacingMm) {
+        const bb = this._hatchBB(points, 'all');
+        const angle = (angleDeg ?? 45) * Math.PI / 180;
+        const spacing = spacingMm || 3;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        // Diagonale des BB = maximaler Bereich
+        const diag = Math.hypot(bb.xMax - bb.xMin, bb.yMax - bb.yMin);
+        const cx = (bb.xMin + bb.xMax) / 2;
+        const cy = (bb.yMin + bb.yMax) / 2;
+        const nLines = Math.ceil(diag / spacing) + 1;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.5 / this.scale;
+        ctx.beginPath();
+
+        for (let i = -nLines; i <= nLines; i++) {
+            const offset = i * spacing;
+            // Linie durch (cx + offset * perpendicular) in Richtung angle
+            const px = cx + offset * (-sin);
+            const py = cy + offset * cos;
+            ctx.moveTo(px - diag * cos, py - diag * sin);
+            ctx.lineTo(px + diag * cos, py + diag * sin);
+        }
+
+        ctx.stroke();
+    }
+
+    _drawHatchDots(ctx, points, color, spacingMm) {
+        const bb = this._hatchBB(points, 'all');
+        const spacing = spacingMm || 3;
+        const dotRadius = Math.max(0.3 / this.scale, 0.15);
+
+        ctx.fillStyle = color;
+
+        for (let x = bb.xMin; x <= bb.xMax; x += spacing) {
+            for (let y = bb.yMin; y <= bb.yMax; y += spacing) {
+                ctx.beginPath();
+                ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
     }

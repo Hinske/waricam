@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.3 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.4 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -12,6 +12,7 @@
  * V5.1: Clearance-Scored Lead Placement — beste Position statt erste kollisionsfreie
  * V5.2: Corner-Penalty + Flat-Segment-Bonus
  * V5.3: autoPlace bevorzugt Flat-Segments, Arc-Degradierung nur >120°
+ * V5.4: Hatch-Property (Schraffur — reine Visualisierung) + clone()-Support
  * Last Modified: 2026-03-16 UTC
  */
 
@@ -74,6 +75,10 @@ class CamContour {
 
         // ═══ LEAD MANUAL OVERRIDE (V5.0 — Batch-Schutz) ═══
         this.leadManualOverride = options.leadManualOverride ?? false;
+
+        // ═══ HATCH (Schraffur — reine Visualisierung) ═══
+        this.hatch = options.hatch || null;
+        // Format: { pattern: 'solid'|'lines'|'cross'|'dots', color: null|CSS, angle: 45, spacing: 3, opacity: 0.25 }
 
         // ═══ KERF FLIP (Kompensationsseite umkehren) ═══
         this.kerfFlipped = false;  // true = Kerf auf Gegenseite
@@ -1926,6 +1931,7 @@ class CamContour {
         c.microjoints = this.microjoints ? this.microjoints.map(j => ({ ...j })) : [];
         c._rotationCount = this._rotationCount;
         c.nestingLevel = this.nestingLevel;  // V5.2: Intarsien braucht Nesting-Level
+        c.hatch = this.hatch ? { ...this.hatch } : null;
         return c;
     }
 
