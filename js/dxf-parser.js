@@ -1,7 +1,11 @@
 /**
- * CeraCUT DXF Parser V3.9
+ * CeraCUT DXF Parser V3.10
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-layertable
+ * Build: 20260316-hatchskip
+ *
+ * V3.10 Änderungen:
+ *   - HATCH-Entities werden beim Import übersprungen (reine Visualisierung)
+ *   - Alte Implementierung las alle Boundary-Loops in ein Array → wirre Linien
  *
  * V3.9 Änderungen:
  *   - _parseLayerTable: Layer-Record ab "0/LAYER" statt "AcDbLayerTableRecord"
@@ -27,7 +31,7 @@
  *
  * V3.5 Änderungen:
  *   - TEXT/MTEXT Support: Bounding-Box oder Glyph-Konvertierung (via TextTool)
- *   - HATCH Support: Boundary-Pfad Extraktion
+ *   - HATCH Support: Boundary-Pfad Extraktion (V3.10: übersprungen)
  *
  * V3.3 FIXES:
  *   - CRITICAL: _parseLWPolyline 1000-Zeilen-Limit entfernt (schnitt große Polylinien ab!)
@@ -1453,59 +1457,17 @@ const DXFParser = {
     // ════════════════════════════════════════════════════════════════
 
     _parseHatch(lines, startIndex) {
-        let layer = null;
+        // V3.10: HATCH-Entities überspringen — reine Visualisierung (Schraffur/Füllung),
+        // keine Schneidgeometrie. Alte Implementierung las alle Boundary-Loops in ein
+        // einziges Punkt-Array → wirre Verbindungslinien zwischen Pfaden.
         let endIndex = startIndex;
-        const boundaryPoints = [];
-        let inBoundary = false;
-        let pathType = 0;
-
-        for (let i = startIndex + 2; i < Math.min(startIndex + 2000, lines.length); i += 2) {
+        for (let i = startIndex + 2; i < Math.min(startIndex + 5000, lines.length); i += 2) {
             const code = lines[i]?.trim();
-            const value = lines[i + 1]?.trim();
             if (code === '0') { endIndex = i; break; }
             endIndex = i + 2;
-
-            switch (code) {
-                case '8': layer = value; break;
-                case '91': // Anzahl Boundary-Pfade
-                    inBoundary = true;
-                    break;
-                case '92': // Boundary-Typ
-                    pathType = parseInt(value) || 0;
-                    break;
-                case '10':
-                    if (inBoundary) {
-                        const px = parseFloat(value) || 0;
-                        // Nächste Zeile sollte Code 20 sein
-                        const nextCode = lines[i + 2]?.trim();
-                        const nextVal = lines[i + 3]?.trim();
-                        if (nextCode === '20') {
-                            const py = parseFloat(nextVal) || 0;
-                            boundaryPoints.push({ x: this._snap(px), y: this._snap(py) });
-                        }
-                    }
-                    break;
-            }
         }
-
-        if (boundaryPoints.length < 3) return null;
-
-        // Schließen
-        const first = boundaryPoints[0];
-        const last = boundaryPoints[boundaryPoints.length - 1];
-        if (Math.hypot(first.x - last.x, first.y - last.y) > 0.01) {
-            boundaryPoints.push({ ...first });
-        }
-
-        console.log(`[DXF Parser V3.8] HATCH: ${boundaryPoints.length} boundary points`);
-
-        return {
-            type: 'HATCH',
-            points: boundaryPoints,
-            isClosed: true,
-            _layer: layer,
-            _endIndex: endIndex
-        };
+        console.debug('[DXF Parser V3.10] HATCH-Entity übersprungen (reine Visualisierung)');
+        return null;
     },
 
     _calculateBounds(contours) {

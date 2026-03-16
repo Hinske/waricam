@@ -14,7 +14,7 @@ const CERACUT_BUILD = {
     time: '14:00 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
+        'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.3', build: '20260316-centroid' },
         'cam-contour':        { version: '5.4', build: '20260316-hatch' },
@@ -224,7 +224,8 @@ const CERACUT_BUILD = {
         'V6.2: HatchTool (H) — Schraffur-Werkzeug: Solid/Lines/Cross/Dots auf geschlossene Konturen (drawing-tools-ext V1.2)',
         'V6.2: Hatch-Rendering — Clip-Path mit Even-Odd, Holes automatisch ausgespart (canvas-renderer V3.23)',
         'V6.2: Hatch als Contour-Property — cam-contour V5.4 mit clone()-Support',
-        'V6.2: Properties-Panel V1.3 — Schraffur hinzufuegen/entfernen/bearbeiten im Kontextmenu'
+        'V6.2: Properties-Panel V1.3 — Schraffur hinzufuegen/entfernen/bearbeiten im Kontextmenu',
+        'V6.2: DXF HATCH-Entities werden beim Import übersprungen — reine Visualisierung, keine Schneidgeometrie (dxf-parser V3.10)'
     ],
     
     print() {

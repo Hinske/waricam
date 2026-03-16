@@ -194,7 +194,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **App** | `app.js` | **V6.2** | Wizard, Kontextmenu, Export-Modal, Undo, ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline |
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
-| **DXF-Parser** | `dxf-parser.js` | **V3.9** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table |
+| **DXF-Parser** | `dxf-parser.js` | **V3.10** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table, HATCH-Skip |
 | **CAMContour** | `cam-contour.js` | **V5.4** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace, Hatch-Property |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
@@ -461,7 +461,7 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 | Bereich | Status | Problem |
 |---------|--------|---------|
-| DXF-Parser | 🟢 | TEXT/MTEXT/HATCH (V3.5), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7), R12-Layer-Table (V3.9) |
+| DXF-Parser | 🟢 | TEXT/MTEXT (V3.5), HATCH-Skip (V3.10), Center/Radius (V3.6), Deque-Chaining O(n) (V3.7), R12-Layer-Table (V3.9) |
 | DXF-Writer | 🟢 | UTF-8 Encoding, Kreis-Validierung mit _fitCircle (V1.1) |
 | Collision | 🟢 | Multi-Kontur Collision Detection (V4.8) |
 | Lead-Routing | 🟢 | V4.8: Startpunkt-Rotation (5°) + Dog-Leg Routing |
@@ -487,7 +487,7 @@ Console-Ausgabe beim Laden:
 ```
 CeraCUT/CeraCUT V6.2 - Build 20260316-hatch
 [BUILD] Modules:
-  dxf-parser: V3.9 (20260316-layertable)
+  dxf-parser: V3.10 (20260316-hatchskip)
   geometry: V2.9 (20260128-0645)
   pipeline: V3.3 (20260316-centroid)
   cam-contour: V5.4 (20260316-hatch)
