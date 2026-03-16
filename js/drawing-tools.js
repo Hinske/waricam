@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.6
+ * CeraCUT Drawing & Modification Tools V2.7
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -12,6 +12,7 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
+ * V2.7: Auto-Apply pending Entities bei ESC/Enter/Rechtsklick ohne aktives Tool
  * V2.6: Enter/Rechtsklick beendet Tool (AutoCAD-Stil), Layerfarbe für Entities + Rubber-Band
  * V2.3: AutoCAD Compliance — Aliases (E/REC/CO/RO/MI/SC/TR/PL/F/CH/EX), Continuous Mode, Previous Selection
  * V2.2: FIX _entityToDxfFormat — points+isClosed statt startX/closed (Linien waren nicht selektierbar)
@@ -20,7 +21,7 @@
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-enterconfirm
+ * Build: 20260316-autoapply
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -116,7 +117,7 @@ class DrawingToolManager {
             this.commandLine.onBackspace = () => this._handleBackspace();
         }
 
-        console.debug('[DrawingTools V2.6] ✅ Initialisiert (Tier 1 + Tier 2)');
+        console.debug('[DrawingTools V2.7] ✅ Initialisiert (Tier 1 + Tier 2)');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -233,6 +234,10 @@ class DrawingToolManager {
         if (this.activeTool) {
             this.activeTool.cancel();
             this.activeTool = null;
+        } else if (this.entities.length > 0) {
+            // V2.7: Kein Tool aktiv, aber pending Entities → Auto-Apply
+            console.debug('[DrawingTools V2.7] Auto-Apply: ESC bei pending Entities');
+            this.applyEntities();
         }
         this.rubberBand = null;
         this.ghostContours = null;
@@ -958,6 +963,10 @@ class DrawingToolManager {
     _handleEnter() {
         if (this.activeTool) {
             this.activeTool.finish();
+        } else if (this.entities.length > 0) {
+            // V2.7: Kein Tool aktiv, aber pending Entities → Auto-Apply
+            console.debug('[DrawingTools V2.7] Auto-Apply: Enter bei pending Entities');
+            this.applyEntities();
         }
     }
 

@@ -24,7 +24,7 @@ const CERACUT_BUILD = {
         'command-line':       { version: '1.2', build: '20260315-ux' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
-        'drawing-tools':      { version: '2.6', build: '20260316-enterconfirm' },
+        'drawing-tools':      { version: '2.7', build: '20260316-autoapply' },
         'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },

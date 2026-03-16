@@ -203,7 +203,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.6** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
-| **Drawing Tools** | `drawing-tools.js` | **V2.6** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe für Entities+Rubber-Band |
+| **Drawing Tools** | `drawing-tools.js` | **V2.7** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.6** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
@@ -275,7 +275,7 @@ ceraCUT/
 │   ├── command-line.js                ← Command-Line UI V1.2
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
-│   ├── drawing-tools.js              ← CAD-Tools V2.6 (Enter/Rechtsklick-Bestätigung)
+│   ├── drawing-tools.js              ← CAD-Tools V2.7 (Auto-Apply pending Entities)
 │   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.6
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.4 (Fillet/Trim/Extend/Offset/Chamfer)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
@@ -501,7 +501,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   command-line: V1.2 (20260315-ux)
   snap-manager: V1.3 (20260315-bugfix35)
   geometry-ops: V2.4 (20260315-bugfix35)
-  drawing-tools: V2.6 (20260316-enterconfirm)
+  drawing-tools: V2.7 (20260316-autoapply)
   drawing-tools-ext: V1.6 (20260316-hatchpalette)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)

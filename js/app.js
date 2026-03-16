@@ -829,10 +829,17 @@ class CeraCutApp {
         this.renderer?.canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             if (this.toolManager?.isToolActive()) return;
-            
+
+            // V2.7: Rechtsklick im drawMode ohne Tool → Auto-Apply pending Entities
+            if (this.drawingTools?.drawMode && !this.drawingTools.activeTool && this.drawingTools.entities.length > 0) {
+                console.debug('[App V6.9] Auto-Apply: Rechtsklick bei pending Entities');
+                this.drawingTools.applyEntities();
+                return;
+            }
+
             const worldPos = this.renderer.screenToWorld(e.offsetX, e.offsetY);
             const contour = this.renderer.findContourAtPoint(worldPos.x, worldPos.y);
-            
+
             if (contour) {
                 this.showContextMenu(contour, worldPos, e.clientX, e.clientY);
             } else {
