@@ -374,7 +374,7 @@ html, body {
 .ribbon-sm-stack {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 2px;
 }
 
 /* Ribbon inline controls */
@@ -429,8 +429,6 @@ html, body {
 }
 
 .ribbon-btn-mini {
-    min-height: 26px;
-    height: auto;
     padding: 2px 8px;
     border: 1px solid var(--ribbon-border);
     background: var(--panel-input-bg);
