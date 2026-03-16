@@ -1,17 +1,18 @@
 /**
- * CeraCUT Drawing Tools Extension V1.3
+ * CeraCUT Drawing Tools Extension V1.4
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
+ * V1.4: Hatch-Bereichsklick — Point-in-Polygon statt Linien-Distanz (Industrie-Standard)
  * V1.3: Hatch-Fix — Toast-Feedback, Panel-Refresh nach Hatch-Klick
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatchfix
+ * Build: 20260316-hatcharea
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
  *   - geometry.js (SplineUtils)
- *   - cam-contour.js (CamContour — Hatch-Property)
- *   - canvas-renderer.js (findContourAtPoint)
+ *   - geometry-ops.js (GeometryOps.pointInPolygon — Hatch-Bereichsklick)
+ *   - cam-contour.js (CamContour — Hatch-Property, getArea)
  *
  * Laden: NACH advanced-tools.js, VOR app.js
  */
@@ -873,10 +874,10 @@ class HatchTool extends BaseTool {
 
     start() {
         const patternLabel = { solid: 'Solid', lines: 'Linien', cross: 'Kreuz', dots: 'Punkte' };
-        this.cmd?.setPrompt(`HATCH — Geschlossene Kontur anklicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
-        this.cmd?.log('▧ Schraffur: Kontur anklicken → Füllung anwenden', 'info');
+        this.cmd?.setPrompt(`HATCH — IN geschlossenen Bereich klicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
+        this.cmd?.log('▧ Schraffur: IN einen geschlossenen Bereich klicken → Füllung anwenden', 'info');
         this.cmd?.log('   Optionen: S=Solid  L=Linien  C=Kreuz  D=Punkte', 'info');
-        console.log('[HatchTool V1.3] gestartet, Pattern=' + this.pattern);
+        console.log('[HatchTool V1.4] gestartet, Pattern=' + this.pattern);
     }
 
     acceptsOption(opt) { return ['S', 'L', 'C', 'D'].includes(opt); }
@@ -887,26 +888,50 @@ class HatchTool extends BaseTool {
         if (map[option]) {
             this.pattern = map[option];
             this.cmd?.log(`Pattern: ${labels[option]}`, 'info');
-            this.cmd?.setPrompt(`HATCH [${labels[option]}] — Geschlossene Kontur anklicken:`);
+            this.cmd?.setPrompt(`HATCH [${labels[option]}] — IN geschlossenen Bereich klicken:`);
             console.log(`[HatchTool V1.0] Pattern → ${this.pattern}`);
         }
+    }
+
+    /**
+     * V1.4: Bereichs-Klick — Point-in-Polygon statt Linien-Distanz.
+     * Findet die kleinste geschlossene Kontur, die den Klickpunkt umschließt.
+     */
+    _findEnclosingContour(point) {
+        const contours = this.manager.app?.contours;
+        if (!contours?.length) return null;
+        if (typeof GeometryOps === 'undefined' || !GeometryOps.pointInPolygon) return null;
+
+        const lm = this.manager.app?.layerManager;
+        const candidates = [];
+
+        for (const c of contours) {
+            if (!c.isClosed || c.isReference) continue;
+            if (!c.points || c.points.length < 3) continue;
+            // Unsichtbare Layer überspringen
+            if (lm) {
+                const ld = lm.getLayer(c.layer || '0');
+                if (ld && !ld.visible) continue;
+            }
+            if (GeometryOps.pointInPolygon(point, c.points)) {
+                candidates.push(c);
+            }
+        }
+
+        if (candidates.length === 0) return null;
+
+        // Kleinste Fläche = innerste Kontur
+        candidates.sort((a, b) => a.getArea() - b.getArea());
+        return candidates[0];
     }
 
     handleClick(point) {
         const renderer = this.manager.renderer;
         if (!renderer) return;
 
-        const contour = renderer.findContourAtPoint(point.x, point.y);
+        const contour = this._findEnclosingContour(point);
         if (!contour) {
-            this.cmd?.log('Keine Kontur getroffen', 'warning');
-            return;
-        }
-        if (!contour.isClosed) {
-            this.cmd?.log('Nur geschlossene Konturen können schraffiert werden', 'warning');
-            return;
-        }
-        if (contour.isReference) {
-            this.cmd?.log('Referenz-Kontur kann nicht schraffiert werden', 'warning');
+            this.cmd?.log('Kein geschlossener Bereich getroffen — klicke IN eine Kontur', 'warning');
             return;
         }
 
@@ -934,7 +959,7 @@ class HatchTool extends BaseTool {
         }
 
         this.cmd?.log(`✔ Schraffur [${this.pattern}] → ${contour.name}`, 'success');
-        console.log(`[HatchTool V1.3] ✔ ${this.pattern} → ${contour.name}, hatch=`, contour.hatch);
+        console.log(`[HatchTool V1.4] ✔ ${this.pattern} → ${contour.name}, hatch=`, contour.hatch);
         renderer.render();
 
         // V1.3: Toast-Feedback + Properties-Panel-Refresh
@@ -943,14 +968,15 @@ class HatchTool extends BaseTool {
 
         // Continuous Mode — bereit für nächste Kontur
         const patternLabel = { solid: 'Solid', lines: 'Linien', cross: 'Kreuz', dots: 'Punkte' };
-        this.cmd?.setPrompt(`HATCH [${patternLabel[this.pattern]}] — Nächste Kontur (ESC=Beenden):`);
+        this.cmd?.setPrompt(`HATCH [${patternLabel[this.pattern]}] — Nächsten Bereich klicken (ESC=Beenden):`);
     }
 
     handleMouseMove(point) {
         const renderer = this.manager.renderer;
         if (!renderer) return;
 
-        const hovered = renderer.findContourAtPoint(point.x, point.y);
+        // V1.4: Bereichs-Hover statt Linien-Distanz
+        const hovered = this._findEnclosingContour(point);
         if (hovered !== renderer.hoveredContour) {
             renderer.hoveredContour = hovered;
             renderer.render();

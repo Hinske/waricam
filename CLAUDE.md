@@ -204,7 +204,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.5** | Topologie (disc/hole/reference/slit), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export) |
 | **Drawing Tools** | `drawing-tools.js` | **V2.5** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool (Snap, CAM-Vererbung) |
-| **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.3** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, Toast+Panel-Refresh) |
+| **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.4** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, Bereichsklick Point-in-Polygon) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.4** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
 | **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
@@ -498,7 +498,7 @@ CeraCUT/CeraCUT V6.5 - Build 20260316-hatchfix
   snap-manager: V1.3 (20260315-bugfix35)
   geometry-ops: V2.4 (20260315-bugfix35)
   drawing-tools: V2.5 (20260315-bugfix35)
-  drawing-tools-ext: V1.3 (20260316-hatchfix)
+  drawing-tools-ext: V1.4 (20260316-hatcharea)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)
   layer-manager: V1.0 (20260215-2200)
