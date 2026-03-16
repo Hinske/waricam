@@ -1772,12 +1772,29 @@
                 const panel = document.getElementById(panelId);
                 if (!trigger || !panel) return;
 
+                // Ribbon-Panel: position:fixed um overflow:hidden zu umgehen
+                const isRibbon = triggerId === 'ribbon-layer-trigger';
+
                 trigger.addEventListener('click', () => {
                     // Alle anderen Panels schließen
                     document.querySelectorAll('.layer-dropdown-panel.open').forEach(p => {
-                        if (p !== panel) p.classList.remove('open');
+                        if (p !== panel) { p.classList.remove('open'); p.style.position = ''; p.style.left = ''; p.style.top = ''; p.style.width = ''; }
                     });
+                    const wasOpen = panel.classList.contains('open');
                     panel.classList.toggle('open');
+                    if (!wasOpen && isRibbon) {
+                        // Position aus Trigger-BBox berechnen
+                        const rect = trigger.getBoundingClientRect();
+                        panel.style.position = 'fixed';
+                        panel.style.left = rect.left + 'px';
+                        panel.style.top = rect.bottom + 'px';
+                        panel.style.width = Math.max(rect.width, 180) + 'px';
+                    } else if (wasOpen && isRibbon) {
+                        panel.style.position = '';
+                        panel.style.left = '';
+                        panel.style.top = '';
+                        panel.style.width = '';
+                    }
                 });
 
                 panel.addEventListener('click', (e) => {
@@ -1803,6 +1820,7 @@
                     origApp.layerManager.setActive(layerName);
                     origApp._moveSelectedContoursToLayer(layerName);
                     panel.classList.remove('open');
+                    if (isRibbon) { panel.style.position = ''; panel.style.left = ''; panel.style.top = ''; panel.style.width = ''; }
                 });
             }
             setupLayerDropdown('ribbon-layer-trigger', 'ribbon-layer-panel');
@@ -1811,7 +1829,10 @@
             // Click außerhalb → Panel schließen
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.layer-dropdown-wrap')) {
-                    document.querySelectorAll('.layer-dropdown-panel.open').forEach(p => p.classList.remove('open'));
+                    document.querySelectorAll('.layer-dropdown-panel.open').forEach(p => {
+                        p.classList.remove('open');
+                        p.style.position = ''; p.style.left = ''; p.style.top = ''; p.style.width = '';
+                    });
                 }
             });
 

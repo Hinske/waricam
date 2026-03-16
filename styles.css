@@ -277,7 +277,8 @@ html, body {
     display: flex;
     align-items: stretch;
     padding: 0;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
     flex-shrink: 0;
 }
 
