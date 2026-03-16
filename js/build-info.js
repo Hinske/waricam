@@ -1,24 +1,24 @@
 /**
  * CeraCUT Build Info V6.1
  * Version: V6.1
- * Last Modified: 2026-03-15, 23:59 MEZ
- * Build: 20260315-intarsia20
+ * Last Modified: 2026-03-16, 12:00 MEZ
+ * Build: 20260316-leadfix
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
     version: '6.1',
-    build: '20260315-intarsia20',
-    date: '2026-03-15',
-    time: '23:59 MEZ',
+    build: '20260316-leadfix',
+    date: '2026-03-16',
+    time: '12:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
-        'cam-contour':        { version: '5.1', build: '20260315-clearance' },
-        'canvas-renderer':    { version: '3.19', build: '20260315-arcfix' },
+        'cam-contour':        { version: '5.2', build: '20260316-leadfix' },
+        'canvas-renderer':    { version: '3.20', build: '20260316-leadfix' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -214,7 +214,9 @@ const CERACUT_BUILD = {
         'V6.1: Intarsien-Lead-Profil (builtin-intarsia) — lineare Leads fuer saubere Intarsien-Kanten',
         'V6.1: Offset-Richtung Fix — NEG nach aussen (+offset), POS nach innen (-offset)',
         'V6.1: Beide-Button — POS+NEG gleichzeitig als ueberlagerte Vorschau (Orange/Blau)',
-        'V6.1: Live-Regeneration bei Gap-Aenderung (debounced 200ms) und Undo/Redo'
+        'V6.1: Live-Regeneration bei Gap-Aenderung (debounced 200ms) und Undo/Redo',
+        'V6.1: Lead-Platzierung — Corner-Penalty (×0.4) + Flat-Segment-Bonus (bis ×1.5) für organische Konturen (cam-contour V5.2)',
+        'V6.1: Lead-Visualisierung — Text-Labels entfernt, Pfeil am Kontureintritt, breitere Leads, grössere Pfeile (canvas-renderer V3.20)'
     ],
     
     print() {

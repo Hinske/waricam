@@ -1,5 +1,5 @@
 /**
- * CeraCUT V3.19 - Canvas Renderer
+ * CeraCUT V3.20 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
  * V3.19: Arc-Lead Rendering Fix — gekürzte Arcs Polylinien-Fallback, breitere Linear-Dashes
@@ -102,7 +102,7 @@ class CanvasRenderer {
     static LINE_WIDTH = {
         BASE: 1.2,
         KERF: 2.0,
-        LEAD: 2.0,
+        LEAD: 2.5,
         OVERCUT: 2.5,
         HOVER: 2.0,
         MICROJOINT: 4.0,
@@ -110,7 +110,7 @@ class CanvasRenderer {
     };
 
     static MARKER_SIZE = {
-        ARROW: 6,
+        ARROW: 8,
         OVERCUT_ARROW: 4,
         PIERCE_POINT: 3,
         START_TRIANGLE: 6,
@@ -1097,7 +1097,6 @@ class CanvasRenderer {
         // "On geometry" -> kein sichtbarer Lead
         if (leadPath.type === 'on_geometry') {
             this.drawPierceSymbol(ctx, leadPath.piercingPoint, this.colors.leadIn, 'on_geometry');
-            this._drawLeadTypeLabel(ctx, leadPath.piercingPoint, 'OG', this.colors.leadIn);
             return;
         }
 
@@ -1128,14 +1127,10 @@ class CanvasRenderer {
         // Pierce-Punkt
         this.drawPierceSymbol(ctx, pierce, color, 'pierce');
 
-        // Typ-Label am Pierce-Punkt
-        const label = this._getLeadTypeLabel(leadPath.type);
-        this._drawLeadTypeLabel(ctx, pierce, label, color);
-
-        // Richtungspfeil auf ~60% des Pfades
-        const arrowIdx = Math.min(Math.floor(pts.length * 0.6), pts.length - 1);
-        const prevIdx = Math.max(arrowIdx - 1, 0);
-        const ax = pts[arrowIdx].x, ay = pts[arrowIdx].y;
+        // V3.20: Richtungspfeil am Kontureintritt (letzter Punkt)
+        const entryIdx = pts.length - 1;
+        const prevIdx = Math.max(entryIdx - 1, 0);
+        const ax = pts[entryIdx].x, ay = pts[entryIdx].y;
         const angle = Math.atan2(ay - pts[prevIdx].y, ax - pts[prevIdx].x);
         this.drawSmallArrow(ctx, ax, ay, angle, color);
     }

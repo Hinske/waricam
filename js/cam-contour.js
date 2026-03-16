@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.1 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.2 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -632,6 +632,53 @@ class CamContour {
     }
 
     /**
+     * V5.2: Flat-Segment-Bonus — bevorzugt Startpunkte auf langen geraden Abschnitten.
+     * Misst den Geradenlauf (Winkelabweichung < threshold) in beide Richtungen.
+     * @returns {number} Bonus 0..0.5 (0 = keine Gerade, 0.5 = lange Gerade ≥40mm)
+     */
+    _calcFlatSegmentBonus(idx, points, n) {
+        const threshold = 10 * Math.PI / 180; // 10° max Abweichung
+
+        // Winkel am Kandidatenpunkt prüfen
+        const pPrev = points[(idx - 1 + n) % n];
+        const pCurr = points[idx];
+        const pNext = points[(idx + 1) % n];
+        const angleIn = Math.atan2(pCurr.y - pPrev.y, pCurr.x - pPrev.x);
+        const angleOut = Math.atan2(pNext.y - pCurr.y, pNext.x - pCurr.x);
+        let deviation = Math.abs(angleOut - angleIn);
+        if (deviation > Math.PI) deviation = 2 * Math.PI - deviation;
+        if (deviation > threshold) return 0;
+
+        // Geradenlauf in beide Richtungen messen
+        let runLength = Math.hypot(pNext.x - pPrev.x, pNext.y - pPrev.y);
+        const maxSteps = 20;
+
+        // Vorwärts
+        for (let s = 1; s < maxSteps; s++) {
+            const a = points[(idx + s) % n];
+            const b = points[(idx + s + 1) % n];
+            const segAngle = Math.atan2(b.y - a.y, b.x - a.x);
+            let diff = Math.abs(segAngle - angleOut);
+            if (diff > Math.PI) diff = 2 * Math.PI - diff;
+            if (diff > threshold) break;
+            runLength += Math.hypot(b.x - a.x, b.y - a.y);
+        }
+
+        // Rückwärts
+        for (let s = 1; s < maxSteps; s++) {
+            const a = points[(idx - s + n) % n];
+            const b = points[(idx - s - 1 + n) % n];
+            const segAngle = Math.atan2(b.y - a.y, b.x - a.x);
+            let diff = Math.abs(segAngle - angleIn);
+            if (diff > Math.PI) diff = 2 * Math.PI - diff;
+            if (diff > threshold) break;
+            runLength += Math.hypot(b.x - a.x, b.y - a.y);
+        }
+
+        return Math.min(0.5, runLength / 40);
+    }
+
+    /**
      * V4.5: IGEMS Slot 4 — Alternativ-Lead-In berechnen.
      * Sichert/restauriert Primär-Parameter, verwendet Alt-Parameter temporär.
      * Typisch: Linear, kurz (3mm), flacher Winkel (5°) — Blind-Lead-Stil.
@@ -1105,14 +1152,14 @@ class CamContour {
                     // Lead-In nach Rotation neu holen und als rotiert markieren
                     const rotatedLead = this.getLeadInPath();
                     if (rotatedLead) rotatedLead.isRotated = true;
-                    console.log(`[CamContour V5.1] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
+                    console.log(`[CamContour V5.2] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
                 } else {
                     // ── Strategy B: Dog-Leg Routing ──
                     const dogLeg = this._tryDogLegLeadIn(neighbors, safetyMargin);
                     if (dogLeg) {
                         this._cachedLeadInPath = dogLeg;
                         leadInModified = true;
-                        console.log(`[CamContour V5.1] Lead-Routing B: Dog-Leg für ${this.name}`);
+                        console.log(`[CamContour V5.2] Lead-Routing B: Dog-Leg für ${this.name}`);
                     } else {
                         // Kein Routing möglich → konventionelles Shortening
                         for (const nb of neighbors) {
@@ -1142,7 +1189,7 @@ class CamContour {
 
         const modified = leadInModified || leadOutModified;
         if (modified) {
-            console.log(`[CamContour V5.1] Multi-Collision: Lead angepasst für ${this.name}`);
+            console.log(`[CamContour V5.2] Multi-Collision: Lead angepasst für ${this.name}`);
         }
         return modified;
     }
@@ -1312,9 +1359,10 @@ class CamContour {
             const testLead = this.getLeadInPath();
             if (testLead?.points?.length >= 2 && !testLead.isFallbackCenterPierce) {
                 const score = this._calcClearanceScore(testLead.points, neighbors, margin);
-                // Corner-Bonus: Ecken bekommen 20% Bonus auf Score
+                // Corner-Penalty + Flat-Segment-Bonus (V5.2)
                 const isCorner = corners.some(c => c.index === idx);
-                const adjustedScore = isCorner ? score * 1.2 : score;
+                const flatBonus = this._calcFlatSegmentBonus(idx, origPoints, n);
+                const adjustedScore = isCorner ? score * 0.4 : score * (1.0 + flatBonus);
 
                 if (adjustedScore > bestScore && score > margin) {
                     bestScore = adjustedScore;
@@ -1330,7 +1378,7 @@ class CamContour {
             this._rotationCount = bestRotation;
             this.invalidate();
             this.startPointIndex = 0;
-            console.log(`[CamContour V5.1] Clearance-Scored: idx=${bestIdx}, score=${bestScore.toFixed(1)}mm`);
+            console.log(`[CamContour V5.2] Clearance-Scored: idx=${bestIdx}, score=${bestScore.toFixed(1)}mm`);
             return true;
         }
 
@@ -1529,7 +1577,7 @@ class CamContour {
             }
         }
         if (totalModified > 0) {
-            console.log(`[CamContour V5.1] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
+            console.log(`[CamContour V5.2] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
         }
         return totalModified;
     }

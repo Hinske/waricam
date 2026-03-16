@@ -4,7 +4,143 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Letzte Aktualisierung:** 2026-03-16
 > **Version:** V6.1
-> **Build:** 20260315-intarsia20
+> **Build:** 20260316-leadfix
+
+---
+
+## ⚠️ PFLICHT-REGELN — Bei JEDER Code-Aenderung einhalten!
+
+Diese Regeln sind NICHT optional. Sie MUESSEN bei jeder Aenderung vollstaendig abgearbeitet werden.
+
+### Checkliste: Nach JEDER Code-Aenderung
+
+- [ ] **1. `build-info.js`** — Modul-Version hochzaehlen + Build-Timestamp aktualisieren (YYYYMMDD-tag)
+- [ ] **2. Datei-Header** — Version, Last Modified, Build im geaenderten Modul aktualisieren
+- [ ] **3. `index.html`** — `?v=` Cache-Busting-Parameter hochzaehlen fuer geaenderte Script-Tags
+- [ ] **4. Console-Logs** — Versions-Prefix in Debug-Logs aktualisieren (z.B. `[Pipeline V3.3]`)
+- [ ] **5. `CLAUDE.md`** — Modul-Tabelle + Sync-Pruefung aktualisieren bei Versions-Bumps
+- [ ] **6. git commit** — Kurze, deutsche Commit-Message (das "Warum")
+- [ ] **7. git push** — Sofort, ohne Rueckfrage
+
+### Checkliste: Bei neuem Tool / geaendertem Shortcut
+
+- [ ] **1. `constants.js`** — Eintrag in `TOOL_TOOLTIPS` (label, tip, shortcut, group)
+- [ ] **2. Allgemeine Shortcuts** → `GENERAL_SHORTCUTS` in `constants.js`
+- [ ] **3. Maus/Trackpad** → `MOUSE_SHORTCUTS` in `constants.js`
+- [ ] Das genuegt — Tooltip und F1-Dialog werden automatisch generiert
+
+### Checkliste: Bei User-Korrektur
+
+- [ ] **1. `tasks/lessons.md`** — Fehler, Root Cause, Regel dokumentieren
+- [ ] **2. Alle obigen Punkte** ebenfalls abarbeiten
+
+### Bekannte Fallen — VOR dem Coden lesen!
+
+| Falle | Symptom | Loesung |
+|-------|---------|---------|
+| Browser-Cache | Code geaendert, Verhalten gleich | Cache-Busting `?v=` hochzaehlen |
+| PropertyChange ohne Render | Wert korrekt, UI zeigt alten Stand | `_refreshAfterUndoRedo()` nach undo/redo |
+| Slider ohne Snapshot | Undo springt auf falschen Wert | `_captureSnapshot()` beim ersten `input`-Event |
+| Import auf Undo-Stack | STRG+Z loescht alles | Import = Snapshot, NICHT Command |
+| forEach ohne Group | Jede Kontur einzeln undo-bar | `beginGroup()` / `endGroup()` |
+| FunctionCommand auf Stack.push | Execute wird nicht aufgerufen | Nur wenn Aktion BEREITS ausgefuehrt |
+| Neues Tool ohne Tooltip | Button hat keinen Hilfetext, fehlt im F1-Dialog | Eintrag in `TOOL_TOOLTIPS` (constants.js) |
+
+### Implementierungs-Phasen — IMMER einhalten
+
+**Phase 0** (Besprechen) → **Phase 1** (Design) → **Phase 2** (Code) → **Phase 3** (Verifikation)
+
+Nie direkt zu Phase 2 springen. Bei nicht-trivialen Aufgaben (3+ Schritte) Plan Mode verwenden.
+
+---
+
+## Strategische Roadmap & Architektur-Ziele
+
+Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refactorings. Bei Architektur-Entscheidungen sollen diese langfristigen Ziele berücksichtigt werden.
+
+### 1. Code-Hygiene & Stabilitaet
+* **Runtime-Guards im Geometrie-Kernel:** `assertFinite()`-Helper in `geometry.js` und
+  `geometry-ops.js` an kritischen Rechenpfaden (Normalisierung, Division, Arc-Berechnung).
+  Faengt NaN-Bugs dort ab wo sie entstehen — ohne TypeScript-Migration.
+* **Modul-Ladereihenfolge dokumentieren:** Die 35+ Script-Tags in `index.html` haben implizite
+  Abhaengigkeiten. Kommentarblock in der Script-Sektion soll die Abhaengigkeitskette explizit
+  machen. Bundler-Migration bei Bedarf evaluieren.
+* **DXF-Parser Stress-Tests:** Grosse Praxis-DXFs (>5000 Entities) als Test-Suite in `Examples/`
+  sammeln. Parser-Performance ist seit V3.7 (Deque) gut, aber Regressionen sollen auffallen.
+
+### 2. Offene Kernaufgaben (Kurzfristige Prio 1)
+* **Praxis-Validierung:**
+  * Generierten MPF/SPF-Code auf der echten Maschine testen (Kollisionspruefung).
+  * `cost-calculator.js` mit realen CeraJet-Maschinendaten kalibrieren.
+  * BLF-Nesting mit realen Praxis-Szenarien verproben.
+* **Koordinatensystem:** Konflikt der 90-Grad-Drehung (Darstellung im Browser vs. reales
+  Maschinen-Koordinatensystem) aufloesen.
+
+### 3. Zukünftige Feature-Roadmap (Enterprise-Niveau)
+* **Material- & Technologie-Datenbank:** Ausbau der `cerajet-engine.js`. Statt starrer Prozentwerte soll die Software Vorschubgeschwindigkeiten, Ramping, Abrasivfluss und Pumpendruck dynamisch anhand der Parameter "Materialart" und "Materialdicke" berechnen.
+* **True-Shape Nesting:** Erweiterung des aktuellen BLF-Algorithmus (Bounding-Box) zu formtreuem Verschachteln, sodass kleine Bauteile in die Restgitter-Ausschnitte (Holes) großer Bauteile platziert werden können.
+* **Tip-Up Avoidance (Kollisionsvermeidung):** Erweiterung des `toolpath-simulator.js` und der Lead-Routings. Der Schneidkopf soll im Eilgang (G00) intelligent um bereits geschnittene Teile herumgeführt werden, um Kollisionen mit aufgestellten Bauteilen im Wasserbecken zu vermeiden.
+* **PDF-Rüstblatt (Setup Sheet):** Generierung eines Export-Dokuments für den Maschinenbediener mit allen relevanten Job-Daten (Nullpunkt-Position, Brutto-Plattengröße, geschätzte Laufzeit, Anzahl der Piercings).
+
+---
+
+## Workflow Orchestration
+
+### 1. Plan Node Default
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
+### 3. Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
+### 4. Verification Before Done
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+---
+
+## Task Management
+
+1. **Plan First:** Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan:** Check in before starting implementation
+3. **Track Progress:** Mark items complete as you go
+4. **Explain Changes:** High-level summary at each step
+5. **Document Results:** Add review section to `tasks/todo.md`
+6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
+
+---
+
+## Core Principles
+
+- **Simplicity First:** Make every change as simple as possible. Impact minimal code.
+- **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact:** Changes should only touch what's necessary. Avoid introducing bugs.
+
 
 ---
 
@@ -35,8 +171,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 | Beschreibung | Pfad |
 |--------------|------|
-| Lokal (Windows) | `G:\Meine Ablage\Cerasell\Projekte\CAM Software\ceraCUT\` |
-| Server (Linux) | `/home/CNC/ceraCUT/` |
+| Server (Linux) | `/home/ceraCUT/` |
 
 ---
 
@@ -45,7 +180,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | Feld | Wert |
 |------|------|
 | Name | CeraCUT / CeraCUT |
-| Version | **V6.1** — Build 20260315-intarsia20 (2026-03-15, 23:59 MEZ) |
+| Version | **V6.1** — Build 20260316-leadfix (2026-03-16, 12:00 MEZ) |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -60,10 +195,10 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.9** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table |
-| **CAMContour** | `cam-contour.js` | **V5.1** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Clearance-Scored Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
+| **CAMContour** | `cam-contour.js` | **V5.2** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.19** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay, Arc-Lead Polylinien-Fallback |
+| **Renderer** | `canvas-renderer.js` | **V3.20** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay, Entry-Pfeil |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -130,10 +265,10 @@ ceraCUT/
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
-│   ├── cam-contour.js                 ← Kontur-Klasse V5.1 (Clearance-Scored Leads)
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.2 (Corner-Penalty, Flat-Bonus)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.19 (Arc-Lead Fix)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.20 (Entry-Pfeil, keine Labels)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.5 (Safety-Guards)
@@ -312,36 +447,12 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 ## Konventionen
 
-**Versions-Pflege bei jeder Code-Aenderung:**
-1. `build-info.js` → Modul-Version + Build-Timestamp (YYYYMMDD-HHMM MEZ)
-2. Datei-Header → Version, Last Modified, Build
-3. `index.html` → `?v=` Cache-Busting hochzaehlen
-4. Console-Logs → Versions-Prefix aktualisieren
-5. `CLAUDE.md` → Modul-Tabelle aktualisieren bei Versions-Bumps
-6. System-Anweisungen liegen in `.claude/` (nicht in Git)
-
-**Tooltip-Pflege bei neuem Tool / geaendertem Shortcut:**
-1. `constants.js` → Eintrag in `TOOL_TOOLTIPS` hinzufuegen/aendern (label, tip, shortcut, group)
-2. Das genuegt — Tooltip auf dem Button und F1-Hilfe-Dialog werden automatisch generiert
-3. Allgemeine Shortcuts (Strg+X etc.) → `GENERAL_SHORTCUTS` in `constants.js`
-4. Maus/Trackpad-Hinweise → `MOUSE_SHORTCUTS` in `constants.js`
-5. Button in `index.html` braucht nur `data-tool="XX"` — kein `data-tip` von Hand setzen
-
 **Code-Stil:** Deutsch (Kommentare, Doku), Optional Chaining, kategorisierte Logs
 
-**Implementierung:** Phase 0 (Besprechen) → Phase 1 (Design) → Phase 2 (Code) → Phase 3 (Verifikation)
+**System-Anweisungen:** liegen in `.claude/` (nicht in Git)
 
-**Bekannte Fallen:**
-
-| Falle | Symptom | Loesung |
-|-------|---------|---------|
-| Browser-Cache | Code geaendert, Verhalten gleich | Cache-Busting `?v=` hochzaehlen |
-| PropertyChange ohne Render | Wert korrekt, UI zeigt alten Stand | `_refreshAfterUndoRedo()` nach undo/redo |
-| Slider ohne Snapshot | Undo springt auf falschen Wert | `_captureSnapshot()` beim ersten `input`-Event |
-| Import auf Undo-Stack | STRG+Z loescht alles | Import = Snapshot, NICHT Command |
-| forEach ohne Group | Jede Kontur einzeln undo-bar | `beginGroup()` / `endGroup()` |
-| FunctionCommand auf Stack.push | Execute wird nicht aufgerufen | Nur wenn Aktion BEREITS ausgefuehrt |
-| Neues Tool ohne Tooltip | Button hat keinen Hilfetext, fehlt im F1-Dialog | Eintrag in `TOOL_TOOLTIPS` (constants.js) |
+> **Hinweis:** Versions-Pflege, Tooltip-Pflege, Fallen und Implementierungs-Phasen
+> stehen oben im Abschnitt "PFLICHT-REGELN".
 
 ---
 
@@ -373,13 +484,13 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 Console-Ausgabe beim Laden:
 ```
-CeraCUT/CeraCUT V6.1 - Build 20260315-intarsia20
+CeraCUT/CeraCUT V6.1 - Build 20260316-leadfix
 [BUILD] Modules:
   dxf-parser: V3.9 (20260316-layertable)
   geometry: V2.9 (20260128-0645)
   pipeline: V3.2 (20260315-bugfix35)
-  cam-contour: V5.1 (20260315-clearance)
-  canvas-renderer: V3.19 (20260315-arcfix)
+  cam-contour: V5.2 (20260316-leadfix)
+  canvas-renderer: V3.20 (20260316-leadfix)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.5 (20260315-safety)
   command-line: V1.2 (20260315-ux)
@@ -419,89 +530,4 @@ CeraCUT/CeraCUT V6.1 - Build 20260315-intarsia20
 
 ---
 
-## Strategische Roadmap & Architektur-Ziele
 
-Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refactorings. Bei Architektur-Entscheidungen sollen diese langfristigen Ziele berücksichtigt werden.
-
-### 1. Code-Hygiene & Stabilitaet
-* **Runtime-Guards im Geometrie-Kernel:** `assertFinite()`-Helper in `geometry.js` und
-  `geometry-ops.js` an kritischen Rechenpfaden (Normalisierung, Division, Arc-Berechnung).
-  Faengt NaN-Bugs dort ab wo sie entstehen — ohne TypeScript-Migration.
-* **Modul-Ladereihenfolge dokumentieren:** Die 35+ Script-Tags in `index.html` haben implizite
-  Abhaengigkeiten. Kommentarblock in der Script-Sektion soll die Abhaengigkeitskette explizit
-  machen. Bundler-Migration bei Bedarf evaluieren.
-* **DXF-Parser Stress-Tests:** Grosse Praxis-DXFs (>5000 Entities) als Test-Suite in `Examples/`
-  sammeln. Parser-Performance ist seit V3.7 (Deque) gut, aber Regressionen sollen auffallen.
-
-### 2. Offene Kernaufgaben (Kurzfristige Prio 1)
-* **Praxis-Validierung:**
-  * Generierten MPF/SPF-Code auf der echten Maschine testen (Kollisionspruefung).
-  * `cost-calculator.js` mit realen CeraJet-Maschinendaten kalibrieren.
-  * BLF-Nesting mit realen Praxis-Szenarien verproben.
-* **Koordinatensystem:** Konflikt der 90-Grad-Drehung (Darstellung im Browser vs. reales
-  Maschinen-Koordinatensystem) aufloesen.
-
-### 3. Zukünftige Feature-Roadmap (Enterprise-Niveau)
-* **Material- & Technologie-Datenbank:** Ausbau der `cerajet-engine.js`. Statt starrer Prozentwerte soll die Software Vorschubgeschwindigkeiten, Ramping, Abrasivfluss und Pumpendruck dynamisch anhand der Parameter "Materialart" und "Materialdicke" berechnen.
-* **True-Shape Nesting:** Erweiterung des aktuellen BLF-Algorithmus (Bounding-Box) zu formtreuem Verschachteln, sodass kleine Bauteile in die Restgitter-Ausschnitte (Holes) großer Bauteile platziert werden können.
-* **Tip-Up Avoidance (Kollisionsvermeidung):** Erweiterung des `toolpath-simulator.js` und der Lead-Routings. Der Schneidkopf soll im Eilgang (G00) intelligent um bereits geschnittene Teile herumgeführt werden, um Kollisionen mit aufgestellten Bauteilen im Wasserbecken zu vermeiden.
-* **PDF-Rüstblatt (Setup Sheet):** Generierung eines Export-Dokuments für den Maschinenbediener mit allen relevanten Job-Daten (Nullpunkt-Position, Brutto-Plattengröße, geschätzte Laufzeit, Anzahl der Piercings).
-
----
-
-## Workflow Orchestration
-
-### 1. Plan Node Default
-- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-- If something goes sideways, STOP and re-plan immediately — don't keep pushing
-- Use plan mode for verification steps, not just building
-- Write detailed specs upfront to reduce ambiguity
-
-### 2. Subagent Strategy
-- Use subagents liberally to keep main context window clean
-- Offload research, exploration, and parallel analysis to subagents
-- For complex problems, throw more compute at it via subagents
-- One task per subagent for focused execution
-
-### 3. Self-Improvement Loop
-- After ANY correction from the user: update `tasks/lessons.md` with the pattern
-- Write rules for yourself that prevent the same mistake
-- Ruthlessly iterate on these lessons until mistake rate drops
-- Review lessons at session start for relevant project
-
-### 4. Verification Before Done
-- Never mark a task complete without proving it works
-- Diff behavior between main and your changes when relevant
-- Ask yourself: "Would a staff engineer approve this?"
-- Run tests, check logs, demonstrate correctness
-
-### 5. Demand Elegance (Balanced)
-- For non-trivial changes: pause and ask "is there a more elegant way?"
-- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
-- Skip this for simple, obvious fixes — don't over-engineer
-- Challenge your own work before presenting it
-
-### 6. Autonomous Bug Fixing
-- When given a bug report: just fix it. Don't ask for hand-holding
-- Point at logs, errors, failing tests — then resolve them
-- Zero context switching required from the user
-- Go fix failing CI tests without being told how
-
----
-
-## Task Management
-
-1. **Plan First:** Write plan to `tasks/todo.md` with checkable items
-2. **Verify Plan:** Check in before starting implementation
-3. **Track Progress:** Mark items complete as you go
-4. **Explain Changes:** High-level summary at each step
-5. **Document Results:** Add review section to `tasks/todo.md`
-6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
-
----
-
-## Core Principles
-
-- **Simplicity First:** Make every change as simple as possible. Impact minimal code.
-- **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.
-- **Minimal Impact:** Changes should only touch what's necessary. Avoid introducing bugs.
