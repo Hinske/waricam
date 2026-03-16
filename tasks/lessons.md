@@ -36,3 +36,21 @@
 - **Root Cause:** Layer-Sichtbarkeit war nur an `contours[].layer` gekoppelt, nicht an die TABLES-Layer-Definition.
 - **Regel:** Importierte DXF-Layer (`dxfResult.layers`) immer im Dropdown anzeigen — wie AutoCAD. "Leer" heißt nicht "unwichtig" (Layer kann Entities haben die nicht als Konturen importiert werden).
 - **Betroffene Module:** `app.js` (`_updateLayerUI`)
+
+### [2026-03-16] Disc-Füllung: worldToScreen nicht in world-transformiertem ctx verwenden
+- **Fehler:** Disc-Fill war unsichtbar/falsch positioniert. Die Füllung nutzte `worldToScreen()` obwohl der Canvas-Kontext bereits `translate()+scale()` hatte → Doppel-Transformation.
+- **Root Cause:** `drawContour()` wird innerhalb eines world-transformierten `ctx` aufgerufen (translate+scale in render()). `drawPath()` nutzt korrekt World-Koordinaten direkt, aber der Disc-Fill-Code nutzte `worldToScreen()` → Screen-Koordinaten durch World-Transform = komplett falsche Position.
+- **Regel:** Innerhalb von `ctx.save()/translate()/scale()` Blöcken NIE `worldToScreen()` verwenden. Direkte World-Koordinaten nutzen — wie `drawPath()` es tut. `worldToScreen()` ist nur für Code der AUSSERHALB des Transforms zeichnet (z.B. UI-Overlays, Order-Numbers).
+- **Betroffene Module:** `canvas-renderer.js` — gilt für jeden neuen Fill/Path-Code in `drawContour()`
+
+### [2026-03-16] Hit-Test Erweiterungen können Click-Routing brechen
+- **Fehler:** Click-Selektion von Konturen funktionierte nicht mehr, nachdem `_hitTestStartTriangle` um Pierce-Punkt-Check erweitert wurde.
+- **Root Cause:** Erweiterter Hit-Test fing zu viele Klicks ab → `isDraggingStartPoint=true` auf mousedown → obwohl mouseup es zurücksetzt, wurde bei jedem Micro-Move `setStartPoint()` aufgerufen statt Selection. Pierce-Punkte können weit von der Kontur entfernt liegen und fremde Klicks abfangen.
+- **Regel:** Hit-Test-Bereiche konservativ halten. Erweiterungen immer gegen Click-Routing testen (Selektion, Kontextmenu, Window-Selection). Neue Hit-Targets nur für Cursor-Feedback (mousemove), nicht für Drag-Initiation (mousedown), es sei denn das Verhalten ist eindeutig gewünscht.
+- **Betroffene Module:** `canvas-renderer.js` (`_hitTestStartTriangle`, mousedown-Handler)
+
+### [2026-03-16] Waste-Side-Normal: Centroid-Methode versagt bei nicht-konvexen Konturen
+- **Fehler:** Lead zeigte bei Disc nach innen statt nach außen (Waste-Seite).
+- **Root Cause:** `_getWasteSideNormal` nutzte Centroid-Richtung zur Bestimmung der Normalenseite. Bei nicht-konvexen Polygonen kann der Centroid außerhalb liegen oder die Richtung zum Centroid an bestimmten Punkten falsch sein.
+- **Regel:** Für Innen/Außen-Bestimmung die Shoelace-Formel (Vorzeichen der Fläche = Windungsrichtung) verwenden statt Centroid. `Geometry.getSignedArea() > 0` = CW, Links-Normale zeigt einwärts. Robust für alle Polygon-Formen.
+- **Betroffene Module:** `cam-contour.js` (`_getWasteSideNormal`)
