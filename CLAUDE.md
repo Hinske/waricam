@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> **Letzte Aktualisierung:** 2026-03-15
+> **Letzte Aktualisierung:** 2026-03-16
 > **Version:** V6.1
 > **Build:** 20260315-intarsia20
 
@@ -63,7 +63,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **CAMContour** | `cam-contour.js` | **V5.1** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Clearance-Scored Rotation+Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.18** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay |
+| **Renderer** | `canvas-renderer.js` | **V3.19** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay, Arc-Lead Polylinien-Fallback |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -133,7 +133,7 @@ ceraCUT/
 │   ├── cam-contour.js                 ← Kontur-Klasse V5.1 (Clearance-Scored Leads)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.18 (Intarsien-Overlay)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.19 (Arc-Lead Fix)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.5 (Safety-Guards)
@@ -379,7 +379,7 @@ CeraCUT/CeraCUT V6.1 - Build 20260315-intarsia20
   geometry: V2.9 (20260128-0645)
   pipeline: V3.2 (20260315-bugfix35)
   cam-contour: V5.1 (20260315-clearance)
-  canvas-renderer: V3.18 (20260315-intarsia20)
+  canvas-renderer: V3.19 (20260315-arcfix)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.5 (20260315-safety)
   command-line: V1.2 (20260315-ux)

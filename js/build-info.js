@@ -235,6 +235,8 @@ const CERACUT_BUILD = {
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         CERACUT_BUILD.print();
+        const dtEl = document.getElementById('build-datetime');
+        if (dtEl) dtEl.textContent = '(' + CERACUT_BUILD.date + ', ' + CERACUT_BUILD.time + ')';
     });
 }
 
