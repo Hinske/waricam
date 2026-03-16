@@ -1,6 +1,7 @@
 /**
- * CeraCUT Drawing Tools Extension V1.5
+ * CeraCUT Drawing Tools Extension V1.6
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
+ * V1.6: Hatch Farbpalette — Floating Toolbar mit 8 AutoCAD-Farben + Pattern-Auswahl
  * V1.5: Hatch als eigenständige CamContour (cuttingMode='none') — AutoCAD-konform
  *        Live-Preview beim Hover, separate Selektion/Löschung/Undo
  * V1.4: Hatch-Bereichsklick — Point-in-Polygon statt Linien-Distanz (Industrie-Standard)
@@ -8,7 +9,7 @@
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
  * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatchentity
+ * Build: 20260316-hatchpalette
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
@@ -864,6 +865,18 @@ class OverlapBreakTool extends BaseTool {
 // ════════════════════════════════════════════════════════════════════════════
 
 class HatchTool extends BaseTool {
+    // V1.6: AutoCAD-Farbpalette
+    static HATCH_COLORS = [
+        { name: 'ByLayer', color: null,      css: 'linear-gradient(135deg, #666 25%, #999 50%, #666 75%)' },
+        { name: 'Rot',     color: '#FF0000', css: '#FF0000' },
+        { name: 'Gelb',    color: '#FFFF00', css: '#FFFF00' },
+        { name: 'Grün',    color: '#00FF00', css: '#00FF00' },
+        { name: 'Cyan',    color: '#00FFFF', css: '#00FFFF' },
+        { name: 'Blau',    color: '#0000FF', css: '#0000FF' },
+        { name: 'Magenta', color: '#FF00FF', css: '#FF00FF' },
+        { name: 'Weiß',    color: '#FFFFFF', css: '#FFFFFF' }
+    ];
+
     constructor(manager) {
         super(manager);
         this.state = 'select';
@@ -871,8 +884,9 @@ class HatchTool extends BaseTool {
         this.angle = 45;
         this.spacing = 3;
         this.opacity = 0.25;
-        this.color = null;       // null = Konturfarbe
-        this._previewContour = null;  // V1.5: Live-Preview Kontur
+        this.color = null;       // null = Konturfarbe (ByLayer)
+        this._previewContour = null;
+        this._paletteEl = null;  // V1.6: Farbpalette DOM-Element
     }
 
     start() {
@@ -880,7 +894,118 @@ class HatchTool extends BaseTool {
         this.cmd?.setPrompt(`HATCH — IN geschlossenen Bereich klicken [${patternLabel[this.pattern]}] [S/L/C/D]:`);
         this.cmd?.log('▧ Schraffur: IN einen geschlossenen Bereich klicken → Füllung anwenden', 'info');
         this.cmd?.log('   Optionen: S=Solid  L=Linien  C=Kreuz  D=Punkte', 'info');
-        console.log('[HatchTool V1.5] gestartet, Pattern=' + this.pattern);
+        console.log('[HatchTool V1.6] gestartet, Pattern=' + this.pattern);
+        this._showColorPalette();
+    }
+
+    // ═══ V1.6: Floating Farbpalette ═══
+
+    _showColorPalette() {
+        this._removeColorPalette();
+        const canvasArea = document.getElementById('canvas-area');
+        if (!canvasArea) return;
+
+        const bar = document.createElement('div');
+        bar.id = 'hatch-color-palette';
+        bar.style.cssText = `
+            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 4px; padding: 4px 8px;
+            background: rgba(15,15,26,0.92); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px; z-index: 100; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        `;
+
+        // Pattern-Buttons
+        const patterns = [
+            { key: 'solid', label: '■', tip: 'Solid (S)' },
+            { key: 'lines', label: '╱', tip: 'Linien (L)' },
+            { key: 'cross', label: '╳', tip: 'Kreuz (C)' },
+            { key: 'dots',  label: '⠿', tip: 'Punkte (D)' }
+        ];
+        for (const p of patterns) {
+            const btn = document.createElement('button');
+            btn.textContent = p.label;
+            btn.title = p.tip;
+            btn.dataset.pattern = p.key;
+            btn.style.cssText = `
+                width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 4px; cursor: pointer; font-size: 14px;
+                display: flex; align-items: center; justify-content: center;
+                background: ${p.key === this.pattern ? 'var(--accent-blue, #3b82f6)' : 'rgba(255,255,255,0.06)'};
+                color: #fff;
+            `;
+            btn.addEventListener('click', () => {
+                this.pattern = p.key;
+                this._updatePaletteState();
+                this.cmd?.log(`Pattern: ${p.tip}`, 'info');
+                console.log(`[HatchTool V1.6] Pattern → ${this.pattern}`);
+            });
+            bar.appendChild(btn);
+        }
+
+        // Separator
+        const sep = document.createElement('div');
+        sep.style.cssText = 'width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 4px;';
+        bar.appendChild(sep);
+
+        // Farb-Buttons
+        for (const c of HatchTool.HATCH_COLORS) {
+            const btn = document.createElement('button');
+            btn.title = c.name;
+            btn.dataset.hatchColor = c.color || 'bylayer';
+            btn.style.cssText = `
+                width: 24px; height: 24px; border-radius: 4px; cursor: pointer;
+                border: 2px solid ${this.color === c.color ? '#fff' : 'rgba(255,255,255,0.25)'};
+                background: ${c.css};
+                ${c.color === null ? 'background-size: 8px 8px;' : ''}
+            `;
+            btn.addEventListener('click', () => {
+                this.color = c.color;
+                this._updatePaletteState();
+                this.cmd?.log(`Farbe: ${c.name}`, 'info');
+                console.log(`[HatchTool V1.6] Farbe → ${c.name} (${c.color})`);
+            });
+            bar.appendChild(btn);
+        }
+
+        canvasArea.appendChild(bar);
+        this._paletteEl = bar;
+    }
+
+    _updatePaletteState() {
+        if (!this._paletteEl) return;
+        // Pattern-Buttons highlighten
+        this._paletteEl.querySelectorAll('[data-pattern]').forEach(btn => {
+            const active = btn.dataset.pattern === this.pattern;
+            btn.style.background = active ? 'var(--accent-blue, #3b82f6)' : 'rgba(255,255,255,0.06)';
+        });
+        // Farb-Buttons highlighten
+        this._paletteEl.querySelectorAll('[data-hatch-color]').forEach(btn => {
+            const val = btn.dataset.hatchColor;
+            const active = (val === 'bylayer' && this.color === null) || val === this.color;
+            btn.style.borderColor = active ? '#fff' : 'rgba(255,255,255,0.25)';
+        });
+        // Preview aktualisieren wenn Kontur unter Cursor
+        if (this._previewContour && this.manager.renderer) {
+            this.manager.renderer._hatchPreview = {
+                contour: this._previewContour,
+                hatch: {
+                    pattern: this.pattern,
+                    color: this.color,
+                    angle: this.angle,
+                    spacing: this.spacing,
+                    opacity: Math.min(this.opacity, 0.15)
+                }
+            };
+            this.manager.renderer.render();
+        }
+    }
+
+    _removeColorPalette() {
+        if (this._paletteEl) {
+            this._paletteEl.remove();
+            this._paletteEl = null;
+        }
     }
 
     acceptsOption(opt) { return ['S', 'L', 'C', 'D'].includes(opt); }
@@ -1060,6 +1185,7 @@ class HatchTool extends BaseTool {
 
     finish() {
         this._previewContour = null;
+        this._removeColorPalette();
         if (this.manager.renderer) {
             this.manager.renderer._hatchPreview = null;
         }

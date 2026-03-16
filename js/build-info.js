@@ -1,17 +1,17 @@
 /**
- * CeraCUT Build Info V6.6
- * Version: V6.6
- * Last Modified: 2026-03-16, 20:00 MEZ
- * Build: 20260316-hatchentity
+ * CeraCUT Build Info V6.7
+ * Version: V6.7
+ * Last Modified: 2026-03-16, 21:00 MEZ
+ * Build: 20260316-undofix
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.6',
-    build: '20260316-hatchentity',
+    version: '6.7',
+    build: '20260316-undofix',
     date: '2026-03-16',
-    time: '20:00 MEZ',
+    time: '21:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
@@ -25,14 +25,14 @@ const CERACUT_BUILD = {
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
         'drawing-tools':      { version: '2.5', build: '20260315-bugfix35' },
-        'drawing-tools-ext':  { version: '1.5', build: '20260316-hatchentity' },
+        'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.0', build: '20260215-2200' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.6', build: '20260316-hatchentity' },
+        'app':                { version: '6.7', build: '20260316-undofix' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -246,7 +246,8 @@ const CERACUT_BUILD = {
         'V6.6: Hatch Live-Preview — halbtransparente Vorschau beim Hover über Konturen',
         'V6.6: Pipeline V3.6 — Hatch-Konturen von Topologie/Slit/Offset ausgeschlossen',
         'V6.6: Renderer V3.28 — Hatch-Konturen als Hintergrund-Layer, gestrichelte Boundary bei Hover/Select',
-        'V6.6: Sinumerik PP V1.6 — Hatch-Konturen aus CNC-Export gefiltert'
+        'V6.6: Sinumerik PP V1.6 — Hatch-Konturen aus CNC-Export gefiltert',
+        'V6.6: HatchTool V1.6 — Floating Farbpalette (8 AutoCAD-Farben + ByLayer) + Pattern-Buttons'
     ],
     
     print() {
