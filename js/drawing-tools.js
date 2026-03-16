@@ -12,7 +12,7 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
- * V2.6: Enter/Rechtsklick-Bestätigung für RectangleTool + CircleTool (wie LineTool)
+ * V2.6: Enter/Rechtsklick beendet Tool (AutoCAD-Stil), Layerfarbe für Entities + Rubber-Band
  * V2.3: AutoCAD Compliance — Aliases (E/REC/CO/RO/MI/SC/TR/PL/F/CH/EX), Continuous Mode, Previous Selection
  * V2.2: FIX _entityToDxfFormat — points+isClosed statt startX/closed (Linien waren nicht selektierbar)
  * V2.0: Tier 2 Modification Tools, Always-Active ToolManager
@@ -268,6 +268,10 @@ class DrawingToolManager {
 
     /** Entity hinzufügen (wird von Zeichentools aufgerufen) */
     addEntity(entity) {
+        // V2.6: Layerfarbe beim Erstellen speichern
+        if (!entity.color) {
+            entity.color = this.app?.layerManager?.getActiveLayer()?.color || '#FFFFFF';
+        }
         this.entities.push(entity);
         this.snapManager?.setDrawingEntities(this.entities);
         this.commandLine?.log(`✓ ${entity.type} erstellt`, 'success');
@@ -493,8 +497,9 @@ class DrawingToolManager {
     _drawEntity(ctx, entity, scale) {
         const lineWidth = 1.5 / scale;
 
+        // V2.6: Entity-Farbe (Layerfarbe beim Erstellen gespeichert)
         ctx.save();
-        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeStyle = entity.color || '#FFFFFF';
         ctx.lineWidth = lineWidth;
         ctx.setLineDash([]);
 
@@ -585,8 +590,11 @@ class DrawingToolManager {
         const rb = this.rubberBand;
         const lineWidth = 1.0 / scale;
 
+        // V2.6: Rubber-Band in Layerfarbe (halbtransparent)
+        const layerHex = this.app?.layerManager?.getActiveLayer()?.color || '#FFFFFF';
+        const r = parseInt(layerHex.slice(1, 3), 16), g = parseInt(layerHex.slice(3, 5), 16), b = parseInt(layerHex.slice(5, 7), 16);
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.6)`;
         ctx.lineWidth = lineWidth;
         ctx.setLineDash([4 / scale, 4 / scale]);
 
@@ -2893,23 +2901,10 @@ class CircleTool extends BaseTool {
     }
 
     finish() {
-        if (this.center || this.p1) {
-            // Teilzustand: Reset für neuen Kreis (wie LineTool)
-            this.center = null;
-            this.p1 = null;
-            this.p2 = null;
-            this._ttrObj1 = null;
-            this._ttrObj2 = null;
-            this._ttrClickPt1 = null;
-            this._ttrClickPt2 = null;
-            this.subMode = 'center';
-            this.mode = 'radius';
-            this.manager.rubberBand = null;
-            this.cmd?.setPrompt('KREIS — Mittelpunkt angeben [2P/3P/TTR] (Enter/Rechtsklick=Fertig):');
-            this.manager.renderer?.render();
-            return;
-        }
-        // Kein Zustand: Tool beenden
+        // Enter/Rechtsklick = Tool beenden (AutoCAD-Stil)
+        this.center = null;
+        this.p1 = null;
+        this.p2 = null;
         this.manager.rubberBand = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;
@@ -2987,15 +2982,8 @@ class RectangleTool extends BaseTool {
     }
 
     finish() {
-        if (this.corner1) {
-            // Teilzustand: Reset für neues Rechteck (wie LineTool)
-            this.corner1 = null;
-            this.manager.rubberBand = null;
-            this.cmd?.setPrompt('RECHTECK — Erste Ecke angeben (Enter/Rechtsklick=Fertig):');
-            this.manager.renderer?.render();
-            return;
-        }
-        // Kein Zustand: Tool beenden
+        // Enter/Rechtsklick = Tool beenden (AutoCAD-Stil)
+        this.corner1 = null;
         this.manager.rubberBand = null;
         this.manager._setDefaultPrompt();
         this.manager.activeTool = null;
