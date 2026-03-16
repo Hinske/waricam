@@ -195,10 +195,10 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Geometry** | `geometry.js` | **V2.9** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace |
 | **GeometryOps** | `geometry-ops.js` | **V2.4** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap |
 | **DXF-Parser** | `dxf-parser.js` | **V3.9** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT/HATCH, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table |
-| **CAMContour** | `cam-contour.js` | **V5.2** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride |
+| **CAMContour** | `cam-contour.js` | **V5.3** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.20** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay, Entry-Pfeil |
+| **Renderer** | `canvas-renderer.js` | **V3.21** | Canvas-Rendering, Hit-Testing, Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung, Intarsien-Overlay, Entry-Pfeil, Lead-Drag Pierce-Hit |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.5** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
@@ -265,10 +265,10 @@ ceraCUT/
 │   ├── geometry.js                    ← Geometrie-Kernel V2.9
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.2
-│   ├── cam-contour.js                 ← Kontur-Klasse V5.2 (Corner-Penalty, Flat-Bonus)
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.3 (Flat-Preferred autoPlace)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.20 (Entry-Pfeil, keine Labels)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.21 (Lead-Drag Pierce-Hit)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.5 (Safety-Guards)
@@ -489,8 +489,8 @@ CeraCUT/CeraCUT V6.1 - Build 20260316-leadfix
   dxf-parser: V3.9 (20260316-layertable)
   geometry: V2.9 (20260128-0645)
   pipeline: V3.2 (20260315-bugfix35)
-  cam-contour: V5.2 (20260316-leadfix)
-  canvas-renderer: V3.20 (20260316-leadfix)
+  cam-contour: V5.3 (20260316-flatplace)
+  canvas-renderer: V3.21 (20260316-flatplace)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.5 (20260315-safety)
   command-line: V1.2 (20260315-ux)

@@ -9,7 +9,7 @@
 
 const CERACUT_BUILD = {
     version: '6.1',
-    build: '20260316-leadfix',
+    build: '20260316-flatplace',
     date: '2026-03-16',
     time: '12:00 MEZ',
 
@@ -17,8 +17,8 @@ const CERACUT_BUILD = {
         'dxf-parser':         { version: '3.9', build: '20260316-layertable' },
         'geometry':           { version: '2.9', build: '20260128-0645' },
         'pipeline':           { version: '3.2', build: '20260315-bugfix35' },
-        'cam-contour':        { version: '5.2', build: '20260316-leadfix' },
-        'canvas-renderer':    { version: '3.20', build: '20260316-leadfix' },
+        'cam-contour':        { version: '5.3', build: '20260316-flatplace' },
+        'canvas-renderer':    { version: '3.21', build: '20260316-flatplace' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.5', build: '20260315-safety' },
         'command-line':       { version: '1.2', build: '20260315-ux' },
@@ -216,7 +216,10 @@ const CERACUT_BUILD = {
         'V6.1: Beide-Button — POS+NEG gleichzeitig als ueberlagerte Vorschau (Orange/Blau)',
         'V6.1: Live-Regeneration bei Gap-Aenderung (debounced 200ms) und Undo/Redo',
         'V6.1: Lead-Platzierung — Corner-Penalty (×0.4) + Flat-Segment-Bonus (bis ×1.5) für organische Konturen (cam-contour V5.2)',
-        'V6.1: Lead-Visualisierung — Text-Labels entfernt, Pfeil am Kontureintritt, breitere Leads, grössere Pfeile (canvas-renderer V3.20)'
+        'V6.1: Lead-Visualisierung — Text-Labels entfernt, Pfeil am Kontureintritt, breitere Leads, grössere Pfeile (canvas-renderer V3.20)',
+        'V6.1: Lead-Platzierung — autoPlace bevorzugt Flat-Segments statt Ecken (cam-contour V5.3)',
+        'V6.1: Arc-Leads — Degradierung zu Linear nur noch bei >120° (war >90°), Arc bleibt auf flachen Segmenten erhalten',
+        'V6.1: Lead-Drag — Hit-Test auf Pierce-Punkt erweitert + größerer Klickbereich (canvas-renderer V3.21)'
     ],
     
     print() {

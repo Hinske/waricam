@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.20 - Canvas Renderer
+ * CeraCUT V3.21 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.21: Lead-Drag Hit-Test erweitert — Pierce-Punkt + größerer Hit-Bereich
  * V3.19: Arc-Lead Rendering Fix — gekürzte Arcs Polylinien-Fallback, breitere Linear-Dashes
  * V3.16: Notebook-Navigation — Trackpad-Pan (Zwei-Finger), Pinch-to-Zoom, Space+Drag Pan
  * V3.13: Visuelle Lead-Differenzierung (Cyan/Rot/Grün/Gelb/Magenta nach Zustand)
@@ -11,7 +12,7 @@
  * V3.11: Image Underlay Rendering
  * V3.5: Ghost-Preview + Window-Selection Rendering
  * V3.4: Drawing-Overlay + SnapManager-Rendering
- * Last Modified: 2026-03-15 MEZ
+ * Last Modified: 2026-03-16 MEZ
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -1674,7 +1675,7 @@ class CanvasRenderer {
 
     _hitTestStartTriangle(worldPos) {
         if (!this.contours) return null;
-        const hitRadius = CanvasRenderer.MARKER_SIZE.START_TRIANGLE / this.scale * 2;
+        const hitRadius = CanvasRenderer.MARKER_SIZE.START_TRIANGLE / this.scale * 3; // V3.21: größerer Hit-Bereich
         for (const contour of this.contours) {
             if (contour.isReference || (!contour.isClosed && contour.cuttingMode !== 'slit')) continue;
             let startPoint = contour.points[0];
@@ -1685,8 +1686,19 @@ class CanvasRenderer {
                 }
             } catch(e) {}
             if (!startPoint) continue;
-            const dist = Math.hypot(worldPos.x - startPoint.x, worldPos.y - startPoint.y);
-            if (dist < hitRadius) return contour;
+
+            // V3.21: Hit-Test auf Startpunkt (Entry) UND Pierce-Punkt (⊕)
+            const distStart = Math.hypot(worldPos.x - startPoint.x, worldPos.y - startPoint.y);
+            if (distStart < hitRadius) return contour;
+
+            // Auch Pierce-Punkt prüfen (Anfang des Lead-Pfads)
+            try {
+                const leadIn = contour.getLeadInPath?.();
+                if (leadIn?.piercingPoint) {
+                    const distPierce = Math.hypot(worldPos.x - leadIn.piercingPoint.x, worldPos.y - leadIn.piercingPoint.y);
+                    if (distPierce < hitRadius) return contour;
+                }
+            } catch(e) {}
         }
         return null;
     }

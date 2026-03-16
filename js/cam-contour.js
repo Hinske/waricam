@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.2 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.3 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -10,7 +10,9 @@
  * V4.8: Lead-Routing Strategien A (Rotation) + B (Dog-Leg), isRotated/isAlternative Flags
  * V5.0: leadManualOverride Property für Profil-Batch-Schutz
  * V5.1: Clearance-Scored Lead Placement — beste Position statt erste kollisionsfreie
- * Last Modified: 2026-03-15 UTC
+ * V5.2: Corner-Penalty + Flat-Segment-Bonus
+ * V5.3: autoPlace bevorzugt Flat-Segments, Arc-Degradierung nur >120°
+ * Last Modified: 2026-03-16 UTC
  */
 
 class CamContour {
@@ -393,10 +395,11 @@ class CamContour {
             this.leadInLength = this._calcDynamicLeadLength(entry, tangent, normal, pts);
         }
 
-        // CORNER DETECTION: An scharfen Ecken (>90°) Arc zu Linear degradieren
+        // CORNER DETECTION: Nur an sehr scharfen Ecken (>120°) Arc zu Linear degradieren
+        // V5.3: Threshold von 90° auf 120° erhöht — Arc-Leads werden seltener degradiert
         const cornerAngle = this._isAtCorner(pts);
         let effectiveType = this.leadInType;
-        if (cornerAngle > 90 && effectiveType === 'arc') {
+        if (cornerAngle > 120 && effectiveType === 'arc') {
             effectiveType = 'linear';
         }
 
@@ -429,7 +432,7 @@ class CamContour {
                 const altPath = this._tryAlternativeLeadIn(entry, tangent, normal, pts);
                 if (altPath && (!altPath.shortened || this._pathLength(altPath.points) > primaryLen)) {
                     leadPath = altPath;
-                    console.debug(`[CamContour V5.2] Alt-Lead: ${this.name} (${primaryLen.toFixed(1)}mm < 40% von ${requestedLen}mm)`);
+                    console.debug(`[CamContour V5.3] Alt-Lead: ${this.name} (${primaryLen.toFixed(1)}mm < 40% von ${requestedLen}mm)`);
                 }
             }
         }
@@ -440,7 +443,7 @@ class CamContour {
             if (finalLen < 0.5) {
                 leadPath = this._calcCenterPierceLeadIn(entry, pts);
                 leadPath.isFallbackCenterPierce = true;
-                console.debug(`[CamContour V5.2] Center-Pierce Fallback: ${this.name}`);
+                console.debug(`[CamContour V5.3] Center-Pierce Fallback: ${this.name}`);
             }
         }
 
@@ -854,10 +857,10 @@ class CamContour {
         // 2. Normale zur Verschnittseite
         const normal = this._getWasteSideNormal(exitPoint, exitTangent);
 
-        // 3. CORNER DETECTION: An scharfen Ecken (>90°) Linear erzwingen
+        // 3. CORNER DETECTION: Nur an sehr scharfen Ecken (>120°) Linear erzwingen
         const cornerAngle = this._isAtCorner(pts);
         let effectiveType = this.leadOutType;
-        if (cornerAngle > 90 && effectiveType === 'arc') {
+        if (cornerAngle > 120 && effectiveType === 'arc') {
             effectiveType = 'linear';
         }
 
@@ -1152,14 +1155,14 @@ class CamContour {
                     // Lead-In nach Rotation neu holen und als rotiert markieren
                     const rotatedLead = this.getLeadInPath();
                     if (rotatedLead) rotatedLead.isRotated = true;
-                    console.log(`[CamContour V5.2] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
+                    console.log(`[CamContour V5.3] Lead-Routing A: Startpunkt rotiert für ${this.name}`);
                 } else {
                     // ── Strategy B: Dog-Leg Routing ──
                     const dogLeg = this._tryDogLegLeadIn(neighbors, safetyMargin);
                     if (dogLeg) {
                         this._cachedLeadInPath = dogLeg;
                         leadInModified = true;
-                        console.log(`[CamContour V5.2] Lead-Routing B: Dog-Leg für ${this.name}`);
+                        console.log(`[CamContour V5.3] Lead-Routing B: Dog-Leg für ${this.name}`);
                     } else {
                         // Kein Routing möglich → konventionelles Shortening
                         for (const nb of neighbors) {
@@ -1189,7 +1192,7 @@ class CamContour {
 
         const modified = leadInModified || leadOutModified;
         if (modified) {
-            console.log(`[CamContour V5.2] Multi-Collision: Lead angepasst für ${this.name}`);
+            console.log(`[CamContour V5.3] Multi-Collision: Lead angepasst für ${this.name}`);
         }
         return modified;
     }
@@ -1378,7 +1381,7 @@ class CamContour {
             this._rotationCount = bestRotation;
             this.invalidate();
             this.startPointIndex = 0;
-            console.log(`[CamContour V5.2] Clearance-Scored: idx=${bestIdx}, score=${bestScore.toFixed(1)}mm`);
+            console.log(`[CamContour V5.3] Clearance-Scored: idx=${bestIdx}, score=${bestScore.toFixed(1)}mm`);
             return true;
         }
 
@@ -1577,7 +1580,7 @@ class CamContour {
             }
         }
         if (totalModified > 0) {
-            console.log(`[CamContour V5.2] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
+            console.log(`[CamContour V5.3] Lead-Routing: ${totalModified}/${contours.length} Leads angepasst`);
         }
         return totalModified;
     }
@@ -1618,56 +1621,86 @@ class CamContour {
     }
 
     autoPlaceStartPoint(allContours) {
-        if (!this.isClosed || !this.preferCorners) return;
+        if (!this.isClosed) return;
+
+        const n = this.points.length - 1; // Closed: letzter = erster
+        if (n < 4) return;
 
         const corners = Geometry.findCorners(this.points, this.cornerAngleThreshold);
-        if (corners.length === 0) return;
 
-        // Ohne Nachbarn: wie bisher, schärfste Ecke
-        if (!allContours || allContours.length < 2) {
-            corners.sort((a, b) => b.angle - a.angle);
-            if (corners[0].index > 0) this.setStartPoint(corners[0].point);
-            return;
+        // Kandidaten sammeln: Ecken + gleichverteilte Positionen (alle 5°)
+        const candidates = [];
+        for (const c of corners) {
+            if (c.index > 0 && c.index < n) candidates.push({ index: c.index, isCorner: true });
+        }
+        const step = Math.max(1, Math.round(n / 72));
+        for (let i = step; i < n; i += step) {
+            if (!candidates.some(c => c.index === i)) {
+                candidates.push({ index: i, isCorner: false });
+            }
         }
 
-        // Mit Nachbarn: Clearance-Score pro Ecke berechnen
-        const neighbors = this._getNeighborContours(allContours, 0.5);
-        if (neighbors.length === 0) {
-            corners.sort((a, b) => b.angle - a.angle);
-            if (corners[0].index > 0) this.setStartPoint(corners[0].point);
-            return;
-        }
+        if (candidates.length === 0) return;
 
-        let bestCorner = null;
-        let bestScore = -Infinity;
-
-        // Originalzustand sichern
         const origPoints = this.points.map(p => ({ x: p.x, y: p.y }));
         const origRotation = this._rotationCount;
 
-        for (const corner of corners) {
-            // Temporär an diese Ecke setzen
-            if (corner.index > 0) this.setStartPoint(corner.point);
+        // Nachbarn für Clearance-Scoring (falls vorhanden)
+        const neighbors = (allContours && allContours.length >= 2)
+            ? this._getNeighborContours(allContours, 0.5)
+            : [];
+
+        let bestIdx = -1;
+        let bestScore = -Infinity;
+        let bestPoints = null;
+        let bestRotation = origRotation;
+
+        for (const cand of candidates) {
+            // Punkte rotieren
+            const rotated = [];
+            for (let i = 0; i < n; i++) {
+                rotated.push(origPoints[(cand.index + i) % n]);
+            }
+            rotated.push({ x: rotated[0].x, y: rotated[0].y });
+            this.points = rotated;
+            this._rotationCount = origRotation + cand.index;
+            this.invalidate();
 
             const testLead = this.getLeadInPath();
-            if (testLead?.points?.length >= 2) {
-                const clearance = this._calcClearanceScore(testLead.points, neighbors, 0.5);
-                // Score = Clearance + Corner-Sharpness-Bonus (max 10% der Clearance)
-                const score = clearance + (corner.angle / 180) * clearance * 0.1;
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestCorner = corner;
+            if (testLead?.points?.length >= 2 && !testLead.isFallbackCenterPierce) {
+                // Clearance-Score (mit oder ohne Nachbarn)
+                const clearance = neighbors.length > 0
+                    ? this._calcClearanceScore(testLead.points, neighbors, 0.5)
+                    : 100; // Ohne Nachbarn: kein Clearance-Limit
+
+                // Flat-Segment-Bonus (V5.3): bevorzugt gerade Strecken
+                const flatBonus = this._calcFlatSegmentBonus(cand.index, origPoints, n);
+
+                // Corner-Penalty: Ecken werden abgewertet (×0.4)
+                const adjustedScore = cand.isCorner
+                    ? clearance * 0.4
+                    : clearance * (1.0 + flatBonus);
+
+                if (adjustedScore > bestScore) {
+                    bestScore = adjustedScore;
+                    bestIdx = cand.index;
+                    bestPoints = rotated.map(p => ({ x: p.x, y: p.y }));
+                    bestRotation = this._rotationCount;
                 }
             }
-
-            // Zurücksetzen
-            this.points = origPoints.map(p => ({ x: p.x, y: p.y }));
-            this._rotationCount = origRotation;
-            this.invalidate();
         }
 
-        if (bestCorner && bestCorner.index > 0) {
-            this.setStartPoint(bestCorner.point);
+        if (bestIdx >= 0) {
+            this.points = bestPoints;
+            this._rotationCount = bestRotation;
+            this.invalidate();
+            this.startPointIndex = 0;
+            console.debug(`[CamContour V5.3] autoPlace: idx=${bestIdx}, score=${bestScore.toFixed(1)}, flat-preferred`);
+        } else {
+            // Fallback: Original wiederherstellen
+            this.points = origPoints;
+            this._rotationCount = origRotation;
+            this.invalidate();
         }
     }
 
