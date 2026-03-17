@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.10 - Main Application
+ * CeraCUT V6.11 - Main Application
+ * V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle cycled durch überlappende Konturen
  * V6.10: Quick Wins — Snap-Modi-Statusbar, Locked-Layer Guard
  * V6.9: Auto-Apply Rechtsklick + fitToContent nur beim ersten Zeichnen (kein View-Sprung)
  * V6.8: Console Cleanup — Init-Logs auf console.debug, sauberer Startup-Output
@@ -91,7 +92,12 @@ class CeraCutApp {
         this.currentSnapPoint = null;
         
         this.startpointMode = false; // NEU: Startpunkt-Modus
-        
+
+        // V6.11: Cycle-Selection State
+        this._cyclePoint = null;    // Letzter Klickpunkt
+        this._cycleContours = [];   // Alle Konturen an diesem Punkt
+        this._cycleIndex = 0;       // Aktueller Index im Cycle
+
         // Kontext-Menü
         this.contextMenuContour = null;
         this.contextMenuPoint = null;
@@ -325,6 +331,7 @@ class CeraCutApp {
                 return;
             }
             // V3.5: Klick auf leere Fläche → Selektion aufheben (wenn kein Tool aktiv)
+            this._cyclePoint = null; // V6.11: Cycle-Reset
             this.contours.forEach(c => { c.isSelected = false; });
             this.renderer?.invalidateGrips?.();  // V3.10
             this.renderer?.render();
@@ -366,15 +373,34 @@ class CeraCutApp {
                 return;
             }
             
-            // V5.2: Additive Selektion — Klick addiert, Shift subtrahiert
+            // V5.2: Additive Selektion — Shift subtrahiert
             if (isShift) {
-                // Shift+Klick: Aus Selektion entfernen
+                // Shift+Klick: Aus Selektion entfernen (unverändert)
                 contour.isSelected = false;
+                this._cyclePoint = null; // Cycle-Reset bei Shift
             } else {
-                // Klick: Zur Selektion hinzufügen (ohne andere zu deselektieren)
-                contour.isSelected = true;
+                // V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle
+                const CYCLE_TOLERANCE = 5 / (this.renderer?.scale || 1); // 5px in World-Koordinaten
+                const isSameSpot = this._cyclePoint &&
+                    Math.hypot(worldPoint.x - this._cyclePoint.x, worldPoint.y - this._cyclePoint.y) < CYCLE_TOLERANCE;
+
+                if (isSameSpot && this._cycleContours.length > 1) {
+                    // Nächste Kontur im Cycle
+                    this._cycleIndex = (this._cycleIndex + 1) % this._cycleContours.length;
+                    const target = this._cycleContours[this._cycleIndex];
+                    this.contours.forEach(c => { c.isSelected = false; });
+                    target.isSelected = true;
+                    console.debug(`[App V6.11] Cycle-Selection: ${this._cycleIndex + 1}/${this._cycleContours.length}`);
+                } else {
+                    // Neuer Punkt — Cycle initialisieren
+                    this._cycleContours = this.renderer.findAllContoursAtPoint(worldPoint.x, worldPoint.y);
+                    this._cycleIndex = 0;
+                    this._cyclePoint = { x: worldPoint.x, y: worldPoint.y };
+                    // Normales Select: addieren
+                    contour.isSelected = true;
+                }
             }
-            this.renderer.invalidateGrips?.();  // V3.10: Grips aktualisieren
+            this.renderer.invalidateGrips?.();
             this.renderer.render();
             this.updateContourPanel();
         };

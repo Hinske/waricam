@@ -1,7 +1,7 @@
 # CAD-Verbesserungen — Roadmap zum AutoCAD-Clone
 
 > **Datum:** 2026-03-17
-> **Status:** Phase 1 Quick Wins umgesetzt (V6.10)
+> **Status:** Phase 1 Quick Wins (V6.10) + Cycle-Selection (V6.11)
 > **Kontext:** Umfassende Analyse aller CAD-Module vs. AutoCAD-Features
 
 ---
@@ -72,7 +72,7 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 - [ ] Visueller Separator zwischen Geometrie- vs. Property-Änderungen
 - **Dateien:** `index.html`, `undo-manager.js`, `app.js`
 
-### 2.5 Grid-Customization
+### 2.5 Grid-Customization (zurückgestellt)
 - [ ] Input-Feld für Grid-Größe (mm) im Ansicht-Tab
 - [ ] Presets: 1, 5, 10, 25, 50 mm
 - [ ] Grid-Toggle Shortcut sichtbar machen (G-Taste)
@@ -90,7 +90,7 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 - [ ] Ortho-Indikator im HUD wenn F8 aktiv
 - **Datei:** `dynamic-input.js`
 
-### 3.2 Match Properties Tool (MA)
+### 3.2 Match Properties Tool (MA) (zurückgestellt)
 - [ ] Quell-Kontur klicken → Eigenschaften übernehmen (Quality, Kerf, Lead, Material)
 - [ ] Auf Ziel-Konturen klicken → Properties anwenden
 - [ ] Continuous Mode bis ESC
@@ -114,10 +114,12 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 - [ ] localStorage-Persistenz
 - **Dateien:** `properties-panel.js`, `constants.js`
 
-### 3.6 Cycle-Selection bei Überlappung
-- [ ] Shift+Klick auf gleiche Stelle → nächste darunter liegende Kontur selektieren
-- [ ] Durchklick-Liste mit Index-Tracking
-- **Datei:** `canvas-renderer.js`
+### 3.6 Cycle-Selection bei Überlappung ✅ (V6.11)
+- [x] Wiederholter Klick auf gleiche Stelle → nächste darunter liegende Kontur selektieren
+- [x] `findAllContoursAtPoint()` sammelt alle Treffer (Kante + Fläche)
+- [x] Cycle-State in app.js (_cyclePoint, _cycleContours, _cycleIndex)
+- [x] 5px Toleranz, Reset bei Shift/Leerklick/anderem Punkt
+- **Dateien:** `canvas-renderer.js` V3.32, `app.js` V6.11
 
 ### 3.7 Vollbild-Fadenkreuz (optional)
 - [ ] Cursor-Crosshair über gesamten Canvas (AutoCAD-Style)
@@ -179,11 +181,16 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 - [ ] "Fix All" oder einzeln bestätigen
 - **Dateien:** `dxf-parser.js`, neuer Cleanup-Dialog
 
-### 5.4 Proaktive Fehler-Erkennung
-- [ ] Zu spitze Winkel für Wasserstrahl erkennen
-- [ ] Zu kleine Innenradien warnen
+### 5.4 Proaktive Fehler-Erkennung ⏳ (teilweise implementiert)
+- [x] Zu spitze Winkel für Wasserstrahl erkennen (<30° Warnung in Pipeline `validate()`)
+- [x] Warnung bei Gap < Kerf (kritisch)
+- [x] Warnung bei offenen Konturen ohne Slit
+- [x] Warnung bei Lead-Kollisionen
+- [x] Warnung bei Intarsia POS/NEG Mismatch
+- [ ] Zu kleine Innenradien warnen (< Kerf/2)
 - [ ] Selbstüberschneidungen markieren
 - [ ] Warnung bei nicht-schneidbaren Features
+- **Status:** Pipeline-Validation (Pre-Export) vorhanden, visuelle Markierung im Canvas fehlt
 - **Dateien:** `ceracut-pipeline.js`, `canvas-renderer.js`
 
 ### 5.5 Automatische Lead-Platzierung (KI-gestützt)
@@ -208,10 +215,10 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 
 ## Phase 6: Workflow-Verbesserungen
 
-### 6.1 Auto-Topology-Preview im CAD-Tab
-- [ ] Schon beim Zeichnen zeigen: Disc (blau) / Hole (rot) / offen (gelb)
-- [ ] Dezente Hintergrund-Färbung, kein vollständiger Pipeline-Lauf
-- **Dateien:** `canvas-renderer.js`, `ceracut-pipeline.js`
+### 6.1 Auto-Topology-Preview im CAD-Tab ✅ (bereits implementiert)
+- [x] Topologie-Farben im CAD-Tab: Disc (#00aaff), Hole (#ff6600), Reference (#555), Slit (#FFaa00)
+- [x] Farben werden in `drawContour()` basierend auf Topology-Typ angewendet
+- **Dateien:** `canvas-renderer.js` V3.31
 
 ### 6.2 Validation beim Zeichnen
 - [ ] Warnung bei offenen Konturen (Tooltip)
@@ -262,9 +269,9 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 | Modification Tools | 9/10 | Match Properties fehlt |
 | Dynamic Input | 6/10 | Read-Only, kein Tab-Wechsel |
 | Command-Line | 7/10 | History ✅, kein Auto-Complete |
-| Layer System | 7/10 | Kein Manager-Dialog, Locked-Layer-Guard ✅ |
-| Selection | 8/10 | Crossing ✅, kein Cycle |
+| Layer System | 9/10 | Manager-Dialog ✅, Drag-Reorder ✅, Locked-Layer-Guard ✅ |
+| Selection | 9/10 | Crossing ✅, Cycle ✅ |
 | Properties Panel | 5/10 | Nur im Kontextmenü |
 | Grid & Display | 8/10 | Nicht konfigurierbar |
 | Undo/Redo | 8/10 | Keine History-UI |
-| **Gesamt** | **7.6/10** | **UI-Tiefe & Discoverability** |
+| **Gesamt** | **7.8/10** | **UI-Tiefe & Discoverability** |

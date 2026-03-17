@@ -1,24 +1,24 @@
 /**
- * CeraCUT Build Info V6.10
- * Version: V6.10
+ * CeraCUT Build Info V6.11
+ * Version: V6.11
  * Last Modified: 2026-03-17 MEZ
- * Build: 20260317-quickwins
+ * Build: 20260317-cycleselect
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.10',
-    build: '20260317-quickwins',
+    version: '6.11',
+    build: '20260317-cycleselect',
     date: '2026-03-17',
-    time: '14:00 MEZ',
+    time: '16:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.7', build: '20260316-gapdetect' },
-        'canvas-renderer':    { version: '3.31', build: '20260317-quickwins' },
+        'canvas-renderer':    { version: '3.32', build: '20260317-cycleselect' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
@@ -32,7 +32,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.10', build: '20260317-quickwins' },
+        'app':                { version: '6.11', build: '20260317-cycleselect' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -248,6 +248,7 @@ const CERACUT_BUILD = {
         'V6.6: Renderer V3.28 — Hatch-Konturen als Hintergrund-Layer, gestrichelte Boundary bei Hover/Select',
         'V6.6: Sinumerik PP V1.6 — Hatch-Konturen aus CNC-Export gefiltert',
         'V6.6: HatchTool V1.6 — Floating Farbpalette (8 AutoCAD-Farben + ByLayer) + Pattern-Buttons',
+        'V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle cycled durch überlappende Konturen (app V6.11, canvas-renderer V3.32)',
         'V6.10: Command-Line History — ArrowUp/Down navigiert durch letzte Befehle (command-line V1.3)',
         'V6.10: Input-Validation-Feedback — rote Fehlermeldung bei ungültiger Eingabe statt Stille',
         'V6.10: Locked-Layer Selection — gesperrte Layer blockieren Hit-Test + Window-Selection (canvas-renderer V3.31, drawing-tools V2.8)',
