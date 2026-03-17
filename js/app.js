@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.8 - Main Application
+ * CeraCUT V6.10 - Main Application
+ * V6.10: Quick Wins — Snap-Modi-Statusbar, Locked-Layer Guard
  * V6.9: Auto-Apply Rechtsklick + fitToContent nur beim ersten Zeichnen (kein View-Sprung)
  * V6.8: Console Cleanup — Init-Logs auf console.debug, sauberer Startup-Output
  * V6.7: Undo-Fix — addDrawnEntities erstellt pro Kontur einen eigenen Undo-Step
@@ -167,7 +168,8 @@ class CeraCutApp {
         this.bindOrderEvents();
         this.bindTolerancePresets();  // Quick-Fix #5
         this.bindDrawingEvents();    // V3.4
-        
+        this._updateSnapModesDisplay();  // V6.10: Snap-Modi-Statusbar
+
         this.updateStepUI();
 
         // V5.6: Workspace wiederherstellen (async, non-blocking)
@@ -514,6 +516,7 @@ class CeraCutApp {
                 this.snapManager.enabledSnaps.center = on;
                 this.snapManager.enabledSnaps.intersection = on;
                 // nearest bleibt wie es ist (standardmäßig AUS)
+                this._updateSnapModesDisplay();
             }
         });
         
@@ -551,6 +554,27 @@ class CeraCutApp {
         });
     }
     
+    /** V6.10: Snap-Modi-Anzeige in Status-Bar aktualisieren */
+    _updateSnapModesDisplay() {
+        const el = document.getElementById('status-snap-modes');
+        if (!el || !this.snapManager) return;
+        const snaps = this.snapManager.enabledSnaps;
+        const abbr = [
+            { key: 'endpoint',      label: 'END' },
+            { key: 'midpoint',      label: 'MID' },
+            { key: 'center',        label: 'CEN' },
+            { key: 'geocenter',     label: 'GEO' },
+            { key: 'quadrant',      label: 'QUA' },
+            { key: 'intersection',  label: 'INT' },
+            { key: 'perpendicular', label: 'PER' },
+            { key: 'tangent',       label: 'TAN' },
+            { key: 'nearest',       label: 'NEA' }
+        ];
+        el.innerHTML = abbr.map(s =>
+            snaps[s.key] ? `<span class="snap-active">${s.label}</span>` : s.label
+        ).join(' ');
+    }
+
     toggleDrawMode() {
         if (!this.drawingTools) return;
         

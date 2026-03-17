@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.7
+ * CeraCUT Drawing & Modification Tools V2.8
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -12,6 +12,7 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
+ * V2.8: Locked-Layer Guard — gesperrte Layer von Window-Selection ausgeschlossen
  * V2.7: Auto-Apply pending Entities bei ESC/Enter/Rechtsklick ohne aktives Tool
  * V2.6: Enter/Rechtsklick beendet Tool (AutoCAD-Stil), Layerfarbe für Entities + Rubber-Band
  * V2.3: AutoCAD Compliance — Aliases (E/REC/CO/RO/MI/SC/TR/PL/F/CH/EX), Continuous Mode, Previous Selection
@@ -20,7 +21,7 @@
  * V1.1: handleRawInput für Linie/Rechteck/Polylinie
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
- * Last Modified: 2026-03-16 MEZ
+ * Last Modified: 2026-03-17 MEZ
  * Build: 20260316-autoapply
  */
 
@@ -370,8 +371,14 @@ class DrawingToolManager {
         }
 
         let count = 0;
+        const lm = this.app?.layerManager;
         this.app?.contours?.forEach(c => {
             if (c.isReference || !c.points || c.points.length < 2) return;
+            // V2.8: Gesperrte/unsichtbare Layer von Window-Selection ausschließen
+            if (lm) {
+                const ld = lm.getLayer(c.layer || '0');
+                if (ld && (!ld.visible || ld.locked)) return;
+            }
 
             if (isWindow) {
                 // Window: ALLE Punkte müssen im Rechteck liegen

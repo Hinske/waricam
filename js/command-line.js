@@ -1,12 +1,14 @@
 /**
- * CeraCUT Command Line V1.1
+ * CeraCUT Command Line V1.3
  * AutoCAD-style Command Line Interface
  * - Prompt-System für Zeichentools
  * - Koordinateneingabe (absolut + relativ)
  * - Shortcut-Routing (L, C, N, A, P + M, R, S, O, Shift+C, Shift+M)
- * - History
+ * - History + ArrowUp/Down Navigation
+ * - Input-Validation-Feedback (rote Fehlermeldung)
  * Created: 2026-02-13 MEZ
- * Build: 20260213-1200 MEZ
+ * Last Modified: 2026-03-17 MEZ
+ * Build: 20260317-quickwins
  */
 
 class CommandLine {
@@ -24,6 +26,12 @@ class CommandLine {
         this.history = [];
         this.maxHistory = 50;
 
+        // V1.3: Befehls-History für ArrowUp/Down Navigation
+        this.commandHistory = [];      // Eingegebene Befehle (Strings)
+        this.maxCommandHistory = 30;
+        this._historyIndex = -1;       // -1 = kein Browsen, 0 = neuester
+        this._savedInput = '';         // Eingabe vor ArrowUp gesichert
+
         // Callbacks
         this.onInput = options.onInput || null;        // (value: string) => void
         this.onShortcut = options.onShortcut || null;   // (key: string) => void
@@ -32,7 +40,7 @@ class CommandLine {
         this.onBackspace = options.onBackspace || null;  // () => void — Backspace Undo
 
         this._init();
-        console.debug('[CommandLine V1.0] ✅ Initialisiert');
+        console.debug('[CommandLine V1.3] ✅ Initialisiert');
     }
 
     _init() {
@@ -179,24 +187,46 @@ class CommandLine {
                 // Wenn kein Tool aktiv ist, prüfe auf Shortcut
                 if (!this.active) {
                     console.log('[CmdLine] onShortcut dispatch: value="' + value + '" (active=false!)');
+                    this._pushCommandHistory(value);
                     if (this.onShortcut) {
                         this.onShortcut(value.toUpperCase());
                     }
                     this.inputEl.value = '';
+                    this._historyIndex = -1;
                     return;
                 }
 
                 // Tool ist aktiv → Eingabe weiterleiten
+                // V1.3: Input-Validation — rote Fehlermeldung bei ungültiger Eingabe
+                const parsed = CommandLine.parseInput(value);
+                if (!parsed) {
+                    this.log(`Ungültige Eingabe: "${value}" — Erwartet: Koordinaten (100,50), relativ (@25,10) oder Distanz (25)`, 'error');
+                    this.inputEl.value = '';
+                    return;
+                }
+
                 console.log('[CmdLine] onInput dispatch: value="' + value + '", active=' + this.active);
+                this._pushCommandHistory(value);
                 this.log(`> ${value}`, 'input');
                 if (this.onInput) this.onInput(value);
                 this.inputEl.value = '';
+                this._historyIndex = -1;
                 break;
 
             case 'Escape':
                 e.preventDefault();
                 this.inputEl.value = '';
                 if (this.onEscape) this.onEscape();
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                this._navigateHistory(1);
+                break;
+
+            case 'ArrowDown':
+                e.preventDefault();
+                this._navigateHistory(-1);
                 break;
 
             case 'Backspace':
@@ -207,6 +237,50 @@ class CommandLine {
                 }
                 break;
         }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // V1.3: BEFEHLS-HISTORY NAVIGATION
+    // ════════════════════════════════════════════════════════════════
+
+    /** Befehl in History speichern */
+    _pushCommandHistory(cmd) {
+        if (!cmd || cmd.trim() === '') return;
+        const trimmed = cmd.trim();
+        // Duplikate am Ende vermeiden
+        if (this.commandHistory.length > 0 && this.commandHistory[0] === trimmed) return;
+        this.commandHistory.unshift(trimmed);  // Neueste vorne
+        if (this.commandHistory.length > this.maxCommandHistory) {
+            this.commandHistory.pop();
+        }
+    }
+
+    /** ArrowUp (+1) = älter, ArrowDown (-1) = neuer */
+    _navigateHistory(direction) {
+        if (this.commandHistory.length === 0) return;
+
+        if (this._historyIndex === -1 && direction === 1) {
+            // Erste ArrowUp-Taste: aktuelle Eingabe sichern
+            this._savedInput = this.inputEl.value;
+            this._historyIndex = 0;
+        } else {
+            this._historyIndex += direction;
+        }
+
+        // Zurück zur gespeicherten Eingabe
+        if (this._historyIndex < 0) {
+            this._historyIndex = -1;
+            this.inputEl.value = this._savedInput;
+            return;
+        }
+
+        // Am Ende der History stoppen
+        if (this._historyIndex >= this.commandHistory.length) {
+            this._historyIndex = this.commandHistory.length - 1;
+            return;
+        }
+
+        this.inputEl.value = this.commandHistory[this._historyIndex];
     }
 
     _renderHistory() {

@@ -1043,6 +1043,21 @@ html, body {
 
 .status-icon { width: 12px; height: 12px; }
 
+/* V6.10: Snap-Modi-Anzeige in der Status-Bar */
+.status-snap-modes {
+    font-size: 9px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.5px;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 200px;
+}
+.status-snap-modes .snap-active {
+    color: #ffff00;
+    font-weight: 600;
+}
+
 .status-spacer { flex: 1; }
 
 .status-label {

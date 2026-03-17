@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.30 - Canvas Renderer
+ * CeraCUT V3.31 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.31: Locked-Layer Guard — gesperrte Layer blockieren Hit-Test + Start-Triangle-Click
  * V3.30: Gap-Marker — visuelle Darstellung offener/heilbarer/geheilter Gaps (Kreis + Strichlinie)
  * V3.29: Disc-Füllung nur in CAM-Modi (nicht im CAD-Zeichenmodus)
  * V3.28: Hatch als eigenständige CamContour — cuttingMode='none' Rendering, Live-Preview
@@ -1867,10 +1868,10 @@ class CanvasRenderer {
         // V5.0: Rückwärts iterieren (AutoCAD-Konvention: zuletzt gezeichnet = oben)
         for (let ci = this.contours.length - 1; ci >= 0; ci--) {
             const contour = this.contours[ci];
-            // V3.11: Unsichtbare Layer überspringen
+            // V3.11: Unsichtbare Layer überspringen, V3.31: Gesperrte Layer blockieren
             if (lm) {
                 const ld = lm.getLayer(contour.layer || '0');
-                if (ld && !ld.visible) continue;
+                if (ld && (!ld.visible || ld.locked)) continue;
             }
             const points = contour.points;
             if (points && points.length >= 2) {
@@ -1905,7 +1906,7 @@ class CanvasRenderer {
                 if (!contour.points || contour.points.length < 3) continue;
                 if (lm) {
                     const ld = lm.getLayer(contour.layer || '0');
-                    if (ld && !ld.visible) continue;
+                    if (ld && (!ld.visible || ld.locked)) continue;
                 }
                 if (GeometryOps.pointInPolygon(point, contour.points)) {
                     candidates.push(contour);
@@ -1927,9 +1928,15 @@ class CanvasRenderer {
 
     _hitTestStartTriangle(worldPos) {
         if (!this.contours) return null;
+        const lm = this.app?.layerManager;
         const hitRadius = CanvasRenderer.MARKER_SIZE.START_TRIANGLE / this.scale * 2;
         for (const contour of this.contours) {
             if (contour.isReference || (!contour.isClosed && contour.cuttingMode !== 'slit')) continue;
+            // V3.31: Unsichtbare/gesperrte Layer überspringen
+            if (lm) {
+                const ld = lm.getLayer(contour.layer || '0');
+                if (ld && (!ld.visible || ld.locked)) continue;
+            }
             let startPoint = contour.points[0];
             try {
                 const kerf = contour.getKerfOffsetPolyline?.();

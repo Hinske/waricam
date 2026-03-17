@@ -1,30 +1,30 @@
 /**
- * CeraCUT Build Info V6.9
- * Version: V6.9
- * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-gapdetect
+ * CeraCUT Build Info V6.10
+ * Version: V6.10
+ * Last Modified: 2026-03-17 MEZ
+ * Build: 20260317-quickwins
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.9',
-    build: '20260316-gapdetect',
-    date: '2026-03-16',
-    time: '23:00 MEZ',
+    version: '6.10',
+    build: '20260317-quickwins',
+    date: '2026-03-17',
+    time: '14:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.7', build: '20260316-gapdetect' },
-        'canvas-renderer':    { version: '3.30', build: '20260316-gapdetect' },
+        'canvas-renderer':    { version: '3.31', build: '20260317-quickwins' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
-        'command-line':       { version: '1.2', build: '20260315-ux' },
+        'command-line':       { version: '1.3', build: '20260317-quickwins' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
-        'drawing-tools':      { version: '2.7', build: '20260316-autoapply' },
+        'drawing-tools':      { version: '2.8', build: '20260317-quickwins' },
         'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
@@ -32,7 +32,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.9', build: '20260316-undoclick' },
+        'app':                { version: '6.10', build: '20260317-quickwins' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -248,6 +248,10 @@ const CERACUT_BUILD = {
         'V6.6: Renderer V3.28 — Hatch-Konturen als Hintergrund-Layer, gestrichelte Boundary bei Hover/Select',
         'V6.6: Sinumerik PP V1.6 — Hatch-Konturen aus CNC-Export gefiltert',
         'V6.6: HatchTool V1.6 — Floating Farbpalette (8 AutoCAD-Farben + ByLayer) + Pattern-Buttons',
+        'V6.10: Command-Line History — ArrowUp/Down navigiert durch letzte Befehle (command-line V1.3)',
+        'V6.10: Input-Validation-Feedback — rote Fehlermeldung bei ungültiger Eingabe statt Stille',
+        'V6.10: Locked-Layer Selection — gesperrte Layer blockieren Hit-Test + Window-Selection (canvas-renderer V3.31, drawing-tools V2.8)',
+        'V6.10: Status-Bar Snap-Modi — aktive Snap-Typen (END/MID/CEN/...) gelb hervorgehoben',
         'V6.9: Gap Detection — offene/heilbare/geheilte Gaps visuell markiert (Rot/Amber/Grün)',
         'V6.9: MicroHealing V2.9 — gapReports[] + findInternalGaps() für Gap-Reporting',
         'V6.9: Pipeline V3.7 — Gap-Klassifizierung (healable vs. open), Validation erweitert',

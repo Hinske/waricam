@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CeraCUT V6.9 — Wasserstrahl CAM</title>
+    <title>CeraCUT V6.10 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260316-layerbtn">
+    <link rel="stylesheet" href="styles.css?v=20260317-quickwins">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
 </head>
 <body>
@@ -1211,6 +1211,7 @@
             <svg class="status-icon" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1" transform="rotate(45 7 7)"/><line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" stroke-width="0.6"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="0.6"/></svg>
             OFang
         </button>
+        <span class="status-snap-modes" id="status-snap-modes" title="Aktive Snap-Modi">END MID CEN QUA INT PER TAN</span>
         <button class="status-toggle" id="btn-ortho-toggle" title="Ortho-Modus (F8)">
             <svg class="status-icon" viewBox="0 0 14 14" fill="none"><line x1="2" y1="11" x2="7" y2="11" stroke="currentColor" stroke-width="1.5"/><line x1="7" y1="11" x2="7" y2="3" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="9" width="4" height="4" fill="none" stroke="currentColor" stroke-width="0.8"/></svg>
             Ortho
@@ -1438,7 +1439,7 @@
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260316-quietlogs"></script>
-<script src="js/build-info.js?v=20260316-gapdetect"></script>
+<script src="js/build-info.js?v=20260317-quickwins"></script>
 <script src="js/constants.js?v=20260316-overkill"></script>
 <script src="js/geometry.js?v=20260316-gapdetect"></script>
 <script src="js/arc-fitting.js?v=20260316-quietlogs"></script>
@@ -1447,14 +1448,14 @@
 <script src="js/lead-profiles.js?v=20260316-quietlogs"></script>
 <script src="js/cerajet-engine.js?v=20260316-quietlogs"></script>
 <script src="js/ceracut-pipeline.js?v=20260316-gapdetect"></script>
-<script src="js/canvas-renderer.js?v=20260316-gapdetect"></script>
+<script src="js/canvas-renderer.js?v=20260317-quickwins"></script>
 <script src="js/undo-manager.js?v=20260316-quietlogs"></script>
 <script src="js/sinumerik-postprocessor.js?v=20260316-quietlogs"></script>
-<script src="js/command-line.js?v=20260316-quietlogs"></script>
+<script src="js/command-line.js?v=20260317-quickwins"></script>
 <script src="js/dynamic-input.js?v=20260316-quietlogs"></script>
 <script src="js/snap-manager.js?v=20260316-quietlogs"></script>
 <script src="js/geometry-ops.js?v=20260315-bugfix35"></script>
-<script src="js/drawing-tools.js?v=20260316-autoapply"></script>
+<script src="js/drawing-tools.js?v=20260317-quickwins"></script>
 <script src="js/layer-manager.js?v=20260316-quietlogs"></script>
 <script src="js/dxf-writer.js?v=20260315-bugfix35"></script>
 <script src="js/tool-manager.js?v=20260316-quietlogs"></script>
@@ -1478,7 +1479,7 @@
 <script src="js/quality-zones.js?v=20260316-quietlogs"></script>
 <script src="js/project-manager.js?v=20260316-quietlogs"></script>
 <script src="js/dxf-browser.js?v=20260316-quietlogs"></script>
-<script src="js/app.js?v=20260316-undoclick"></script>
+<script src="js/app.js?v=20260317-quickwins"></script>
 
 <!-- Hidden Image Input -->
 <input type="file" id="image-file-input" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
