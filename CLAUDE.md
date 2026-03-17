@@ -211,7 +211,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Command Line** | `command-line.js` | **V1.3** | AutoCAD-style Prompt, Koordinaten-Parser, History, ArrowUp/Down Navigation, Input-Validation-Feedback |
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
 | **Snap Manager** | `snap-manager.js` | **V1.3** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
-| **Layer Manager** | `layer-manager.js` | **V1.0** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock |
+| **Layer Manager** | `layer-manager.js` | **V1.1** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock, Drag-to-Reorder |
 | **DXF Writer** | `dxf-writer.js` | **V1.2** | DXF R12 (AC1009) Export, ANSI_1252 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
@@ -506,7 +506,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   drawing-tools-ext: V1.6 (20260316-hatchpalette)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)
-  layer-manager: V1.0 (20260215-2200)
+  layer-manager: V1.1 (20260317-layerreorder)
   text-tool: V1.2 (20260312-textimport)
   dxf-writer: V1.2 (20260315-bugfix35)
   lead-profiles: V1.1 (20260315-intarsia20)

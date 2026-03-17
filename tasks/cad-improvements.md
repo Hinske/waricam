@@ -52,11 +52,12 @@ CeraCUT hat 45+ Tools mit AutoCAD-konformem Workflow (Noun-Verb/Verb-Noun, Conti
 - [ ] Status in localStorage persistieren
 - **Dateien:** `index.html`, `snap-manager.js`, `app.js`
 
-### 2.2 Layer-Manager-Dialog
-- [ ] Modal mit Spalten: Name | Sichtbarkeit 👁 | Lock 🔒 | Farbe | Linientyp | Entities | Löschen
-- [ ] Layer umbenennen, umsortieren, Farbe ändern
-- [ ] Layer "0" geschützt (nicht löschbar)
-- **Dateien:** `index.html`, `layer-manager.js`, `styles.css`
+### 2.2 Layer-Manager-Dialog ✅ (bereits implementiert, V1.1 mit Drag-Reorder)
+- [x] Modal mit Spalten: Name | Sichtbarkeit 👁 | Lock 🔒 | Farbe | Linientyp | Entities
+- [x] Layer umbenennen, umsortieren, Farbe ändern
+- [x] Layer "0" geschützt (nicht löschbar, nicht verschiebbar)
+- [x] Drag-to-Reorder mit ≡ Handle (Layer "0" bleibt oben)
+- **Dateien:** `layer-manager.js` V1.1, `app.js`, `styles.css`
 
 ### 2.3 Dockbares Properties-Panel
 - [ ] Rechte Sidebar, dauerhaft sichtbar (Toggle F11 oder Button)

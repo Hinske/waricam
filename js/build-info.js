@@ -28,7 +28,7 @@ const CERACUT_BUILD = {
         'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
-        'layer-manager':      { version: '1.0', build: '20260215-2200' },
+        'layer-manager':      { version: '1.1', build: '20260317-layerreorder' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },

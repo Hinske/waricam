@@ -4920,15 +4920,18 @@ class CeraCutApp {
         const layers = this.layerManager.getAllLayers();
         const active = this.layerManager.activeLayer;
 
-        tbody.innerHTML = layers.map(l => {
+        tbody.innerHTML = layers.map((l, idx) => {
             const isActive = l.name === active;
             const rowClass = isActive ? 'lm-active' : '';
             const visClass = l.visible ? '' : ' off';
             const lockClass = l.locked ? ' locked' : '';
             const visIcon = l.visible ? '💡' : '💡';
             const lockIcon = l.locked ? '🔒' : '🔓';
-            return `<tr class="${rowClass}" data-layer="${l.name}">
-                <td>${isActive ? '▶' : ''}</td>
+            const isZero = l.name === '0';
+            const draggable = isZero ? '' : ' draggable="true"';
+            const handle = isZero ? '' : '<span class="lm-drag-handle">≡</span>';
+            return `<tr class="${rowClass}" data-layer="${l.name}" data-order="${idx}"${draggable}>
+                <td>${isActive ? '▶' : ''}${handle}</td>
                 <td><button class="lm-visible-btn${visClass}" data-action="toggle-vis" data-layer="${l.name}">${visIcon}</button></td>
                 <td><button class="lm-lock-btn${lockClass}" data-action="toggle-lock" data-layer="${l.name}">${lockIcon}</button></td>
                 <td>${l.name}</td>
@@ -4942,6 +4945,60 @@ class CeraCutApp {
                 <td style="text-align:right">${l.entityCount}</td>
             </tr>`;
         }).join('');
+
+        // Drag-and-Drop initialisieren
+        this._initLayerDragAndDrop(tbody);
+    }
+
+    /** Drag-and-Drop für Layer-Manager Tabelle */
+    _initLayerDragAndDrop(tbody) {
+        let draggedRow = null;
+
+        tbody.querySelectorAll('tr[draggable="true"]').forEach(row => {
+            row.addEventListener('dragstart', (e) => {
+                draggedRow = row;
+                row.classList.add('lm-dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', () => {
+                row.classList.remove('lm-dragging');
+                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('lm-drag-over'));
+                draggedRow = null;
+            });
+        });
+
+        // dragover/dragleave/drop auf ALLE Rows (außer Layer "0")
+        tbody.querySelectorAll('tr').forEach(row => {
+            const layerName = row.dataset.layer;
+            if (layerName === '0') return; // Nicht auf Layer "0" droppen
+
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (row !== draggedRow) {
+                    row.classList.add('lm-drag-over');
+                }
+            });
+
+            row.addEventListener('dragleave', () => {
+                row.classList.remove('lm-drag-over');
+            });
+
+            row.addEventListener('drop', (e) => {
+                e.preventDefault();
+                row.classList.remove('lm-drag-over');
+                if (!draggedRow || row === draggedRow) return;
+
+                const fromIdx = parseInt(draggedRow.dataset.order, 10);
+                const toIdx = parseInt(row.dataset.order, 10);
+
+                this.layerManager.reorderLayer(fromIdx, toIdx);
+                this._renderLayerManagerTable();
+                this._updateLayerUI();
+                console.log(`[LayerManager V1.1] Reorder: "${draggedRow.dataset.layer}" → Position ${toIdx}`);
+            });
+        });
     }
 
     // ════════════════════════════════════════════════════════════════

@@ -1,16 +1,18 @@
 /**
- * CeraCUT Layer Manager V1.0
+ * CeraCUT Layer Manager V1.1
  * Verwaltung von Zeichnungslayern (AutoCAD-Stil)
- * 
+ *
  * Features:
  * - Layer anlegen, umbenennen, löschen
  * - Sichtbarkeit, Sperren, Farbe, Linientyp
  * - Aktiver Layer (neue Entities landen hier)
  * - Import aus DXF-Parse-Result
  * - ACI-Farb-Mapping (AutoCAD Color Index)
- * 
- * Created: 2026-02-15 MEZ
- * Build: 20260215-2000 MEZ
+ * - Drag-to-Reorder (Layer "0" immer oben)
+ *
+ * Version: V1.1
+ * Last Modified: 2026-03-17 MEZ
+ * Build: 20260317-layerreorder
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -95,7 +97,7 @@ class LayerManager {
         // Default-Layer "0" anlegen
         this._addDefaultLayer();
 
-        console.debug('[LayerManager V1.0] ✅ Initialisiert');
+        console.debug('[LayerManager V1.1] Initialisiert');
     }
 
     // ═══ INTERNE HELFER ═══
@@ -107,13 +109,22 @@ class LayerManager {
             visible: true,
             locked: false,
             lineType: 'Continuous',
-            entityCount: 0
+            entityCount: 0,
+            order: 0
         });
     }
 
     _nextColor() {
         const idx = this.layers.size % DEFAULT_LAYER_COLORS.length;
         return DEFAULT_LAYER_COLORS[idx];
+    }
+
+    _nextOrder() {
+        let max = 0;
+        for (const l of this.layers.values()) {
+            if (l.order > max) max = l.order;
+        }
+        return max + 1;
     }
 
     _notify() {
@@ -141,7 +152,8 @@ class LayerManager {
             visible: options.visible !== false,
             locked: options.locked === true,
             lineType: options.lineType || 'Continuous',
-            entityCount: options.entityCount || 0
+            entityCount: options.entityCount || 0,
+            order: options.order ?? this._nextOrder()
         });
 
         this._notify();
@@ -281,7 +293,7 @@ class LayerManager {
     }
 
     /**
-     * Alle Layer als Array (sortiert: "0" zuerst, dann alphabetisch)
+     * Alle Layer als Array (sortiert: "0" zuerst, dann nach order)
      * @returns {LayerDef[]}
      */
     getAllLayers() {
@@ -289,9 +301,34 @@ class LayerManager {
         all.sort((a, b) => {
             if (a.name === '0') return -1;
             if (b.name === '0') return 1;
-            return a.name.localeCompare(b.name);
+            return (a.order ?? 0) - (b.order ?? 0);
         });
         return all;
+    }
+
+    /**
+     * Layer-Reihenfolge ändern (Drag-to-Reorder)
+     * Layer "0" bleibt immer an Position 0
+     * @param {number} fromIdx - Quell-Index (in getAllLayers()-Array)
+     * @param {number} toIdx - Ziel-Index
+     */
+    reorderLayer(fromIdx, toIdx) {
+        const layers = this.getAllLayers();
+        // Layer "0" darf nicht bewegt werden (ist immer Index 0)
+        if (fromIdx <= 0 || toIdx <= 0) return;
+        if (fromIdx === toIdx) return;
+        if (fromIdx >= layers.length || toIdx >= layers.length) return;
+
+        // Array umsortieren
+        const [moved] = layers.splice(fromIdx, 1);
+        layers.splice(toIdx, 0, moved);
+
+        // Order-Werte neu vergeben (Layer "0" bleibt 0)
+        for (let i = 0; i < layers.length; i++) {
+            layers[i].order = i;
+        }
+
+        this._notify();
     }
 
     /**
@@ -386,7 +423,8 @@ class LayerManager {
                 color: def.color,
                 visible: def.visible,
                 locked: def.locked,
-                lineType: def.lineType
+                lineType: def.lineType,
+                order: def.order ?? 0
             }))
         };
     }
@@ -398,14 +436,16 @@ class LayerManager {
         if (!data) return;
         this.layers.clear();
         if (data.layers) {
-            for (const l of data.layers) {
+            for (let i = 0; i < data.layers.length; i++) {
+                const l = data.layers[i];
                 this.layers.set(l.name, {
                     name: l.name,
                     color: l.color || '#ffffff',
                     visible: l.visible !== false,
                     locked: l.locked === true,
                     lineType: l.lineType || 'Continuous',
-                    entityCount: 0
+                    entityCount: 0,
+                    order: l.order ?? i
                 });
             }
         }
@@ -428,4 +468,5 @@ class LayerManager {
  * @property {boolean} locked
  * @property {string} lineType - 'Continuous', 'Dashed', 'DashDot', 'Dotted'
  * @property {number} entityCount
+ * @property {number} order - Sortier-Reihenfolge (0 = Layer "0", dann aufsteigend)
  */
