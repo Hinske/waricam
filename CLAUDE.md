@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-17
-> **Version:** V6.10
-> **Build:** 20260317-quickwins
+> **Version:** V6.11
+> **Build:** 20260317-cycleselect
 
 ---
 
@@ -187,7 +187,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 ---
 
-## Module & Versionen (Stand 2026-03-16)
+## Module & Versionen (Stand 2026-03-17)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
@@ -230,7 +230,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
 | **DXF Browser** | `dxf-browser.js` | **V1.1** | Server-DXF-Browse Modal, Breadcrumb-Navigation, Pfad-Persistenz (localStorage) |
 | **Server** | `server.js` | **V1.2** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API, Dual-Protocol (HTTP+HTTPS auf einem Port) |
-| **Build-Info** | `build-info.js` | **V6.10** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V6.11** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.8 | Toleranzen, Farben, Defaults, INTARSIA_MATERIALS |
 
 ---
@@ -258,9 +258,9 @@ ceraCUT/
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V6.9
+│   ├── build-info.js                  ← Versions-Banner V6.11
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults, Intarsia-Materialien (V2.8)
-│   ├── app.js                         ← Hauptanwendung V6.9 (Lead-Profiles, Intarsien V2.0)
+│   ├── app.js                         ← Hauptanwendung V6.11 (Lead-Profiles, Intarsien V2.0, Cycle-Selection)
 │   ├── dxf-parser.js                  ← DXF Parser V3.10 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.11
 │   ├── geometry-ops.js                ← GeometryOps V2.4 (Intersection, Arabeske, splitAndOverlap)
@@ -268,19 +268,19 @@ ceraCUT/
 │   ├── cam-contour.js                 ← Kontur-Klasse V5.7 (Flat-Preferred autoPlace)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.30 (Flächen-Hit, Disc-Fill Fix)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.32 (Flächen-Hit, Disc-Fill Fix, Cycle-Selection)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.6 (Safety-Guards, Hatch-Filter)
-│   ├── command-line.js                ← Command-Line UI V1.2
+│   ├── command-line.js                ← Command-Line UI V1.3 (History, Validation-Feedback)
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
-│   ├── drawing-tools.js              ← CAD-Tools V2.7 (Auto-Apply pending Entities)
+│   ├── drawing-tools.js              ← CAD-Tools V2.8 (Auto-Apply, Locked-Layer-Guard)
 │   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.6
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.5 (Fillet/Trim/Extend/Offset/Chamfer/Overkill)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
-│   ├── layer-manager.js              ← Layer-System V1.0
+│   ├── layer-manager.js              ← Layer-System V1.1 (Drag-to-Reorder)
 │   ├── dxf-writer.js                 ← DXF R12 Export V1.2 (UTF-8, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import

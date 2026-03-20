@@ -1,5 +1,5 @@
 /**
- * CeraCUT Cost Calculator V1.0
+ * CeraCUT Cost Calculator V1.1
  * Kosten- und Zeitberechnung für Wasserstrahlschneiden
  *
  * Berechnet Schnittzeit, Maschinenkosten, Materialkosten,
