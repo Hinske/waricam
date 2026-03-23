@@ -1245,9 +1245,28 @@ const GeometryOps = {
     boundaryFromSeedPoint(seed, contours, searchRadius = 100) {
         const _t0 = performance.now();
 
-        // Bis zu 2 Versuche mit wachsendem Radius
-        for (let attempt = 0; attempt < 2; attempt++) {
-            const radius = searchRadius * (attempt + 1);
+        // Auto-Radius: Ausdehnung aller Konturen berechnen
+        let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
+        for (const c of contours) {
+            if (c.isReference || !c.points) continue;
+            for (const p of c.points) {
+                if (p.x < gMinX) gMinX = p.x;
+                if (p.y < gMinY) gMinY = p.y;
+                if (p.x > gMaxX) gMaxX = p.x;
+                if (p.y > gMaxY) gMaxY = p.y;
+            }
+        }
+        const extent = Math.max(gMaxX - gMinX, gMaxY - gMinY, 1);
+
+        // Suchradien: adaptiv basierend auf Geometrie-Ausdehnung
+        const radii = [
+            Math.max(searchRadius, extent * 0.15),
+            Math.max(searchRadius * 3, extent * 0.5),
+            extent * 1.5  // Alles einschliessen
+        ];
+
+        for (let attempt = 0; attempt < radii.length; attempt++) {
+            const radius = radii[attempt];
             const bbox = {
                 minX: seed.x - radius, minY: seed.y - radius,
                 maxX: seed.x + radius, maxY: seed.y + radius
@@ -1256,22 +1275,26 @@ const GeometryOps = {
             const graph = this._buildPlanarGraph(contours, bbox);
             if (graph.edges.length < 3) continue;
 
+            // Dead-End Pruning: Grad-1-Knoten iterativ entfernen
+            this._pruneDeadEnds(graph);
+            if (graph.edges.length < 3) continue;
+
             const halfEdges = this._buildHalfEdgeStructure(graph.nodes, graph.edges);
             if (halfEdges.length === 0) continue;
 
             const face = this._traceFace(halfEdges, seed);
             if (face && face.length >= 3) {
-                // Validierung: Ist es die Aussen-Face? (Fläche > 4x Suchbereich)
+                // Validierung: Ist es die Aussen-Face?
                 const area = Math.abs(this._shoelace(face));
                 const bboxArea = (bbox.maxX - bbox.minX) * (bbox.maxY - bbox.minY);
-                if (area > bboxArea * 4) continue; // Aussen-Face, Radius vergroessern
+                if (area > bboxArea * 4) continue;
 
                 // Schliessen
                 face.push({ x: face[0].x, y: face[0].y });
 
                 console.log('[GeometryOps V2.5] Boundary traced: ' + (face.length - 1) +
-                    ' Punkte, ' + area.toFixed(1) + ' mm², ' +
-                    (performance.now() - _t0).toFixed(1) + 'ms');
+                    ' Punkte, ' + area.toFixed(1) + ' mm², Versuch ' + (attempt + 1) +
+                    ', ' + (performance.now() - _t0).toFixed(1) + 'ms');
                 return face;
             }
         }
@@ -1282,13 +1305,37 @@ const GeometryOps = {
     },
 
     /**
+     * Entfernt Dead-End-Kanten iterativ (Knoten mit Grad 1).
+     * Verhindert Spikes in der Boundary von offenen Linienenden.
+     */
+    _pruneDeadEnds(graph) {
+        let changed = true;
+        while (changed) {
+            changed = false;
+            // Grad pro Knoten berechnen
+            const degree = {};
+            for (const e of graph.edges) {
+                degree[e.fromId] = (degree[e.fromId] || 0) + 1;
+                degree[e.toId] = (degree[e.toId] || 0) + 1;
+            }
+            // Kanten entfernen die an Grad-1-Knoten haengen
+            const before = graph.edges.length;
+            graph.edges = graph.edges.filter(e =>
+                (degree[e.fromId] || 0) > 1 && (degree[e.toId] || 0) > 1
+            );
+            if (graph.edges.length < before) changed = true;
+        }
+    },
+
+    /**
      * Baut einen planaren Graph aus allen Konturen im BBox-Bereich.
      * Segmente werden an Schnittpunkten aufgesplittet, Knoten zusammengefuehrt.
      */
     _buildPlanarGraph(contours, bbox) {
         const EPS = 1e-6;
 
-        // 1. Segmente sammeln (nur Konturen die BBox ueberlappen)
+        // 1. Segmente sammeln — nur Konturen deren BBox den Suchbereich ueberlappt,
+        //    dann alle Segmente der Kontur (noetig fuer korrekte Topologie)
         const allSegs = [];
         for (let ci = 0; ci < contours.length; ci++) {
             const c = contours[ci];
@@ -1313,12 +1360,15 @@ const GeometryOps = {
 
         if (allSegs.length === 0) return { nodes: [], edges: [] };
 
-        // 2. Alle paarweisen Schnittpunkte finden + Segmente splitten
-        // Pro Segment: Liste von Split-t-Werten sammeln
+        // 2. Schnittpunkte finden — nur zwischen Segmenten VERSCHIEDENER Konturen
+        //    (innerhalb einer Kontur gibt es keine Selbstschnitte bei korrekter Geometrie)
         const splitTs = allSegs.map(() => []);
 
         for (let i = 0; i < allSegs.length; i++) {
             for (let j = i + 1; j < allSegs.length; j++) {
+                // Nur verschiedene Konturen kreuzen
+                if (allSegs[i].ci === allSegs[j].ci) continue;
+
                 const hit = this.segmentSegmentIntersection(
                     allSegs[i].p1, allSegs[i].p2,
                     allSegs[j].p1, allSegs[j].p2, EPS
@@ -1326,7 +1376,6 @@ const GeometryOps = {
                 if (hit) {
                     const tA = Math.max(0, Math.min(1, hit.tA));
                     const tB = Math.max(0, Math.min(1, hit.tB));
-                    // Nicht an Endpunkten splitten (schon Knoten)
                     if (tA > EPS && tA < 1 - EPS) splitTs[i].push(tA);
                     if (tB > EPS && tB < 1 - EPS) splitTs[j].push(tB);
                 }
@@ -1334,12 +1383,11 @@ const GeometryOps = {
         }
 
         // 3. Segmente aufsplitten → Sub-Kanten
-        const nodeMap = new Map(); // key → nodeId
+        const nodeMap = new Map();
         const nodes = [];
         const edges = [];
 
         const getNodeId = (x, y) => {
-            // Spatial Hash: auf Grid runden
             const gx = Math.round(x / EPS) * EPS;
             const gy = Math.round(y / EPS) * EPS;
             const key = gx.toFixed(8) + ',' + gy.toFixed(8);
@@ -1356,13 +1404,11 @@ const GeometryOps = {
             ts.push(0, 1);
             ts.sort((a, b) => a - b);
 
-            // Deduplizieren
             const uniqueTs = [ts[0]];
             for (let k = 1; k < ts.length; k++) {
                 if (ts[k] - uniqueTs[uniqueTs.length - 1] > EPS) uniqueTs.push(ts[k]);
             }
 
-            // Sub-Kanten erzeugen
             for (let k = 0; k < uniqueTs.length - 1; k++) {
                 const t0 = uniqueTs[k], t1 = uniqueTs[k + 1];
                 const x1 = seg.p1.x + t0 * (seg.p2.x - seg.p1.x);
@@ -1370,7 +1416,6 @@ const GeometryOps = {
                 const x2 = seg.p1.x + t1 * (seg.p2.x - seg.p1.x);
                 const y2 = seg.p1.y + t1 * (seg.p2.y - seg.p1.y);
 
-                // Null-Laenge filtern
                 const dx = x2 - x1, dy = y2 - y1;
                 if (dx * dx + dy * dy < EPS * EPS) continue;
 
