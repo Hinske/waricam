@@ -1,5 +1,5 @@
 /**
- * CeraCUT CamContour V5.7 - IGEMS-konformes Lead-In/Out System
+ * CeraCUT CamContour V5.8 - IGEMS-konformes Lead-In/Out System
  * Small-Hole: Center-Pierce bei kleinen RUNDEN Bohrungen (Aspekt < 2.5:1)
  * Corner-Lead: linear bei Ecken, Arc bei Segmenten
  * Collision-Detection V2: Distance-based, Lead-In/Out-aware, Fallback
@@ -89,6 +89,10 @@ class CamContour {
         this.materialGroup = options.materialGroup ?? 0;       // 0-4 (Index in CeraCUT.INTARSIA_MATERIALS)
         this.intarsiaRole = options.intarsiaRole || null;      // 'base'|'insert'|null
         // Format: { pattern: 'solid'|'lines'|'cross'|'dots', color: null|CSS, angle: 45, spacing: 3, opacity: 0.25 }
+
+        // ═══ SPLINE FIT-POINTS (V5.8) ═══
+        this._fitPoints = options._fitPoints || null;       // Array<{x,y}> — Original-Klickpunkte
+        this._splineClosed = options._splineClosed ?? null; // true/false/null
 
         // ═══ GAP DETECTION (Offene Konturen) ═══
         this.gaps = [];           // [{x1,y1, x2,y2, distance, type:'open'|'healable'}]

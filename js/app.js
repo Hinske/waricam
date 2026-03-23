@@ -642,7 +642,9 @@ class CeraCutApp {
                         if (typeof CamContour !== 'undefined') {
                             const c = new CamContour(entity.points, {
                                 layer: 'DRAW',
-                                name: `Gezeichnet ${this.contours.length + newContours.length + 1}`
+                                name: `Gezeichnet ${this.contours.length + newContours.length + 1}`,
+                                _fitPoints: entity._fitPoints || null,
+                                _splineClosed: entity._splineClosed ?? null
                             });
                             newContours.push(c);
                         }
@@ -666,7 +668,9 @@ class CeraCutApp {
             if (typeof CamContour !== 'undefined' && !(c instanceof CamContour)) {
                 cam = new CamContour(c.points, {
                     layer: 'DRAW',
-                    name: c.name || 'Gezeichnet'
+                    name: c.name || 'Gezeichnet',
+                    _fitPoints: c._fitPoints || null,
+                    _splineClosed: c._splineClosed ?? null
                 });
             } else {
                 cam = c;

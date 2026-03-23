@@ -1,38 +1,38 @@
 /**
- * CeraCUT Build Info V6.12
- * Version: V6.12
+ * CeraCUT Build Info V6.13
+ * Version: V6.13
  * Last Modified: 2026-03-23 MEZ
- * Build: 20260323-boundary
+ * Build: 20260323-splinetool
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.12',
-    build: '20260323-boundary',
+    version: '6.13',
+    build: '20260323-splinetool',
     date: '2026-03-23',
-    time: '14:00 MEZ',
+    time: '16:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
-        'cam-contour':        { version: '5.7', build: '20260316-gapdetect' },
-        'canvas-renderer':    { version: '3.32', build: '20260317-cycleselect' },
+        'cam-contour':        { version: '5.8', build: '20260323-splinetool' },
+        'canvas-renderer':    { version: '3.33', build: '20260323-splinetool' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.5', build: '20260323-boundary' },
-        'drawing-tools':      { version: '2.8', build: '20260317-quickwins' },
-        'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
+        'drawing-tools':      { version: '2.9', build: '20260323-splinetool' },
+        'drawing-tools-ext':  { version: '1.7', build: '20260323-splinetool' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.1', build: '20260317-layerreorder' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.12', build: '20260323-boundary' },
+        'app':                { version: '6.13', build: '20260323-splinetool' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -48,6 +48,9 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.13: SplineTool AutoCAD-Overhaul — Dual-Preview (Kontrollpolygon + Kurve), Close-to-Start, Continuous Mode',
+        'V6.13: Spline Fit-Points bleiben erhalten → Grip-Editing mit Re-Tessellation in Echtzeit',
+        'V6.13: Kontrollpolygon-Overlay bei selektierten Spline-Konturen',
         'V6.12: Boundary Tool (BP) — DCEL-basierte Umgrenzung aus kreuzenden Konturen (AutoCAD BOUNDARY)',
         'V6.12: GeometryOps V2.5 — Planar Graph Builder, Half-Edge Struktur, Face-Tracing',
         'V3.9: Layer-Table Parser — R12/R14/DXF2000+ kompatibel (ab 0/LAYER statt AcDbLayerTableRecord)',

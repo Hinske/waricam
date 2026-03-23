@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.8
+ * CeraCUT Drawing & Modification Tools V2.9
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -21,8 +21,8 @@
  * V1.1: handleRawInput für Linie/Rechteck/Polylinie
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
- * Last Modified: 2026-03-17 MEZ
- * Build: 20260316-autoapply
+ * Last Modified: 2026-03-23 MEZ
+ * Build: 20260323-splinetool
  */
 
 // ════════════════════════════════════════════════════════════════
@@ -663,6 +663,44 @@ class DrawingToolManager {
                 break;
             }
 
+            case 'spline': {
+                // V2.9: Dual-Preview — Kontrollpolygon + glatte Kurve + Fit-Point-Marker
+                const spFp = rb.data.fitPoints;
+                const spCurve = rb.data.curve;
+
+                // 1. Kontrollpolygon: gestrichelt, halbtransparent
+                if (spFp && spFp.length >= 2) {
+                    ctx.setLineDash([6 / scale, 3 / scale]);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.3)`;
+                    ctx.lineWidth = lineWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(spFp[0].x, spFp[0].y);
+                    for (let i = 1; i < spFp.length; i++) ctx.lineTo(spFp[i].x, spFp[i].y);
+                    ctx.stroke();
+                }
+
+                // 2. Glatte Kurve: solid
+                if (spCurve && spCurve.length >= 2) {
+                    ctx.setLineDash([]);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                    ctx.lineWidth = lineWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(spCurve[0].x, spCurve[0].y);
+                    for (let i = 1; i < spCurve.length; i++) ctx.lineTo(spCurve[i].x, spCurve[i].y);
+                    ctx.stroke();
+                }
+
+                // 3. Fit-Point Marker (kleine Quadrate)
+                if (spFp) {
+                    const gs = 3 / scale;
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                    for (let i = 0; i < spFp.length - 1; i++) { // Letzter = Cursor, kein Marker
+                        ctx.fillRect(spFp[i].x - gs, spFp[i].y - gs, gs * 2, gs * 2);
+                    }
+                }
+                break;
+            }
+
             case 'ellipse': {
                 const epts = rb.data.points;
                 if (epts && epts.length >= 2) {
@@ -1054,7 +1092,9 @@ class DrawingToolManager {
                     type: 'LWPOLYLINE',
                     points: entity.points.map(p => ({ x: p.x, y: p.y })),
                     isClosed: entity.closed || false,
-                    layer: entity.layer || 'DRAW'
+                    layer: entity.layer || 'DRAW',
+                    _fitPoints: entity.fitPoints ? entity.fitPoints.map(p => ({ x: p.x, y: p.y })) : null,
+                    _splineClosed: entity.closed || false
                 };
 
             default:

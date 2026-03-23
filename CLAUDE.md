@@ -3,8 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **Letzte Aktualisierung:** 2026-03-23
-> **Version:** V6.12
-> **Build:** 20260323-boundary
+> **Version:** V6.13
+> **Build:** 20260323-splinetool
 
 ---
 
@@ -180,7 +180,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | Feld | Wert |
 |------|------|
 | Name | CeraCUT / CeraCUT |
-| Version | **V6.12** — Build 20260323-boundary (2026-03-23, 14:00 MEZ) |
+| Version | **V6.13** — Build 20260323-splinetool (2026-03-23, 16:00 MEZ) |
 | Typ | Wasserstrahl-CAM Software |
 | Zweck | DXF → Sinumerik 840D CNC-Code für Wasserstrahlschneiden |
 | Firma | Cerasell GmbH |
@@ -191,20 +191,20 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 
 | Modul | Datei | Version | Verantwortung |
 |-------|-------|---------|---------------|
-| **App** | `app.js` | **V6.12** | Wizard, Kontextmenu, Export-Modal, Undo (Granular per Kontur), ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline, Validation Engine, Multi-Material Export, Hatch-Entity, Undo/Redo-Button-Click, Snap-Modi-Statusbar, Cycle-Selection |
+| **App** | `app.js` | **V6.13** | Wizard, Kontextmenu, Export-Modal, Undo (Granular per Kontur), ToolManager, Click-Routing, Window-Selection, DynamicInput, Print, FSAPI-Save, ProjectManager, CAM-Kontextmenu, Lead-Profiles, Intarsien V2.0, Layer-Visibility→Pipeline, Validation Engine, Multi-Material Export, Hatch-Entity, Undo/Redo-Button-Click, Snap-Modi-Statusbar, Cycle-Selection |
 | **Geometry** | `geometry.js` | **V2.11** | Vektoren, SplineUtils (De Boor), MicroHealing (5-Stage), Shoelace, interiorPoint |
 | **GeometryOps** | `geometry-ops.js` | **V2.5** | Intersection, Segment-Modell, Arabeske, circumscribedCircle, splitAndOverlap, Boundary (DCEL Planar Graph) |
 | **DXF-Parser** | `dxf-parser.js` | **V3.10** | DXF → Entities, SPLINE-Tessellation, Deque-Chaining, Layer-aware, TEXT/MTEXT, TEXT-Glyphs, Center/Radius-Passthrough, R12-Layer-Table, HATCH-Skip |
-| **CAMContour** | `cam-contour.js` | **V5.7** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace, Hatch-Entity (cuttingMode='none', isHatchContour), materialGroup, intarsiaRole |
+| **CAMContour** | `cam-contour.js` | **V5.8** | Lead-In/Out, Overcut, Multi-Contour-Collision, Lead-Routing (Corner-Penalty, Flat-Segment-Bonus, Dog-Leg), Slit, Kerf-Flip, Arc-Metadaten, clone(), leadManualOverride, Flat-Preferred autoPlace, Hatch-Entity (cuttingMode='none', isHatchContour), materialGroup, intarsiaRole |
 | **Lead Profiles** | `lead-profiles.js` | **V1.1** | 8 Built-in Profile (inkl. Intarsien), Benutzerdefiniert (localStorage), Batch-Engine (disc/hole/smallHole/slit) |
 | **CeraJet Engine** | `cerajet-engine.js` | — | Technologie-Engine (Piercing, Speed-Ramping) |
-| **Renderer** | `canvas-renderer.js` | **V3.32** | Canvas-Rendering, Hit-Testing (Kante+Fläche), Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (nur CAM-Modi), Intarsien-Overlay (Multi-Material), Entry-Pfeil, Hatch-Entity-Rendering, Hatch-Live-Preview, Locked-Layer-Guard, Cycle-Selection (findAllContoursAtPoint) |
+| **Renderer** | `canvas-renderer.js` | **V3.33** | Canvas-Rendering, Hit-Testing (Kante+Fläche), Arc-Leads, DPR-Fix, Grip-Editing, Window-Selection-Rect, Lead-Differenzierung, Trackpad-Navigation, Disc-Füllung (nur CAM-Modi), Intarsien-Overlay (Multi-Material), Entry-Pfeil, Hatch-Entity-Rendering, Hatch-Live-Preview, Locked-Layer-Guard, Cycle-Selection (findAllContoursAtPoint) |
 | **Postprozessor** | `sinumerik-postprocessor.js` | **V1.6** | Sinumerik 840D MPF, 3-in-1, G41/G42, Piercing-Types, Multi-Head, Machine-Profile, Safety-Guards, Hatch-Filter |
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.7** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
-| **Drawing Tools** | `drawing-tools.js` | **V2.8** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities, Locked-Layer-Guard Window-Selection |
-| **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.6** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
+| **Drawing Tools** | `drawing-tools.js` | **V2.9** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities, Locked-Layer-Guard Window-Selection |
+| **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.7** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.6** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen, Overkill, Boundary (DCEL) |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
 | **Tool Manager** | `tool-manager.js` | **V2.2** | Tool-Routing, Always-Active, Shortcut-Dispatch, Tier 4 |
@@ -230,7 +230,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **ProjectManager** | `project-manager.js` | **V1.0** | Workspace-Verwaltung, FSAPI Directory, Auto-Save, CNC-Unterordner, IndexedDB |
 | **DXF Browser** | `dxf-browser.js` | **V1.1** | Server-DXF-Browse Modal, Breadcrumb-Navigation, Pfad-Persistenz (localStorage) |
 | **Server** | `server.js` | **V1.2** | Node.js HTTPS-Server, Auto-TLS (Self-Signed), DXF-Browse-API, Dual-Protocol (HTTP+HTTPS auf einem Port) |
-| **Build-Info** | `build-info.js` | **V6.12** | Versions-Banner, Modul-Versionen, Changelog |
+| **Build-Info** | `build-info.js` | **V6.13** | Versions-Banner, Modul-Versionen, Changelog |
 | **Konstanten** | `constants.js` | V2.8 | Toleranzen, Farben, Defaults, INTARSIA_MATERIALS |
 
 ---
@@ -258,25 +258,25 @@ ceraCUT/
 ├── styles.css                         ← Dark Theme (CeraCUT Blue)
 ├── properties-panel-styles.css        ← Properties Panel Styles
 ├── js/
-│   ├── build-info.js                  ← Versions-Banner V6.12
+│   ├── build-info.js                  ← Versions-Banner V6.13
 │   ├── constants.js                   ← Toleranzen, Farben, Defaults, Intarsia-Materialien (V2.8)
-│   ├── app.js                         ← Hauptanwendung V6.12 (Lead-Profiles, Intarsien V2.0, Cycle-Selection)
+│   ├── app.js                         ← Hauptanwendung V6.13 (Lead-Profiles, Intarsien V2.0, Cycle-Selection)
 │   ├── dxf-parser.js                  ← DXF Parser V3.10 (Deque-Chaining, TEXT-Glyphs)
 │   ├── geometry.js                    ← Geometrie-Kernel V2.11
 │   ├── geometry-ops.js                ← GeometryOps V2.5 (Intersection, Arabeske, splitAndOverlap)
 │   ├── ceracut-pipeline.js            ← Pipeline V3.7
-│   ├── cam-contour.js                 ← Kontur-Klasse V5.7 (Flat-Preferred autoPlace)
+│   ├── cam-contour.js                 ← Kontur-Klasse V5.8 (Flat-Preferred autoPlace)
 │   ├── lead-profiles.js               ← Lead-Profile V1.1 (8 Built-in inkl. Intarsien, Batch-Engine)
 │   ├── cerajet-engine.js              ← Technologie-Engine
-│   ├── canvas-renderer.js             ← Canvas Rendering V3.32 (Flächen-Hit, Disc-Fill Fix, Cycle-Selection)
+│   ├── canvas-renderer.js             ← Canvas Rendering V3.33 (Flächen-Hit, Disc-Fill Fix, Cycle-Selection)
 │   ├── arc-fitting.js                 ← Arc Fitting V3.1
 │   ├── undo-manager.js               ← Undo/Redo + Clipboard V1.1 (WizardStepUndo)
 │   ├── sinumerik-postprocessor.js     ← Sinumerik PP V1.6 (Safety-Guards, Hatch-Filter)
 │   ├── command-line.js                ← Command-Line UI V1.3 (History, Validation-Feedback)
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
-│   ├── drawing-tools.js              ← CAD-Tools V2.8 (Auto-Apply, Locked-Layer-Guard)
-│   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.6
+│   ├── drawing-tools.js              ← CAD-Tools V2.9 (Auto-Apply, Locked-Layer-Guard)
+│   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.7
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.6 (Fillet/Trim/Extend/Offset/Chamfer/Overkill)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
@@ -484,9 +484,9 @@ Seit V1.0 (2026-02-13) funktional, V1.3 mit Multi-Head:
 
 ## Sync-Pruefung
 
-Console-Ausgabe beim Laden (V6.12: nur 1 Zeile + collapsed Gruppe):
+Console-Ausgabe beim Laden (V6.13: nur 1 Zeile + collapsed Gruppe):
 ```
-CeraCUT V6.12 — Build 20260323-boundary (2026-03-23) — 31 Module
+CeraCUT V6.13 — Build 20260323-splinetool (2026-03-23) — 31 Module
 ▶ [BUILD] Module-Versionen    ← aufklappbar per Klick
 ```
 
@@ -495,22 +495,22 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   dxf-parser: V3.10 (20260316-hatchskip)
   geometry: V2.11 (20260316-gapdetect)
   pipeline: V3.7 (20260316-gapdetect)
-  cam-contour: V5.7 (20260316-gapdetect)
-  canvas-renderer: V3.32 (20260317-cycleselect)
+  cam-contour: V5.8 (20260323-splinetool)
+  canvas-renderer: V3.33 (20260323-splinetool)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.6 (20260316-hatchentity)
   command-line: V1.3 (20260317-quickwins)
   snap-manager: V1.3 (20260315-bugfix35)
   geometry-ops: V2.5 (20260323-boundary)
-  drawing-tools: V2.8 (20260317-quickwins)
-  drawing-tools-ext: V1.6 (20260316-hatchpalette)
+  drawing-tools: V2.9 (20260323-splinetool)
+  drawing-tools-ext: V1.7 (20260323-splinetool)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)
   layer-manager: V1.1 (20260317-layerreorder)
   text-tool: V1.2 (20260312-textimport)
   dxf-writer: V1.2 (20260315-bugfix35)
   lead-profiles: V1.1 (20260315-intarsia20)
-  app: V6.12 (20260323-boundary)
+  app: V6.13 (20260323-splinetool)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.5 (20260316-hatchentity)
   debug-monitor: V1.0 (20260219-dm10)

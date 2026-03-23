@@ -1,6 +1,7 @@
 /**
- * CeraCUT Drawing Tools Extension V1.6
+ * CeraCUT Drawing Tools Extension V1.7
  * Zusätzliche Zeichentools: Ellipse, Spline, Donut, XLine, OverlapBreak, Hatch
+ * V1.7: SplineTool AutoCAD-Overhaul — Dual-Preview, Close-to-Start, Continuous Mode, FitPoints erhalten
  * V1.6: Hatch Farbpalette — Floating Toolbar mit 8 AutoCAD-Farben + Pattern-Auswahl
  * V1.5: Hatch als eigenständige CamContour (cuttingMode='none') — AutoCAD-konform
  *        Live-Preview beim Hover, separate Selektion/Löschung/Undo
@@ -8,8 +9,8 @@
  * V1.3: Hatch-Fix — Toast-Feedback, Panel-Refresh nach Hatch-Klick
  * Lazy-Patch Registration (wie advanced-tools.js)
  * Created: 2026-02-16 MEZ
- * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatchpalette
+ * Last Modified: 2026-03-23 MEZ
+ * Build: 20260323-splinetool
  *
  * Abhängigkeiten:
  *   - drawing-tools.js (BaseTool, DrawingToolManager)
@@ -174,13 +175,25 @@ class SplineTool extends BaseTool {
     start() {
         this.cmd?.setPrompt('SPLINE — Ersten Fit-Punkt angeben:');
         this.cmd?.log('〰️ Spline: Fit-Punkte klicken → Enter=Fertig / S=Schließen / U=Undo', 'info');
-        console.log('[SplineTool V1.0] gestartet');
+        console.log('[SplineTool V1.1] gestartet');
     }
 
     handleClick(point) {
+        // V1.1: Close-to-Start — Klick nahe Startpunkt schliesst den Spline
+        if (this.fitPoints.length >= 3) {
+            const fp = this.fitPoints[0];
+            const scale = this.manager.renderer?.scale || 1;
+            const snapDist = scale > 0 ? 10 / scale : 5;
+            if (Math.hypot(point.x - fp.x, point.y - fp.y) < snapDist) {
+                this.closed = true;
+                this._createSpline();
+                return;
+            }
+        }
+
         this.fitPoints.push({ x: point.x, y: point.y });
         const n = this.fitPoints.length;
-        console.log(`[SplineTool V1.0] Fit-Punkt ${n}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`);
+        console.debug(`[SplineTool V1.1] Fit-Punkt ${n}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`);
 
         if (n >= 2) {
             this.cmd?.setPrompt(`SPLINE — Nächster Punkt (${n} Pkt) [U=Undo / S=Schließen / Enter=Fertig]:`);
@@ -191,11 +204,18 @@ class SplineTool extends BaseTool {
 
     handleMouseMove(point) {
         if (this.fitPoints.length >= 1) {
-            const previewPts = [...this.fitPoints, { x: point.x, y: point.y }];
+            const cursorPt = { x: point.x, y: point.y };
+            const previewPts = [...this.fitPoints, cursorPt];
             const tessellated = this._tessellate(previewPts, false);
+
+            // V1.1: Dual-Preview — Kontrollpolygon (gestrichelt) + glatte Kurve (solid)
             this.manager.rubberBand = {
-                type: 'polyline',
-                data: { points: tessellated }
+                type: 'spline',
+                data: {
+                    fitPoints: previewPts,
+                    curve: tessellated,
+                    closed: false
+                }
             };
             this.manager.renderer?.render();
         }
@@ -232,6 +252,7 @@ class SplineTool extends BaseTool {
         if (this.fitPoints.length >= 2) {
             this._createSpline();
         } else if (this.fitPoints.length === 0) {
+            // Kein Punkt → Tool beenden
             this.manager.rubberBand = null;
             this.manager._setDefaultPrompt();
             this.manager.activeTool = null;
@@ -242,9 +263,7 @@ class SplineTool extends BaseTool {
     }
 
     _createSpline() {
-        console.time('[SplineTool V1.0] Tessellierung');
         const pts = this._tessellate(this.fitPoints, this.closed);
-        console.timeEnd('[SplineTool V1.0] Tessellierung');
 
         if (pts.length < 2) {
             this.cmd?.log('Spline: Zu wenig Punkte erzeugt', 'error');
@@ -253,18 +272,19 @@ class SplineTool extends BaseTool {
 
         this.manager.addEntity({
             type: 'SPLINE',
-            fitPoints: this.fitPoints.map(p => ({ ...p })),
+            fitPoints: this.fitPoints.map(p => ({ x: p.x, y: p.y })),
             points: pts,
             closed: this.closed
         });
 
-        console.log(`[SplineTool V1.0] ✔ Spline ${this.fitPoints.length} Fit-Punkte → ${pts.length} Segmente, closed=${this.closed}`);
-        this.cmd?.log(`✔ Spline ${this.fitPoints.length} Punkte${this.closed ? ' (geschlossen)' : ''}`, 'success');
+        console.debug(`[SplineTool V1.1] Spline ${this.fitPoints.length} Fit-Punkte → ${pts.length} Segmente, closed=${this.closed}`);
+        this.cmd?.log(`Spline ${this.fitPoints.length} Punkte${this.closed ? ' (geschlossen)' : ''} (Strg+Z)`, 'success');
 
+        // V1.1: Continuous Mode — Reset für nächsten Spline
         this.fitPoints = [];
         this.closed = false;
         this.manager.rubberBand = null;
-        this.cmd?.setPrompt('SPLINE — Ersten Fit-Punkt angeben (Enter=Beenden):');
+        this.cmd?.setPrompt('SPLINE — Ersten Fit-Punkt angeben (ESC=Ende):');
     }
 
     _tessellate(fitPoints, closed) {
@@ -288,7 +308,7 @@ class SplineTool extends BaseTool {
             return result;
         }
 
-        console.warn('[SplineTool V1.0] SplineUtils nicht verfügbar — Fallback auf linear');
+        console.warn('[SplineTool V1.1] SplineUtils nicht verfügbar — Fallback auf linear');
         return [...fitPoints];
     }
 

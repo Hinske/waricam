@@ -45,6 +45,7 @@ const CeraCutPipeline = {
                 });
                 if (c.sourceType) cam.sourceType = c.sourceType;
                 if (c._splineData) cam._splineData = c._splineData;
+                if (c._fitPoints) { cam._fitPoints = c._fitPoints; cam._splineClosed = c._splineClosed; }
                 return cam;
             }
             c.kerfWidth = this.kerfWidth;

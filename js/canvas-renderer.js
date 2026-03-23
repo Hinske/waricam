@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.32 - Canvas Renderer
+ * CeraCUT V3.33 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.33: Spline Grip-Editing — Fit-Point-Grips + Re-Tessellation + Kontrollpolygon-Overlay
  * V3.32: Cycle-Selection — findAllContoursAtPoint() für Durchklicken überlappender Konturen
  * V3.31: Locked-Layer Guard — gesperrte Layer blockieren Hit-Test + Start-Triangle-Click
  * V3.30: Gap-Marker — visuelle Darstellung offener/heilbarer/geheilter Gaps (Kreis + Strichlinie)
@@ -2074,6 +2075,21 @@ class CanvasRenderer {
             const pts = contour.points;
             if (!pts || pts.length < 2) continue;
 
+            // V3.33: Spline Fit-Point Grips
+            if (contour._fitPoints && contour._fitPoints.length >= 2) {
+                for (let i = 0; i < contour._fitPoints.length; i++) {
+                    this._grips.push({
+                        type: 'spline_fit',
+                        x: contour._fitPoints[i].x,
+                        y: contour._fitPoints[i].y,
+                        contour: contour,
+                        fitIndex: i,
+                        label: 'F' + i
+                    });
+                }
+                continue; // Keine normalen Vertex-Grips für Spline-Konturen
+            }
+
             // Kreis-Erkennung
             if (this._isCircleContour(contour)) {
                 this._addCircleGrips(contour);
@@ -2282,6 +2298,38 @@ class CanvasRenderer {
                 grip.y = cy + newR * Math.sin(angleRad);
                 break;
             }
+            case 'spline_fit': {
+                // V3.33: Fit-Point verschieben → Spline re-tessellieren
+                contour._fitPoints[grip.fitIndex].x = newPos.x;
+                contour._fitPoints[grip.fitIndex].y = newPos.y;
+                grip.x = newPos.x;
+                grip.y = newPos.y;
+
+                // Re-Tessellation
+                if (typeof SplineUtils !== 'undefined' && SplineUtils.interpolate) {
+                    let inputPts = contour._fitPoints;
+                    if (contour._splineClosed && inputPts.length >= 3) {
+                        inputPts = [...inputPts, inputPts[0], inputPts[1]];
+                    }
+                    const newCurve = SplineUtils.interpolate(inputPts);
+                    if (newCurve && newCurve.length >= 2) {
+                        pts.length = 0;
+                        for (const p of newCurve) pts.push({ x: p.x, y: p.y });
+                        // Geschlossene Splines: Schlusspunkt hinzufügen
+                        if (contour._splineClosed) {
+                            // Trim overlapping end (like SplineTool._tessellate)
+                            const first = pts[0];
+                            for (let ti = pts.length - 1; ti > pts.length / 2; ti--) {
+                                if (Math.hypot(pts[ti].x - first.x, pts[ti].y - first.y) < 0.1) {
+                                    pts.length = ti + 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            }
         }
 
         // Cache invalidieren
@@ -2309,6 +2357,27 @@ class CanvasRenderer {
         if (this._grips.length === 0) return;
 
         const size = 4 / this.scale;  // 4px Quadrat in Bildschirmpixeln
+
+        // V3.33: Kontrollpolygon für selektierte Spline-Konturen
+        const drawnPolygons = new Set();
+        for (const grip of this._grips) {
+            if (grip.type === 'spline_fit' && !drawnPolygons.has(grip.contour)) {
+                drawnPolygons.add(grip.contour);
+                const fp = grip.contour._fitPoints;
+                if (fp && fp.length >= 2) {
+                    ctx.save();
+                    ctx.setLineDash([6 / this.scale, 3 / this.scale]);
+                    ctx.strokeStyle = 'rgba(100, 140, 255, 0.4)';
+                    ctx.lineWidth = 1 / this.scale;
+                    ctx.beginPath();
+                    ctx.moveTo(fp[0].x, fp[0].y);
+                    for (let i = 1; i < fp.length; i++) ctx.lineTo(fp[i].x, fp[i].y);
+                    if (grip.contour._splineClosed) ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
 
         for (const grip of this._grips) {
             let color = this.colors.grip;
