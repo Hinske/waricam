@@ -1,17 +1,17 @@
 /**
- * CeraCUT Build Info V6.11
- * Version: V6.11
- * Last Modified: 2026-03-17 MEZ
- * Build: 20260317-cycleselect
+ * CeraCUT Build Info V6.12
+ * Version: V6.12
+ * Last Modified: 2026-03-23 MEZ
+ * Build: 20260323-boundary
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.11',
-    build: '20260317-cycleselect',
-    date: '2026-03-17',
-    time: '16:00 MEZ',
+    version: '6.12',
+    build: '20260323-boundary',
+    date: '2026-03-23',
+    time: '14:00 MEZ',
 
     modules: {
         'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
@@ -23,7 +23,7 @@ const CERACUT_BUILD = {
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
-        'geometry-ops':       { version: '2.4', build: '20260315-bugfix35' },
+        'geometry-ops':       { version: '2.5', build: '20260323-boundary' },
         'drawing-tools':      { version: '2.8', build: '20260317-quickwins' },
         'drawing-tools-ext':  { version: '1.6', build: '20260316-hatchpalette' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
@@ -32,7 +32,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.11', build: '20260317-cycleselect' },
+        'app':                { version: '6.12', build: '20260323-boundary' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
@@ -43,11 +43,13 @@ const CERACUT_BUILD = {
         'bridge-cutting':     { version: '1.0', build: '20260309' },
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
         'cam-tools':          { version: '1.1', build: '20260316-hittest' },
-        'advanced-tools':     { version: '1.5', build: '20260316-overkill' },
+        'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
     },
     
     changes: [
+        'V6.12: Boundary Tool (BP) — DCEL-basierte Umgrenzung aus kreuzenden Konturen (AutoCAD BOUNDARY)',
+        'V6.12: GeometryOps V2.5 — Planar Graph Builder, Half-Edge Struktur, Face-Tracing',
         'V3.9: Layer-Table Parser — R12/R14/DXF2000+ kompatibel (ab 0/LAYER statt AcDbLayerTableRecord)',
         'V3.9: Layer-Dropdown zeigt alle importierten DXF-Layer (auch ohne Entities)',
         'V3.5: Tier 2 Modification Tools — Move (M), Copy (Shift+C), Rotate (R), Mirror (Shift+M), Scale (S), Erase (DEL)',

@@ -1,14 +1,15 @@
 /**
- * CeraCUT GeometryOps V2.4 — Geometry Operations Engine
+ * CeraCUT GeometryOps V2.5 — Geometry Operations Engine
  * Foundation für Tier 3+5 CAD Tools
- * 
+ *
+ * V2.5: Boundary from Seed Point — DCEL-basierter Planar Graph, Face-Tracing (AutoCAD BOUNDARY)
  * V2.2: Arabeske (Laternenfliese) — 8 Kreisbögen, _arcThrough3Points, _circumscribedCircle
  * V2.1: Stabiler _trimClosedBetween (Index-basiert), trimContourPreview für Hover
  * V2.0: Fillet, Chamfer, Trim, Extend, Offset, Boolean, N-gon, Obround Algorithmen
  * V1.0: Segment-Modell, Intersection, Split, Explode, Join
- * 
- * Last Modified: 2026-02-20 MEZ
- * Build: 20260220a
+ *
+ * Last Modified: 2026-03-23 MEZ
+ * Build: 20260323-boundary
  */
 
 const GeometryOps = {
@@ -1225,6 +1226,294 @@ const GeometryOps = {
     /** Punkt auf Linie bei Parameter t */
     lerp(p1, p2, t) {
         return { x: p1.x + t * (p2.x - p1.x), y: p1.y + t * (p2.y - p1.y) };
+    },
+
+    // ════════════════════════════════════════════════════════════════
+    // V2.5: BOUNDARY FROM SEED POINT — AutoCAD-Style Umgrenzung (DCEL)
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Erkennt die geschlossene Umgrenzung um einen Seed-Punkt.
+     * Baut einen lokalen Planar Graph (DCEL) aus allen Kanten im Suchbereich
+     * und traced die Face, die den Seed-Punkt enthält.
+     *
+     * @param {{x,y}} seed — Klickpunkt des Benutzers
+     * @param {Array<CamContour>} contours — Alle Konturen
+     * @param {number} [searchRadius=100] — Suchradius um den Seed-Punkt
+     * @returns {Array<{x,y}>|null} — Boundary-Punkte (geschlossen) oder null
+     */
+    boundaryFromSeedPoint(seed, contours, searchRadius = 100) {
+        const _t0 = performance.now();
+
+        // Bis zu 2 Versuche mit wachsendem Radius
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const radius = searchRadius * (attempt + 1);
+            const bbox = {
+                minX: seed.x - radius, minY: seed.y - radius,
+                maxX: seed.x + radius, maxY: seed.y + radius
+            };
+
+            const graph = this._buildPlanarGraph(contours, bbox);
+            if (graph.edges.length < 3) continue;
+
+            const halfEdges = this._buildHalfEdgeStructure(graph.nodes, graph.edges);
+            if (halfEdges.length === 0) continue;
+
+            const face = this._traceFace(halfEdges, seed);
+            if (face && face.length >= 3) {
+                // Validierung: Ist es die Aussen-Face? (Fläche > 4x Suchbereich)
+                const area = Math.abs(this._shoelace(face));
+                const bboxArea = (bbox.maxX - bbox.minX) * (bbox.maxY - bbox.minY);
+                if (area > bboxArea * 4) continue; // Aussen-Face, Radius vergroessern
+
+                // Schliessen
+                face.push({ x: face[0].x, y: face[0].y });
+
+                console.log('[GeometryOps V2.5] Boundary traced: ' + (face.length - 1) +
+                    ' Punkte, ' + area.toFixed(1) + ' mm², ' +
+                    (performance.now() - _t0).toFixed(1) + 'ms');
+                return face;
+            }
+        }
+
+        console.log('[GeometryOps V2.5] Boundary: keine Face gefunden (' +
+            (performance.now() - _t0).toFixed(1) + 'ms)');
+        return null;
+    },
+
+    /**
+     * Baut einen planaren Graph aus allen Konturen im BBox-Bereich.
+     * Segmente werden an Schnittpunkten aufgesplittet, Knoten zusammengefuehrt.
+     */
+    _buildPlanarGraph(contours, bbox) {
+        const EPS = 1e-6;
+
+        // 1. Segmente sammeln (nur Konturen die BBox ueberlappen)
+        const allSegs = [];
+        for (let ci = 0; ci < contours.length; ci++) {
+            const c = contours[ci];
+            if (c.isReference) continue;
+            const pts = c.points;
+            if (!pts || pts.length < 2) continue;
+
+            // BBox-Check der Kontur
+            let cMinX = Infinity, cMinY = Infinity, cMaxX = -Infinity, cMaxY = -Infinity;
+            for (const p of pts) {
+                if (p.x < cMinX) cMinX = p.x;
+                if (p.y < cMinY) cMinY = p.y;
+                if (p.x > cMaxX) cMaxX = p.x;
+                if (p.y > cMaxY) cMaxY = p.y;
+            }
+            if (cMaxX < bbox.minX || cMinX > bbox.maxX || cMaxY < bbox.minY || cMinY > bbox.maxY) continue;
+
+            for (let i = 0; i < pts.length - 1; i++) {
+                allSegs.push({ p1: pts[i], p2: pts[i + 1], ci, si: i });
+            }
+        }
+
+        if (allSegs.length === 0) return { nodes: [], edges: [] };
+
+        // 2. Alle paarweisen Schnittpunkte finden + Segmente splitten
+        // Pro Segment: Liste von Split-t-Werten sammeln
+        const splitTs = allSegs.map(() => []);
+
+        for (let i = 0; i < allSegs.length; i++) {
+            for (let j = i + 1; j < allSegs.length; j++) {
+                const hit = this.segmentSegmentIntersection(
+                    allSegs[i].p1, allSegs[i].p2,
+                    allSegs[j].p1, allSegs[j].p2, EPS
+                );
+                if (hit) {
+                    const tA = Math.max(0, Math.min(1, hit.tA));
+                    const tB = Math.max(0, Math.min(1, hit.tB));
+                    // Nicht an Endpunkten splitten (schon Knoten)
+                    if (tA > EPS && tA < 1 - EPS) splitTs[i].push(tA);
+                    if (tB > EPS && tB < 1 - EPS) splitTs[j].push(tB);
+                }
+            }
+        }
+
+        // 3. Segmente aufsplitten → Sub-Kanten
+        const nodeMap = new Map(); // key → nodeId
+        const nodes = [];
+        const edges = [];
+
+        const getNodeId = (x, y) => {
+            // Spatial Hash: auf Grid runden
+            const gx = Math.round(x / EPS) * EPS;
+            const gy = Math.round(y / EPS) * EPS;
+            const key = gx.toFixed(8) + ',' + gy.toFixed(8);
+            if (nodeMap.has(key)) return nodeMap.get(key);
+            const id = nodes.length;
+            nodes.push({ x, y, id });
+            nodeMap.set(key, id);
+            return id;
+        };
+
+        for (let i = 0; i < allSegs.length; i++) {
+            const seg = allSegs[i];
+            const ts = splitTs[i];
+            ts.push(0, 1);
+            ts.sort((a, b) => a - b);
+
+            // Deduplizieren
+            const uniqueTs = [ts[0]];
+            for (let k = 1; k < ts.length; k++) {
+                if (ts[k] - uniqueTs[uniqueTs.length - 1] > EPS) uniqueTs.push(ts[k]);
+            }
+
+            // Sub-Kanten erzeugen
+            for (let k = 0; k < uniqueTs.length - 1; k++) {
+                const t0 = uniqueTs[k], t1 = uniqueTs[k + 1];
+                const x1 = seg.p1.x + t0 * (seg.p2.x - seg.p1.x);
+                const y1 = seg.p1.y + t0 * (seg.p2.y - seg.p1.y);
+                const x2 = seg.p1.x + t1 * (seg.p2.x - seg.p1.x);
+                const y2 = seg.p1.y + t1 * (seg.p2.y - seg.p1.y);
+
+                // Null-Laenge filtern
+                const dx = x2 - x1, dy = y2 - y1;
+                if (dx * dx + dy * dy < EPS * EPS) continue;
+
+                const fromId = getNodeId(x1, y1);
+                const toId = getNodeId(x2, y2);
+                if (fromId === toId) continue;
+
+                edges.push({ fromId, toId, p1: { x: x1, y: y1 }, p2: { x: x2, y: y2 } });
+            }
+        }
+
+        return { nodes, edges };
+    },
+
+    /**
+     * Baut eine Half-Edge (DCEL) Struktur aus Knoten und Kanten.
+     * Pro Kante 2 gerichtete Half-Edges, pro Knoten nach Winkel sortiert,
+     * next-Pointer verlinkt (nächste CW-Kante = Face-Traversierung).
+     */
+    _buildHalfEdgeStructure(nodes, edges) {
+        if (edges.length === 0) return [];
+
+        const halfEdges = [];
+
+        // 1. Zwei Half-Edges pro Kante
+        for (let i = 0; i < edges.length; i++) {
+            const e = edges[i];
+            const he0 = {
+                id: halfEdges.length, fromId: e.fromId, toId: e.toId,
+                p1: e.p1, p2: e.p2, twin: null, next: null,
+                angle: Math.atan2(e.p2.y - e.p1.y, e.p2.x - e.p1.x)
+            };
+            const he1 = {
+                id: halfEdges.length + 1, fromId: e.toId, toId: e.fromId,
+                p1: e.p2, p2: e.p1, twin: null, next: null,
+                angle: Math.atan2(e.p1.y - e.p2.y, e.p1.x - e.p2.x)
+            };
+            he0.twin = he1;
+            he1.twin = he0;
+            halfEdges.push(he0, he1);
+        }
+
+        // 2. Pro Knoten: ausgehende Kanten nach Winkel sortieren
+        const outgoing = new Map(); // nodeId → [halfEdge, ...]
+        for (const he of halfEdges) {
+            if (!outgoing.has(he.fromId)) outgoing.set(he.fromId, []);
+            outgoing.get(he.fromId).push(he);
+        }
+        for (const [, list] of outgoing) {
+            list.sort((a, b) => a.angle - b.angle);
+        }
+
+        // 3. next-Pointer: Wenn Half-Edge h bei Knoten v ankommt,
+        //    ist h.next die nächste ausgehende Kante von v im CW-Sinn
+        //    (= die Kante direkt VOR h.twin in der CCW-sortierten Liste)
+        for (const he of halfEdges) {
+            const arrivalNode = he.toId;
+            const twinHe = he.twin;
+            const list = outgoing.get(arrivalNode);
+            if (!list || list.length === 0) continue;
+
+            // Finde twin in der sortierten Liste
+            const idx = list.indexOf(twinHe);
+            if (idx === -1) continue;
+
+            // Nächste Kante im CW-Sinn = vorherige in CCW-Liste
+            const prevIdx = (idx - 1 + list.length) % list.length;
+            he.next = list[prevIdx];
+        }
+
+        return halfEdges;
+    },
+
+    /**
+     * Traced die Face die den Seed-Punkt enthält.
+     * Ray-Cast von Seed → nächste Kante → Half-Edge-Walk.
+     */
+    _traceFace(halfEdges, seed) {
+        // 1. Ray von Seed in +X-Richtung: finde nächste getroffene Kante
+        const rayEnd = { x: seed.x + 1e8, y: seed.y };
+        let bestHe = null;
+        let bestT = Infinity;
+
+        for (let i = 0; i < halfEdges.length; i += 2) { // Nur jede 2. (eine pro Kante)
+            const he = halfEdges[i];
+            const hit = this.segmentSegmentIntersection(seed, rayEnd, he.p1, he.p2, 1e-8);
+            if (hit && hit.tA > 1e-9 && hit.tA < bestT) {
+                bestT = hit.tA;
+                bestHe = he;
+            }
+        }
+
+        if (!bestHe) return null;
+
+        // 2. Welche Seite der Kante liegt der Seed? Cross-Product bestimmt Half-Edge
+        const cross = (bestHe.p2.x - bestHe.p1.x) * (seed.y - bestHe.p1.y) -
+                      (bestHe.p2.y - bestHe.p1.y) * (seed.x - bestHe.p1.x);
+        let startHe = cross > 0 ? bestHe : bestHe.twin;
+
+        // 3. Face-Walk: next-Chain folgen
+        const facePoints = [];
+        let current = startHe;
+        const maxSteps = halfEdges.length + 1;
+        let steps = 0;
+
+        do {
+            facePoints.push({ x: current.p1.x, y: current.p1.y });
+            current = current.next;
+            steps++;
+            if (!current || steps > maxSteps) return null; // Endlos-Schleife Schutz
+        } while (current !== startHe);
+
+        if (facePoints.length < 3) return null;
+
+        // 4. Validierung: enthält die Face den Seed-Punkt?
+        if (!this.pointInPolygon(seed, facePoints)) {
+            // Versuche die andere Seite
+            startHe = startHe.twin;
+            facePoints.length = 0;
+            current = startHe;
+            steps = 0;
+            do {
+                facePoints.push({ x: current.p1.x, y: current.p1.y });
+                current = current.next;
+                steps++;
+                if (!current || steps > maxSteps) return null;
+            } while (current !== startHe);
+
+            if (facePoints.length < 3) return null;
+            if (!this.pointInPolygon(seed, facePoints)) return null;
+        }
+
+        return facePoints;
+    },
+
+    /** Shoelace-Formel für vorzeichenbehaftete Fläche */
+    _shoelace(pts) {
+        let area = 0;
+        for (let i = 0, n = pts.length; i < n; i++) {
+            const j = (i + 1) % n;
+            area += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+        }
+        return area / 2;
     }
 };
 

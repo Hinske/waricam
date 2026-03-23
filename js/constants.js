@@ -145,7 +145,7 @@ const TOOL_TOOLTIPS = {
     'J':     { label: 'Join',        tip: 'Linien zu einer Kontur verbinden',        shortcut: 'J',     group: 'edit' },
     'B':     { label: 'Brechen',     tip: 'Kontur an einem Punkt teilen',            shortcut: 'B',     group: 'edit' },
     'BO':    { label: 'Boolesch',    tip: 'Formen verschmelzen/subtrahieren',        shortcut: 'BO',    group: 'edit' },
-    'BP':    { label: 'Boundary',    tip: 'Umrandung erkennen',                      shortcut: 'BP',    group: 'edit' },
+    'BP':    { label: 'Boundary',    tip: 'Umgrenzung aus kreuzenden Konturen erkennen', shortcut: 'BP', group: 'edit' },
     'CLDCL': { label: 'Aufteilen',   tip: 'Kontur gleichmaessig aufteilen',          shortcut: 'CLDCL', group: 'edit' },
     'OK':    { label: 'Overkill',    tip: 'Duplikate und ueberlappende Linien entfernen', shortcut: 'OK', group: 'edit' },
 

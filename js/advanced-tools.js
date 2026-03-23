@@ -1,7 +1,8 @@
 /**
- * CeraCUT Advanced Tools V1.5 — Tier 5 CAD Tools
+ * CeraCUT Advanced Tools V1.6 — Tier 5 CAD Tools
  * 14 CAD-Werkzeuge + Ribbon-Alias-Fix
  *
+ * V1.6: Boundary Tool — DCEL-basierte Umgrenzung aus kreuzenden Konturen (AutoCAD BOUNDARY)
  * V1.5: Overkill-Tool (OK) — Duplikate + überlappende Linien entfernen, Toleranz-Dialog
  * V1.4: Aufteilen-Werkzeuge (CL2D, CLND, CLDCL)
  * V1.3: Offset Ghost-Preview (handleMouseMove), Chamfer Continuous Mode + finish()
@@ -11,13 +12,13 @@
  *
  * Tools: Fillet (F), Trim (T), Offset (O), Extend (EX), Chamfer (CH),
  *        Zero Fillet (ZF), Boolean (BO), N-gon (NG), Obround (OB),
- *        Array (AR), Lengthen (LE), Boundary Poly (BP), Arabeske (AB),
+ *        Array (AR), Lengthen (LE), Boundary (BP), Arabeske (AB),
  *        Overkill (OK)
  *
- * Benötigt: geometry-ops.js V2.2, drawing-tools.js V2.3
+ * Benötigt: geometry-ops.js V2.5, drawing-tools.js V2.3
  *
- * Last Modified: 2026-03-11 MEZ
- * Build: 20260311-offset
+ * Last Modified: 2026-03-23 MEZ
+ * Build: 20260323-boundary
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1541,39 +1542,59 @@ class LengthenTool extends BaseTool {
 
 class BoundaryPolyTool extends BaseTool {
     start() {
-        this.cmd?.setPrompt('BOUNDARY POLY — Punkt im Bereich anklicken:');
-        this.cmd?.log('🔲 Boundary Poly: Klick innerhalb eines geschlossenen Bereichs', 'info');
+        this.cmd?.setPrompt('BOUNDARY — Punkt im Bereich anklicken:');
+        this.cmd?.log('🔲 Boundary: Umgrenzung aus kreuzenden Konturen erkennen (BP)', 'info');
     }
+
     handleClick(point) {
-        var app = this.manager.app;
-        if (!app?.contours || app.contours.length === 0) { this.cmd?.log('Keine Konturen', 'error'); return; }
-        var best = null, bestArea = Infinity;
-        for (var i = 0; i < app.contours.length; i++) {
-            var c = app.contours[i];
-            if (!c.isClosed || c.isReference) continue;
-            if (GeometryOps.pointInPolygon(point, c.points)) {
-                var area = Math.abs(this._area(c.points));
-                if (area < bestArea) { bestArea = area; best = c; }
+        const app = this.manager.app;
+        if (!app?.contours || app.contours.length === 0) {
+            this.cmd?.log('Keine Konturen vorhanden', 'error');
+            return;
+        }
+
+        // Phase 1: DCEL-basierte Boundary-Erkennung (kreuzende Geometrien)
+        let boundaryPts = GeometryOps.boundaryFromSeedPoint(point, app.contours, 100);
+
+        // Phase 2: Fallback — kleinste geschlossene Kontur die den Punkt enthält
+        if (!boundaryPts) {
+            let best = null, bestArea = Infinity;
+            for (const c of app.contours) {
+                if (!c.isClosed || c.isReference) continue;
+                if (GeometryOps.pointInPolygon(point, c.points)) {
+                    const area = Math.abs(GeometryOps._shoelace(c.points));
+                    if (area < bestArea) { bestArea = area; best = c; }
+                }
+            }
+            if (best) {
+                boundaryPts = best.points.map(p => ({ x: p.x, y: p.y }));
+                console.log('[AdvancedTools V1.6] Boundary Fallback: bestehende Kontur kopiert');
             }
         }
-        if (!best) { this.cmd?.log('Kein geschlossener Bereich gefunden', 'warning'); return; }
 
-        var nc = new CamContour(best.points.map(function(p){return {x:p.x,y:p.y};}), { layer: 'DRAW', name: 'Boundary_' + best.name });
+        if (!boundaryPts) {
+            this.cmd?.log('Kein geschlossener Bereich gefunden', 'warning');
+            return;
+        }
+
+        // Neue Kontur erstellen
+        const nc = new CamContour(boundaryPts, { layer: 'DRAW', name: 'Boundary_' + Date.now() });
         nc.isClosed = true;
-        var contours = app.contours;
-        var rerender = function() { app.renderer?.setContours(app.contours); app.rebuildCutOrder?.(); app.updateContourPanel?.(); app.renderer?.render(); };
-        var cmd = new FunctionCommand('Boundary Poly',
-            function() { contours.push(nc); rerender(); },
-            function() { var idx = contours.indexOf(nc); if (idx !== -1) contours.splice(idx, 1); rerender(); }
+        const contours = app.contours;
+        const rerender = () => {
+            app.renderer?.setContours(app.contours);
+            app.rebuildCutOrder?.();
+            app.updateContourPanel?.();
+            app.renderer?.render();
+        };
+
+        const cmd = new FunctionCommand('Boundary',
+            () => { contours.push(nc); rerender(); },
+            () => { const idx = contours.indexOf(nc); if (idx !== -1) contours.splice(idx, 1); rerender(); }
         );
         app.undoManager?.execute(cmd);
-        this.cmd?.log('✔ Boundary erstellt (Strg+Z)', 'success');
-        this.cmd?.setPrompt('BOUNDARY POLY — Nächster Bereich (ESC = Ende):');
-    }
-    _area(pts) {
-        var a = 0, n = pts.length;
-        for (var i = 0; i < n; i++) { var j = (i+1) % n; a += pts[i].x * pts[j].y - pts[j].x * pts[i].y; }
-        return a / 2;
+        this.cmd?.log('Boundary erstellt (' + (boundaryPts.length - 1) + ' Punkte, Strg+Z)', 'success');
+        this.cmd?.setPrompt('BOUNDARY — Nächster Bereich (ESC = Ende):');
     }
 }
 
