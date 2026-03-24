@@ -19,7 +19,7 @@ Diese Regeln sind NICHT optional. Sie MUESSEN bei jeder Aenderung vollstaendig a
 - [ ] **3. `index.html`** — `?v=` Cache-Busting-Parameter hochzaehlen fuer geaenderte Script-Tags
 - [ ] **4. Console-Logs** — Versions-Prefix in Debug-Logs aktualisieren (z.B. `[Pipeline V3.3]`)
 - [ ] **5. `CLAUDE.md`** — `node scripts/sync-versions.js` ausfuehren (aktualisiert Header, Modul-Tabelle, Sync-Pruefung, Dateibaum automatisch). Danach Projekt-Tabelle (Version/Build-Zeile) manuell pruefen.
-- [ ] **6. git commit** — Kurze, deutsche Commit-Message (das "Warum")
+- [ ] **6. `build-info.js` → `git`** — Hash, Datum, Message des NEUEN Commits eintragen (nach `git commit`, vor `git push`: `git log -1 --format='%h|%ci|%s'` ablesen, in `CERACUT_BUILD.git` aktualisieren, `git commit --amend --no-edit`)
 - [ ] **7. git push** — Sofort, ohne Rueckfrage
 
 ### Checkliste: Bei neuem Tool / geaendertem Shortcut
@@ -220,7 +220,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
 | **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
-| **Debug Monitor** | `debug-monitor.js` | **V1.0** | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
+| **Debug Monitor** | `debug-monitor.js` | **V1.1** | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
 | **Nesting** | `nesting.js` | **V1.1** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
 | **Toolpath Simulator** | `toolpath-simulator.js` | **V1.0** | Pfad-Verifikation, Animation, Kollisionsmatrix |
 | **Cost Calculator** | `cost-calculator.js` | **V1.1** | Kosten-/Zeitkalkulation mit CeraJet-Integration |
@@ -513,7 +513,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   app: V6.13 (20260323-splinetool)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.5 (20260316-hatchentity)
-  debug-monitor: V1.0 (20260219-dm10)
+  debug-monitor: V1.1 (20260324-gitcommit)
   nesting: V1.1 (20260315-bugfix35)
   toolpath-simulator: V1.0 (20260309)
   cost-calculator: V1.1 (20260315-bugfix35)

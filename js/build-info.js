@@ -13,6 +13,13 @@ const CERACUT_BUILD = {
     date: '2026-03-23',
     time: '16:00 MEZ',
 
+    // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
+    git: {
+        hash: '73fa6b1',
+        date: '2026-03-24 08:11:48 +0100',
+        message: 'feat: Debug Monitor zeigt Git-Commit-Info (V1.1)'
+    },
+
     modules: {
         'dxf-parser':         { version: '3.11', build: '20260324-splinegrip' },
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
@@ -35,7 +42,7 @@ const CERACUT_BUILD = {
         'app':                { version: '6.13', build: '20260323-splinetool' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
-        'debug-monitor':      { version: '1.0', build: '20260219-dm10' },
+        'debug-monitor':      { version: '1.1', build: '20260324-gitcommit' },
         'nesting':            { version: '1.1', build: '20260315-bugfix35' },
         'toolpath-simulator': { version: '1.0', build: '20260309' },
         'cost-calculator':    { version: '1.1', build: '20260315-bugfix35' },
@@ -48,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.13.1: Debug Monitor zeigt Git-Commit-Info im Footer — Hash, Datum, Message (debug-monitor V1.1)',
         'V6.13.1: Spline Fit-Points Durchreichung in chainContours — Grip-Editing funktioniert jetzt für gezeichnete Splines (dxf-parser V3.11)',
         'V6.13: SplineTool AutoCAD-Overhaul — Dual-Preview (Kontrollpolygon + Kurve), Close-to-Start, Continuous Mode',
         'V6.13: Spline Fit-Points bleiben erhalten → Grip-Editing mit Re-Tessellation in Echtzeit',

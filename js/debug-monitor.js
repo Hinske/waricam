@@ -1,5 +1,7 @@
 /**
- * CeraCUT Debug Monitor V1.0
+ * CeraCUT Debug Monitor V1.1
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-gitcommit
  * ════════════════════════════════════════════════════════════
  * Automatisches Fehler-Monitoring für CeraCUT / CeraCUT
  *
@@ -10,24 +12,27 @@
  *   - Action-Tracker: Letzte 50 User-Aktionen protokolliert
  *   - Performance-Monitor: Frames die >16ms dauern
  *   - Debug-Overlay: Strg+Shift+D → öffnet/schließt Panel
+ *   - Git-Commit-Info im Footer (Hash, Datum, Message)
  *   - JSON-Export für Claude Code Analyse
  *   - Kein Framework, kein Build-Tool — reines Vanilla JS
  *
+ * V1.1 Änderungen:
+ *   - Git-Commit-Info (Hash, Datum, Message) im Overlay-Footer
+ *   - Liest CERACUT_BUILD.git aus build-info.js
+ *
  * Aktivierung: Als ERSTES Script in index.html laden
- *   <script src="js/debug-monitor.js?v=20260219-dm10"></script>
+ *   <script src="js/debug-monitor.js?v=20260324-gitcommit"></script>
  *
  * Claude Code Workflow:
  *   1. Strg+Shift+D → "Export JSON"
  *   2. Datei an Claude Code übergeben
  *   3. claude "Analysiere diesen CeraCUT Debug-Log und schlage Fixes vor"
- *
- * Build: 20260219-dm10
  */
 
 (function() {
     'use strict';
 
-    console.debug('[DebugMonitor V1.0] Strg+Shift+D für Overlay');
+    console.debug('[DebugMonitor V1.1] Strg+Shift+D für Overlay');
 
     // ═══════════════════════════════════════════════════════
     // BEKANNTE CeraCUT-FALLEN (aus system-anweisung V16)
@@ -183,7 +188,7 @@
     }
 
     function _logError(type, message, source, line, col, stack, extra) {
-        console.time('[DebugMonitor V1.0] Error-Verarbeitung');
+        console.time('[DebugMonitor V1.1] Error-Verarbeitung');
 
         const trap = _matchKnownTrap(message, stack);
         const entry = {
@@ -234,7 +239,7 @@
             _updateOverlay();
         }
 
-        console.timeEnd('[DebugMonitor V1.0] Error-Verarbeitung');
+        console.timeEnd('[DebugMonitor V1.1] Error-Verarbeitung');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -283,7 +288,7 @@
             }
         }, true);
 
-        console.debug('[DebugMonitor V1.0] Action-Tracking aktiv');
+        console.debug('[DebugMonitor V1.1] Action-Tracking aktiv');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -315,7 +320,7 @@
                     _perfWarnings.push(warn);
 
                     if (_frameDropCount <= 5) {
-                        console.warn(`[DebugMonitor V1.0] 🐢 Frame-Drop: ${Math.round(delta)}ms (Schwelle: 100ms)`);
+                        console.warn(`[DebugMonitor V1.1] 🐢 Frame-Drop: ${Math.round(delta)}ms (Schwelle: 100ms)`);
                     }
                 }
             }
@@ -328,11 +333,11 @@
         // Perf-Zusammenfassung alle 30 Sekunden (wenn Drops vorhanden)
         setInterval(() => {
             if (_frameDropCount > 0 && _frameDropCount % 10 === 0) {
-                console.warn(`[DebugMonitor V1.0] Performance: ${_frameDropCount} Frame-Drops seit Session-Start`);
+                console.warn(`[DebugMonitor V1.1] Performance: ${_frameDropCount} Frame-Drops seit Session-Start`);
             }
         }, 30000);
 
-        console.debug('[DebugMonitor V1.0] Performance-Monitor aktiv (Schwelle: 100ms)');
+        console.debug('[DebugMonitor V1.1] Performance-Monitor aktiv (Schwelle: 100ms)');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -367,7 +372,7 @@
             }
         };
 
-        console.log('[DebugMonitor V1.0] Error-Handler registriert (onerror + unhandledrejection + console.error)');
+        console.log('[DebugMonitor V1.1] Error-Handler registriert (onerror + unhandledrejection + console.error)');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -407,7 +412,7 @@
                 cursor: move;
                 user-select: none;
             ">
-                <span style="color: #ff9800; font-weight: bold;">🔍 CeraCUT Debug Monitor V1.0</span>
+                <span style="color: #ff9800; font-weight: bold;">🔍 CeraCUT Debug Monitor V1.1</span>
                 <div style="display: flex; gap: 6px;">
                     <button id="wdm-export" style="background:#004499;color:#fff;border:none;padding:2px 8px;border-radius:2px;cursor:pointer;font-size:10px;">📥 Export JSON</button>
                     <button id="wdm-clear" style="background:#440000;color:#fff;border:none;padding:2px 8px;border-radius:2px;cursor:pointer;font-size:10px;">🗑 Löschen</button>
@@ -422,11 +427,19 @@
             </div>
             <div id="wdm-content" style="overflow-y:auto;flex:1;max-height:calc(80vh - 80px);"></div>
             <div id="wdm-footer" style="background:#111;padding:4px 10px;font-size:10px;color:#666;border-top:1px solid #333;">
-                Strg+Shift+D zum Schließen · Letzte Aktualisierung: —
+                <div>Strg+Shift+D zum Schließen · Letzte Aktualisierung: —</div>
+                <div id="wdm-git" style="color:#4fc3f7;margin-top:2px;font-family:monospace;"></div>
             </div>
         `;
 
         document.body.appendChild(overlay);
+
+        // Git-Commit-Info anzeigen
+        const gitEl = document.getElementById('wdm-git');
+        if (gitEl && typeof CERACUT_BUILD !== 'undefined' && CERACUT_BUILD.git) {
+            const g = CERACUT_BUILD.git;
+            gitEl.textContent = `Git: ${g.hash} · ${g.date} · ${g.message}`;
+        }
 
         // Tab-Switching
         let _activeTab = 'errors';
@@ -453,7 +466,7 @@
             _perfWarnings = [];
             sessionStorage.removeItem(SESSION_KEY);
             _renderTab(_activeTab);
-            console.log('[DebugMonitor V1.0] Log geleert');
+            console.log('[DebugMonitor V1.1] Log geleert');
         });
         document.getElementById('wdm-export').addEventListener('click', () => _exportJSON());
 
@@ -590,7 +603,7 @@
         if (_overlayVisible) {
             _overlayRef.renderTab(_overlayRef.getActiveTab());
         }
-        console.log(`[DebugMonitor V1.0] Overlay ${_overlayVisible ? 'geöffnet' : 'geschlossen'}`);
+        console.log(`[DebugMonitor V1.1] Overlay ${_overlayVisible ? 'geöffnet' : 'geschlossen'}`);
     }
 
     function _updateOverlay() {
@@ -604,7 +617,7 @@
     // ═══════════════════════════════════════════════════════
 
     function _exportJSON() {
-        console.time('[DebugMonitor V1.0] JSON-Export');
+        console.time('[DebugMonitor V1.1] JSON-Export');
 
         const data = {
             meta: {
@@ -646,8 +659,8 @@
         a.click();
         URL.revokeObjectURL(url);
 
-        console.log(`[DebugMonitor V1.0] JSON exportiert: ${_sessionLog.length} Fehler, ${_actionLog.length} Aktionen`);
-        console.timeEnd('[DebugMonitor V1.0] JSON-Export');
+        console.log(`[DebugMonitor V1.1] JSON exportiert: ${_sessionLog.length} Fehler, ${_actionLog.length} Aktionen`);
+        console.timeEnd('[DebugMonitor V1.1] JSON-Export');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -662,7 +675,7 @@
                 _toggleOverlay();
             }
         }, true); // capture phase — vor allem anderen
-        console.debug('[DebugMonitor V1.0] Shortcut registriert');
+        console.debug('[DebugMonitor V1.1] Shortcut registriert');
     }
 
     // ═══════════════════════════════════════════════════════
@@ -691,7 +704,7 @@
             _actionLog = [];
             _perfWarnings = [];
             sessionStorage.removeItem(SESSION_KEY);
-            console.log('[DebugMonitor V1.0] Log geleert via API');
+            console.log('[DebugMonitor V1.1] Log geleert via API');
         },
 
         /** Manuell einen Fehler loggen (für Tests) */
@@ -699,7 +712,7 @@
 
         /** Bekannte Fallen anzeigen */
         showTraps: () => {
-            console.group('[DebugMonitor V1.0] Bekannte CeraCUT-Fallen:');
+            console.group('[DebugMonitor V1.1] Bekannte CeraCUT-Fallen:');
             KNOWN_TRAPS.filter(t => !t.isPositive).forEach(t => {
                 const hits = _sessionLog.filter(e => e.trap?.id === t.id).length;
                 console.log(`${t.label} [${hits > 0 ? '⚠ ' + hits + '× getroffen' : '✅ nicht getroffen'}]\n  💡 ${t.hint}`);
@@ -713,7 +726,7 @@
             const warns = _sessionLog.filter(e => e.trap?.severity === 'warning').length;
             const unkn  = _sessionLog.filter(e => !e.trap).length;
             const traps = [...new Set(_sessionLog.map(e => e.trap?.id).filter(Boolean))];
-            console.group('[DebugMonitor V1.0] Session-Zusammenfassung');
+            console.group('[DebugMonitor V1.1] Session-Zusammenfassung');
             console.log(`Fehler: ${crits} kritisch, ${warns} Warnungen, ${unkn} unbekannt`);
             console.log(`Aktionen: ${_actionLog.length} | Frame-Drops: ${_perfWarnings.length}`);
             if (traps.length) console.log(`Getroffene Fallen: ${traps.join(', ')}`);
@@ -743,7 +756,7 @@
 
     // Gespeicherte Fehler aus vorheriger Session melden
     if (_sessionLog.length > 0) {
-        console.warn(`[DebugMonitor V1.0] ⚠ ${_sessionLog.length} Fehler aus vorheriger Session geladen — Strg+Shift+D zum Anzeigen`);
+        console.warn(`[DebugMonitor V1.1] ⚠ ${_sessionLog.length} Fehler aus vorheriger Session geladen — Strg+Shift+D zum Anzeigen`);
     }
 
     // Init-Timer entfernt — kein Rauschen in der Console
