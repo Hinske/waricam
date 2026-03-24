@@ -1,23 +1,23 @@
 /**
- * CeraCUT Build Info V6.13
- * Version: V6.13
- * Last Modified: 2026-03-23 MEZ
- * Build: 20260323-splinetool
+ * CeraCUT Build Info V6.14
+ * Version: V6.14
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-layerfix
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.13',
-    build: '20260323-splinetool',
-    date: '2026-03-23',
-    time: '16:00 MEZ',
+    version: '6.14',
+    build: '20260324-layerfix',
+    date: '2026-03-24',
+    time: '10:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '73fa6b1',
-        date: '2026-03-24 08:11:48 +0100',
-        message: 'feat: Debug Monitor zeigt Git-Commit-Info (V1.1)'
+        hash: 'cf67edf',
+        date: '2026-03-24 08:36:54 +0100',
+        message: 'fix: Neu erstellte Layer — Dropdown zeigt sie korrekt an (V6.14)'
     },
 
     modules: {
@@ -39,7 +39,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.13', build: '20260323-splinetool' },
+        'app':                { version: '6.14', build: '20260324-layerfix' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.1', build: '20260324-gitcommit' },
@@ -55,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt',
         'V6.13.1: Debug Monitor zeigt Git-Commit-Info im Footer — Hash, Datum, Message (debug-monitor V1.1)',
         'V6.13.1: Spline Fit-Points Durchreichung in chainContours — Grip-Editing funktioniert jetzt für gezeichnete Splines (dxf-parser V3.11)',
         'V6.13: SplineTool AutoCAD-Overhaul — Dual-Preview (Kontrollpolygon + Kurve), Close-to-Start, Continuous Mode',

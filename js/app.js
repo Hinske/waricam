@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.11 - Main Application
+ * CeraCUT V6.14 - Main Application
+ * V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt
  * V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle cycled durch überlappende Konturen
  * V6.10: Quick Wins — Snap-Modi-Statusbar, Locked-Layer Guard
  * V6.9: Auto-Apply Rechtsklick + fitToContent nur beim ersten Zeichnen (kein View-Sprung)
