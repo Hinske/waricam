@@ -1695,7 +1695,7 @@
             document.getElementById('lm-add')?.addEventListener('click', () => {
                 const name = prompt('Neuer Layer-Name:');
                 if (name && origApp.layerManager.addLayer(name)) {
-                    origApp.layerManager.setActiveLayer(name);
+                    origApp.layerManager.setActive(name);
                     origApp._renderLayerManagerTable();
                     origApp.showToast(`Layer "${name}" angelegt`, 'success');
                 }
@@ -1887,7 +1887,7 @@
             document.getElementById('btn-layer-add')?.addEventListener('click', () => {
                 const name = prompt('Neuer Layer-Name:');
                 if (name && origApp.layerManager.addLayer(name)) {
-                    origApp.layerManager.setActiveLayer(name);
+                    origApp.layerManager.setActive(name);
                     origApp.showToast(`Layer "${name}" angelegt`, 'success');
                 }
             });
