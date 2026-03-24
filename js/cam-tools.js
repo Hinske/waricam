@@ -1,5 +1,5 @@
 /**
- * CeraCUT CAM-Tools V1.2 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
+ * CeraCUT CAM-Tools V1.3 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
  * 7 Tools für Analyse, Optimierung und Vorbereitung der Schnittgeometrie
  *
  * Tools:
@@ -13,12 +13,13 @@
  *
  * Benötigt: geometry-ops.js V2.1, drawing-tools.js V2.2, ceracut-pipeline.js V3.1
  *
+ * V1.3: _notifyStateChange() nach jedem undoStack.push() — UI-Buttons aktualisieren sich korrekt
  * V1.2: Renderer-Patch fix (scale/offsetX/offsetY), Edgefix nutzt zentrale Hit-Test-Methode,
  *       Shift-Tracking für BoundaryTrim, Redo-Stack-Clearing nach Undo-Push, alle TOOL_TOOLTIPS
  * V1.1: Hit-Test Scaling — Klick-Threshold skaliert mit Zoom-Level
  * Created: 2026-02-17 MEZ
  * Last Modified: 2026-03-24 MEZ
- * Build: 20260324-camfix
+ * Build: 20260324-undofix
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -149,6 +150,7 @@ class EdgefixTool extends BaseTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
             this.cmd?.log('✅ Edgefix: Abschnitt ersetzt (' + (arc ? 'Arc' : 'Linie') + ')', 'info');
         }
         this.manager.renderer?.render();
@@ -310,6 +312,7 @@ class ReplaceTool extends ModificationTool {
         cmd.execute();
         undoMgr.undoStack.push(cmd);
         undoMgr.redoStack.length = 0;
+        undoMgr._notifyStateChange();
 
         // Selektion aufheben
         for (const t of this.targetContours) t.isSelected = false;
@@ -481,6 +484,7 @@ class AnalyzeTool extends ModificationTool {
             };
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         const gapCount = unique.filter(m => m.type === 'gap').length;
@@ -601,6 +605,7 @@ class BoundaryTrimTool extends BaseTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         this.manager.renderer?.render();
@@ -786,6 +791,7 @@ class PolyJointTool extends BaseTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         this.manager.renderer?.render();
@@ -854,6 +860,7 @@ class PolyJointTool extends BaseTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         this.manager.renderer?.render();
@@ -988,6 +995,7 @@ class VectorizeTool extends ModificationTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         // Selektion aufheben
@@ -1120,6 +1128,7 @@ class ConvexHullTool extends ModificationTool {
             cmd.execute();
             undoMgr.undoStack.push(cmd);
             undoMgr.redoStack.length = 0;
+            undoMgr._notifyStateChange();
         }
 
         // Selektion aufheben

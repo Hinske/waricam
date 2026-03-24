@@ -1,5 +1,5 @@
 /**
- * CeraCUT Layer Manager V1.1
+ * CeraCUT Layer Manager V1.2
  * Verwaltung von Zeichnungslayern (AutoCAD-Stil)
  *
  * Features:
@@ -9,10 +9,11 @@
  * - Import aus DXF-Parse-Result
  * - ACI-Farb-Mapping (AutoCAD Color Index)
  * - Drag-to-Reorder (Layer "0" immer oben)
+ * - Undo-fähige Layer-Operationen (Visibility, Lock, Color)
  *
- * Version: V1.1
- * Last Modified: 2026-03-17 MEZ
- * Build: 20260317-layerreorder
+ * Version: V1.2
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-undofix
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -94,10 +95,13 @@ class LayerManager {
         /** Callback bei Änderungen (für UI-Updates) */
         this.onChange = null;
 
+        /** Referenz auf UndoManager (wird von app.js gesetzt) */
+        this.undoManager = null;
+
         // Default-Layer "0" anlegen
         this._addDefaultLayer();
 
-        console.debug('[LayerManager V1.1] Initialisiert');
+        console.debug('[LayerManager V1.2] Initialisiert');
     }
 
     // ═══ INTERNE HELFER ═══
@@ -228,7 +232,22 @@ class LayerManager {
     toggleVisibility(name) {
         const layer = this.layers.get(name);
         if (!layer) return false;
+        const oldVal = layer.visible;
         layer.visible = !layer.visible;
+        const newVal = layer.visible;
+        // Undo-fähig machen
+        if (this.undoManager) {
+            const self = this;
+            const cmd = new FunctionCommand(
+                `Layer "${name}" ${newVal ? 'einblenden' : 'ausblenden'}`,
+                () => { layer.visible = newVal; self._notify(); },
+                () => { layer.visible = oldVal; self._notify(); }
+            );
+            // Aktion bereits ausgeführt → direkt auf Stack
+            this.undoManager.undoStack.push(cmd);
+            this.undoManager.redoStack.length = 0;
+            this.undoManager._notifyStateChange();
+        }
         this._notify();
         return layer.visible;
     }
@@ -242,10 +261,26 @@ class LayerManager {
         if (name === '0') return false; // Layer 0 kann nicht gesperrt werden
         const layer = this.layers.get(name);
         if (!layer) return false;
+        const oldLocked = layer.locked;
+        const oldActive = this.activeLayer;
         layer.locked = !layer.locked;
+        const newLocked = layer.locked;
         // Wenn aktiver Layer gesperrt wird → auf "0" wechseln
         if (layer.locked && this.activeLayer === name) {
             this.activeLayer = '0';
+        }
+        const newActive = this.activeLayer;
+        // Undo-fähig machen
+        if (this.undoManager) {
+            const self = this;
+            const cmd = new FunctionCommand(
+                `Layer "${name}" ${newLocked ? 'sperren' : 'entsperren'}`,
+                () => { layer.locked = newLocked; self.activeLayer = newActive; self._notify(); },
+                () => { layer.locked = oldLocked; self.activeLayer = oldActive; self._notify(); }
+            );
+            this.undoManager.undoStack.push(cmd);
+            this.undoManager.redoStack.length = 0;
+            this.undoManager._notifyStateChange();
         }
         this._notify();
         return layer.locked;
@@ -259,7 +294,20 @@ class LayerManager {
     setColor(name, color) {
         const layer = this.layers.get(name);
         if (!layer) return;
+        const oldColor = layer.color;
         layer.color = color;
+        // Undo-fähig machen
+        if (this.undoManager) {
+            const self = this;
+            const cmd = new FunctionCommand(
+                `Layer "${name}" Farbe ändern`,
+                () => { layer.color = color; self._notify(); },
+                () => { layer.color = oldColor; self._notify(); }
+            );
+            this.undoManager.undoStack.push(cmd);
+            this.undoManager.redoStack.length = 0;
+            this.undoManager._notifyStateChange();
+        }
         this._notify();
     }
 

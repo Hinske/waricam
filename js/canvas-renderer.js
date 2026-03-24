@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.34 - Canvas Renderer
+ * CeraCUT V3.35 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.35: _notifyStateChange() nach Grip-Edit → Undo-Buttons aktualisieren sich korrekt
  * V3.34: Shift-Status am ToolManager zwischenspeichern (für CAM-Tools wie BoundaryTrim)
  * V3.33: Spline Grip-Editing — Fit-Point-Grips + Re-Tessellation + Kontrollpolygon-Overlay
  * V3.32: Cycle-Selection — findAllContoursAtPoint() für Durchklicken überlappender Konturen
@@ -494,6 +495,7 @@ class CanvasRenderer {
                 if (app?.undoManager) {
                     const max = app.undoManager.maxHistory || 100;
                     if (app.undoManager.undoStack.length > max) app.undoManager.undoStack.shift();
+                    app.undoManager._notifyStateChange();
                 }
                 this._gripDirty = true;
                 isDraggingGrip = false;

@@ -1,5 +1,6 @@
 /**
- * CeraCUT V6.14 - Main Application
+ * CeraCUT V6.15 - Main Application
+ * V6.15: Fix — Undo-System: LayerManager.undoManager Verknüpfung für undo-fähige Layer-Ops
  * V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt
  * V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle cycled durch überlappende Konturen
  * V6.10: Quick Wins — Snap-Modi-Statusbar, Locked-Layer Guard
@@ -129,6 +130,7 @@ class CeraCutApp {
 
         // V3.8: Layer-Management + DXF-Writer
         this.layerManager = new LayerManager();
+        this.layerManager.undoManager = this.undoManager;
         this.layerManager.onChange = () => this._updateLayerUI();
         this.dxfWriter = new DXFWriter();
         this.loadedFileName = '';  // Geladener Dateiname (für "Speichern")

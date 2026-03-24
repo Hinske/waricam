@@ -8,16 +8,16 @@
  */
 
 const CERACUT_BUILD = {
-    version: '6.14',
-    build: '20260324-layerfix',
+    version: '6.15',
+    build: '20260324-undofix',
     date: '2026-03-24',
-    time: '10:00 MEZ',
+    time: '16:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '3c7d023',
-        date: '2026-03-24 10:11:56 +0100',
-        message: 'fix: CAM-Tools V1.2 — 5 Bugs behoben (Renderer-Patch, Hit-Test, Shift, Redo-Stack, Tooltips)'
+        hash: 'a30e839',
+        date: '2026-03-24 16:29:02 +0100',
+        message: 'fix: Undo-System V6.15 — fehlende _notifyStateChange() + Layer-Ops undo-fähig'
     },
 
     modules: {
@@ -25,7 +25,7 @@ const CERACUT_BUILD = {
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.8', build: '20260323-splinetool' },
-        'canvas-renderer':    { version: '3.34', build: '20260324-camfix' },
+        'canvas-renderer':    { version: '3.35', build: '20260324-undofix' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
@@ -35,11 +35,11 @@ const CERACUT_BUILD = {
         'drawing-tools-ext':  { version: '1.7', build: '20260323-splinetool' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
-        'layer-manager':      { version: '1.1', build: '20260317-layerreorder' },
+        'layer-manager':      { version: '1.2', build: '20260324-undofix' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.3', build: '20260324-splinedxf' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.14', build: '20260324-layerfix' },
+        'app':                { version: '6.15', build: '20260324-undofix' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.1', build: '20260324-gitcommit' },
@@ -49,12 +49,13 @@ const CERACUT_BUILD = {
         'machine-profiles':   { version: '1.0', build: '20260309' },
         'bridge-cutting':     { version: '1.0', build: '20260309' },
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
-        'cam-tools':          { version: '1.2', build: '20260324-camfix' },
+        'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
     },
     
     changes: [
+        'V6.15: Fix — Undo-System: fehlende _notifyStateChange() in cam-tools/canvas-renderer, Layer-Ops undo-fähig',
         'V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt',
         'V6.13.1: Debug Monitor zeigt Git-Commit-Info im Footer — Hash, Datum, Message (debug-monitor V1.1)',
         'V6.14.1: DXF-Writer R2000 (AC1015) — SPLINE-Entity-Export mit Fit-Points und Control-Points (Roundtrip-fähig)',

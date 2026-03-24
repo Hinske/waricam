@@ -145,3 +145,15 @@
 - **Root Cause:** Bei Commands die bereits ausgefuehrt sind (execute() schon gelaufen) wird `undoStack.push()` statt `undoMgr.execute()` genutzt, um doppelte Ausfuehrung zu vermeiden. Aber dabei wird vergessen, den redoStack zu leeren.
 - **Regel:** Wenn `undoStack.push(cmd)` direkt genutzt wird (weil Aktion bereits ausgefuehrt), IMMER auch `undoMgr.redoStack.length = 0` ausfuehren.
 - **Betroffene Module:** `cam-tools.js`, alle Module mit direktem undoStack-Zugriff
+
+### [2026-03-24] Direktes undoStack.push() ohne _notifyStateChange() — Undo-Buttons bleiben stale
+- **Fehler:** Nach CAM-Tool-Aktionen (Edgefix, Replace, Analyze, BoundaryTrim, PolyJoint, Vectorize, ConvexHull) und Grip-Editing blieben die Undo/Redo-Buttons im Header disabled, obwohl Aktionen auf dem Stack lagen. Strg+Z funktionierte, aber die Buttons zeigten falschen Zustand.
+- **Root Cause:** `undoStack.push(cmd)` wurde korrekt aufgerufen, aber `undoMgr._notifyStateChange()` fehlte. Der `onStateChange`-Callback (der die Buttons enabled/disabled) wird nur von `execute()`, `undo()`, `redo()` und `endGroup()` automatisch aufgerufen — NICHT bei direktem `push()`.
+- **Regel:** Bei direktem `undoStack.push(cmd)` IMMER die Dreier-Sequenz einhalten: (1) `undoStack.push(cmd)`, (2) `redoStack.length = 0`, (3) `_notifyStateChange()`. Keinen der drei Schritte weglassen. Besser: Prüfen ob `undoMgr.execute(cmd)` verwendbar ist (wenn Aktion noch nicht ausgeführt).
+- **Betroffene Module:** `cam-tools.js` (8 Stellen), `canvas-renderer.js` (Grip-Edit)
+
+### [2026-03-24] Layer-Operationen ohne Undo-Tracking — Visibility/Lock/Color nicht rückgängig machbar
+- **Fehler:** Layer-Sichtbarkeit togglen, Layer sperren/entsperren und Farbänderungen waren nicht per Strg+Z rückgängig machbar. User-Erwartung: Jede UI-Aktion sollte undo-fähig sein.
+- **Root Cause:** `LayerManager` hatte keine Referenz auf den `UndoManager`. Alle Mutationen (`toggleVisibility`, `toggleLock`, `setColor`) änderten den State direkt ohne FunctionCommand auf den Undo-Stack zu legen.
+- **Regel:** Jede benutzersichtbare Datenänderung MUSS über den UndoManager laufen. Neue Module die State mutieren brauchen eine `undoManager`-Referenz. Bei bestehenden Modulen prüfen: Welche Mutationen sind NICHT undo-fähig?
+- **Betroffene Module:** `layer-manager.js`, `app.js` (Verknüpfung)
