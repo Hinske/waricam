@@ -1,7 +1,7 @@
 /**
- * CeraCUT CAM-Tools V1.1 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
+ * CeraCUT CAM-Tools V1.2 — IGEMS Kap. 6 Geometrie-Vorbereitungstools
  * 7 Tools für Analyse, Optimierung und Vorbereitung der Schnittgeometrie
- * 
+ *
  * Tools:
  *   Edgefix     (EF)   — Polylinien-Abschnitt durch Arc/Line ersetzen (Glättung)
  *   Replace     (REP)  — Objekte durch Quell-Objekt ersetzen (per Schwerpunkt)
@@ -10,12 +10,15 @@
  *   PolyJoint   (PJ)   — Geschlossene Polylinien verbinden oder aufteilen
  *   Vectorize   (VZ)   — Kurven/Arcs in Liniensegmente umwandeln (Toleranz)
  *   ConvexHull  (HULL) — Konvexes Hüllpolygon um selektierte Objekte
- * 
+ *
  * Benötigt: geometry-ops.js V2.1, drawing-tools.js V2.2, ceracut-pipeline.js V3.1
- * 
+ *
+ * V1.2: Renderer-Patch fix (scale/offsetX/offsetY), Edgefix nutzt zentrale Hit-Test-Methode,
+ *       Shift-Tracking für BoundaryTrim, Redo-Stack-Clearing nach Undo-Push, alle TOOL_TOOLTIPS
  * V1.1: Hit-Test Scaling — Klick-Threshold skaliert mit Zoom-Level
  * Created: 2026-02-17 MEZ
- * Build: 20260316-hittest
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-camfix
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -31,11 +34,11 @@ class EdgefixTool extends BaseTool {
         this.contourIndex = -1;
         this.segA = null;   // { segmentIndex, point }
         this.segB = null;
-        console.log('[CAM-Tools V1.1] EdgefixTool erstellt');
+        console.log('[CAM-Tools V1.2] EdgefixTool erstellt');
     }
 
     start() {
-        console.log('[CAM-Tools V1.1] Edgefix gestartet');
+        console.log('[CAM-Tools V1.2] Edgefix gestartet');
         this.cmd?.setPrompt('EDGEFIX — Kontur anklicken:');
         this.cmd?.log('🔧 Edgefix: Kontur-Abschnitt durch Arc/Line ersetzen', 'info');
     }
@@ -47,24 +50,24 @@ class EdgefixTool extends BaseTool {
         if (!contours) return;
 
         if (this.state === 'pickContour') {
-            // Kontur finden
-            const found = this._findContourAtPoint(point, contours);
-            if (!found) {
+            // Kontur finden (zentrale Methode des DrawingToolManagers)
+            const found = this.manager.findContourAtPoint(point);
+            if (!found || found.isReference) {
                 this.cmd?.log('Keine Kontur gefunden', 'error');
                 return;
             }
-            this.contour = found.contour;
-            this.contourIndex = found.index;
+            this.contour = found;
+            this.contourIndex = this.manager.app?.contours?.indexOf(found) ?? -1;
             this.state = 'pickA';
             this.cmd?.setPrompt('EDGEFIX — Startpunkt A auf Kontur anklicken:');
-            console.log('[CAM-Tools V1.1] Edgefix: Kontur selektiert, idx=' + found.index);
+            console.log('[CAM-Tools V1.2] Edgefix: Kontur selektiert, idx=' + found.index);
         }
         else if (this.state === 'pickA') {
             this.segA = this._nearestOnContour(point);
             if (!this.segA) { this.cmd?.log('Punkt nicht auf Kontur', 'error'); return; }
             this.state = 'pickB';
             this.cmd?.setPrompt('EDGEFIX — Endpunkt B auf Kontur anklicken:');
-            console.log('[CAM-Tools V1.1] Edgefix: Punkt A bei Segment ' + this.segA.segmentIndex);
+            console.log('[CAM-Tools V1.2] Edgefix: Punkt A bei Segment ' + this.segA.segmentIndex);
         }
         else if (this.state === 'pickB') {
             this.segB = this._nearestOnContour(point);
@@ -75,7 +78,7 @@ class EdgefixTool extends BaseTool {
             }
             this.state = 'pickC';
             this.cmd?.setPrompt('EDGEFIX — Kurvenpunkt C zwischen A und B anklicken:');
-            console.log('[CAM-Tools V1.1] Edgefix: Punkt B bei Segment ' + this.segB.segmentIndex);
+            console.log('[CAM-Tools V1.2] Edgefix: Punkt B bei Segment ' + this.segB.segmentIndex);
         }
         else if (this.state === 'pickC') {
             this._executeEdgefix(point);
@@ -85,23 +88,6 @@ class EdgefixTool extends BaseTool {
             this.cmd?.setPrompt('EDGEFIX — Kontur anklicken (ESC = Ende):');
         }
         console.log('[CAM-Tools] Edgefix.handleClick: ' + (performance.now() - _t0).toFixed(2) + 'ms');
-    }
-
-    _findContourAtPoint(point, contours) {
-        for (let i = contours.length - 1; i >= 0; i--) {
-            const c = contours[i];
-            if (c.isReference) continue;
-            const pts = c.points;
-            if (!pts || pts.length < 2) continue;
-            for (let s = 0; s < pts.length - 1; s++) {
-                const d = GeometryOps.pointToSegmentDist(point.x, point.y,
-                    pts[s].x, pts[s].y, pts[s + 1].x, pts[s + 1].y);
-                const scale = this.manager?.app?.renderer?.scale || 1;
-                const threshold = Math.max(1.0, 3.0 / scale);
-                if (d < threshold) return { contour: c, index: i };
-            }
-        }
-        return null;
     }
 
     _nearestOnContour(point) {
@@ -162,6 +148,7 @@ class EdgefixTool extends BaseTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
             this.cmd?.log('✅ Edgefix: Abschnitt ersetzt (' + (arc ? 'Arc' : 'Linie') + ')', 'info');
         }
         this.manager.renderer?.render();
@@ -222,13 +209,13 @@ class ReplaceTool extends ModificationTool {
         this.state = 'pickSource';
         this.sourceContour = null;
         this.targetContours = [];
-        console.log('[CAM-Tools V1.1] ReplaceTool erstellt');
+        console.log('[CAM-Tools V1.2] ReplaceTool erstellt');
     }
 
     getToolName() { return 'REPLACE'; }
 
     start() {
-        console.log('[CAM-Tools V1.1] Replace gestartet');
+        console.log('[CAM-Tools V1.2] Replace gestartet');
         this.state = 'pickSource';
         this.cmd?.setPrompt('REPLACE — Quell-Objekt (A) anklicken:');
         this.cmd?.log('🔄 Replace: Objekte durch Quell-Objekt ersetzen', 'info');
@@ -248,7 +235,7 @@ class ReplaceTool extends ModificationTool {
             this.sourceContour = found;
             this.state = 'pickTargets';
             this.cmd?.setPrompt('REPLACE — Ziel-Objekte (B,C,...) anklicken, Enter = ausführen:');
-            console.log('[CAM-Tools V1.1] Replace: Quell-Objekt gewählt');
+            console.log('[CAM-Tools V1.2] Replace: Quell-Objekt gewählt');
         }
         else if (this.state === 'pickTargets') {
             const found = this.manager.findContourAtPoint(point);
@@ -261,7 +248,7 @@ class ReplaceTool extends ModificationTool {
                 found.isSelected = true;
                 this.manager.renderer?.render();
                 this.cmd?.setPrompt('REPLACE — ' + this.targetContours.length + ' Ziel(e) gewählt (Klick=+, Enter=ausführen):');
-                console.log('[CAM-Tools V1.1] Replace: +1 Ziel, gesamt=' + this.targetContours.length);
+                console.log('[CAM-Tools V1.2] Replace: +1 Ziel, gesamt=' + this.targetContours.length);
             }
         }
         console.log('[CAM-Tools] Replace.handleClick: ' + (performance.now() - _t0).toFixed(2) + 'ms');
@@ -322,6 +309,7 @@ class ReplaceTool extends ModificationTool {
         };
         cmd.execute();
         undoMgr.undoStack.push(cmd);
+        undoMgr.redoStack.length = 0;
 
         // Selektion aufheben
         for (const t of this.targetContours) t.isSelected = false;
@@ -353,13 +341,13 @@ class ReplaceTool extends ModificationTool {
 class AnalyzeTool extends ModificationTool {
     constructor(manager) {
         super(manager);
-        console.log('[CAM-Tools V1.1] AnalyzeTool erstellt');
+        console.log('[CAM-Tools V1.2] AnalyzeTool erstellt');
     }
 
     getToolName() { return 'ANALYZE'; }
 
     start() {
-        console.log('[CAM-Tools V1.1] Analyze gestartet');
+        console.log('[CAM-Tools V1.2] Analyze gestartet');
         // Prüfe ob Konturen selektiert sind (Noun-Verb)
         const preSelected = this.manager.getSelectedContours();
         if (preSelected.length > 0) {
@@ -492,6 +480,7 @@ class AnalyzeTool extends ModificationTool {
                 undo() { if (renderer) { renderer._analyzeMarkers = null; renderer.render(); } }
             };
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         const gapCount = unique.filter(m => m.type === 'gap').length;
@@ -518,11 +507,11 @@ class BoundaryTrimTool extends BaseTool {
         super(manager);
         this.state = 'pickBoundary';
         this.boundaryContour = null;
-        console.log('[CAM-Tools V1.1] BoundaryTrimTool erstellt');
+        console.log('[CAM-Tools V1.2] BoundaryTrimTool erstellt');
     }
 
     start() {
-        console.log('[CAM-Tools V1.1] BoundaryTrim gestartet');
+        console.log('[CAM-Tools V1.2] BoundaryTrim gestartet');
         this.cmd?.setPrompt('BOUNDARY TRIM — Geschlossene Begrenzung anklicken (SHIFT = invertiert):');
         this.cmd?.log('✂️ Boundary Trim: Objekte innerhalb/außerhalb einer Grenze löschen', 'info');
     }
@@ -611,6 +600,7 @@ class BoundaryTrimTool extends BaseTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         this.manager.renderer?.render();
@@ -652,11 +642,11 @@ class PolyJointTool extends BaseTool {
         this.state = 'width';  // width → pickA → pickB
         this.width = 1.0;
         this.pointA = null;
-        console.log('[CAM-Tools V1.1] PolyJointTool erstellt');
+        console.log('[CAM-Tools V1.2] PolyJointTool erstellt');
     }
 
     start() {
-        console.log('[CAM-Tools V1.1] PolyJoint gestartet');
+        console.log('[CAM-Tools V1.2] PolyJoint gestartet');
         this.cmd?.setPrompt('POLY JOINT — Brückenbreite <' + this.width + '>:');
         this.cmd?.log('🔗 Poly Joint: Geschlossene Polylinien verbinden oder aufteilen', 'info');
     }
@@ -692,7 +682,7 @@ class PolyJointTool extends BaseTool {
             this.pointA = { x: point.x, y: point.y };
             this.state = 'pickB';
             this.cmd?.setPrompt('POLY JOINT — Punkt B anklicken:');
-            console.log('[CAM-Tools V1.1] PolyJoint: Punkt A gesetzt');
+            console.log('[CAM-Tools V1.2] PolyJoint: Punkt A gesetzt');
         }
         else if (this.state === 'pickB') {
             this._executePolyJoint(point);
@@ -795,6 +785,7 @@ class PolyJointTool extends BaseTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         this.manager.renderer?.render();
@@ -862,6 +853,7 @@ class PolyJointTool extends BaseTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         this.manager.renderer?.render();
@@ -881,13 +873,13 @@ class VectorizeTool extends ModificationTool {
         super(manager);
         this.tolerance = 0.1;  // mm
         this.state = 'tolerance';
-        console.log('[CAM-Tools V1.1] VectorizeTool erstellt');
+        console.log('[CAM-Tools V1.2] VectorizeTool erstellt');
     }
 
     getToolName() { return 'VECTORIZE'; }
 
     start() {
-        console.log('[CAM-Tools V1.1] Vectorize gestartet');
+        console.log('[CAM-Tools V1.2] Vectorize gestartet');
         this.state = 'tolerance';
         this.cmd?.setPrompt('VECTORIZE — Toleranz <' + this.tolerance + ' mm>:');
         this.cmd?.log('📐 Vectorize: Kurven in Liniensegmente umwandeln', 'info');
@@ -995,6 +987,7 @@ class VectorizeTool extends ModificationTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         // Selektion aufheben
@@ -1051,13 +1044,13 @@ class VectorizeTool extends ModificationTool {
 class ConvexHullTool extends ModificationTool {
     constructor(manager) {
         super(manager);
-        console.log('[CAM-Tools V1.1] ConvexHullTool erstellt');
+        console.log('[CAM-Tools V1.2] ConvexHullTool erstellt');
     }
 
     getToolName() { return 'CONVEX HULL'; }
 
     start() {
-        console.log('[CAM-Tools V1.1] ConvexHull gestartet');
+        console.log('[CAM-Tools V1.2] ConvexHull gestartet');
         const preSelected = this.manager.getSelectedContours();
         if (preSelected.length > 0) {
             this.selectedContours = [...preSelected];
@@ -1126,6 +1119,7 @@ class ConvexHullTool extends ModificationTool {
             };
             cmd.execute();
             undoMgr.undoStack.push(cmd);
+            undoMgr.redoStack.length = 0;
         }
 
         // Selektion aufheben
@@ -1221,7 +1215,7 @@ if (typeof DrawingToolManager !== 'undefined') {
             this.tools['HULL']       = () => new ConvexHullTool(this);
             this.tools['CONVEXHULL'] = () => new ConvexHullTool(this);
 
-            console.debug('[CAM-Tools V1.1] ✅ 7 CAM-Vorbereitungstools registriert (EF, REP, AN, BT, PJ, VZ, HULL)');
+            console.debug('[CAM-Tools V1.2] ✅ 7 CAM-Vorbereitungstools registriert (EF, REP, AN, BT, PJ, VZ, HULL)');
         }
 
         // Auto-Apply gezeichnete Entities bei Mod-Tool-Start
@@ -1236,9 +1230,9 @@ if (typeof DrawingToolManager !== 'undefined') {
         return _origStartToolCam.call(this, shortcut);
     };
 
-    console.debug('[CAM-Tools V1.1] ✅ Lazy-Patch installiert');
+    console.debug('[CAM-Tools V1.2] ✅ Lazy-Patch installiert');
 } else {
-    console.warn('[CAM-Tools V1.1] ⚠️ DrawingToolManager nicht gefunden — Lazy-Patch übersprungen');
+    console.warn('[CAM-Tools V1.2] ⚠️ DrawingToolManager nicht gefunden — Lazy-Patch übersprungen');
 }
 
 
@@ -1259,17 +1253,19 @@ if (typeof CanvasRenderer !== 'undefined') {
             const ctx = this.ctx;
             if (!ctx) return result;
 
+            const dpr = this._dpr || 1;
             ctx.save();
-            // Viewport-Transformation anwenden
-            ctx.setTransform(this.dpr * this.zoom, 0, 0, -this.dpr * this.zoom,
-                this.dpr * this.panX, this.dpr * (this.canvas.height / this.dpr - this.panY));
+            // Viewport-Transformation anwenden (gleiche Transformation wie render())
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.translate(this.offsetX, this.offsetY);
+            ctx.scale(this.scale, -this.scale);
 
             for (const m of this._analyzeMarkers) {
-                const screenRadius = Math.max(m.radius, 4 / this.zoom);
+                const screenRadius = Math.max(m.radius, 4 / this.scale);
                 ctx.beginPath();
                 ctx.arc(m.x, m.y, screenRadius, 0, Math.PI * 2);
                 ctx.strokeStyle = m.color;
-                ctx.lineWidth = 2 / this.zoom;
+                ctx.lineWidth = 2 / this.scale;
                 ctx.stroke();
                 // Halbtransparente Füllung
                 ctx.globalAlpha = 0.25;
@@ -1284,5 +1280,5 @@ if (typeof CanvasRenderer !== 'undefined') {
         return result;
     };
 
-    console.debug('[CAM-Tools V1.1] ✅ Renderer-Patch für Analyze-Markierungen installiert');
+    console.debug('[CAM-Tools V1.2] ✅ Renderer-Patch für Analyze-Markierungen installiert');
 }

@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.33 - Canvas Renderer
+ * CeraCUT V3.34 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.34: Shift-Status am ToolManager zwischenspeichern (für CAM-Tools wie BoundaryTrim)
  * V3.33: Spline Grip-Editing — Fit-Point-Grips + Re-Tessellation + Kontrollpolygon-Overlay
  * V3.32: Cycle-Selection — findAllContoursAtPoint() für Durchklicken überlappender Konturen
  * V3.31: Locked-Layer Guard — gesperrte Layer blockieren Hit-Test + Start-Triangle-Click
@@ -567,6 +568,10 @@ class CanvasRenderer {
 
             const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
             const clickedContour = this.findContourAtPoint(worldPos.x, worldPos.y);
+
+            // V3.34: Shift-Status am ToolManager zwischenspeichern (für CAM-Tools wie BoundaryTrim)
+            const toolMgrShift = this.app?.drawingTools || this.app?.toolManager;
+            if (toolMgrShift) toolMgrShift._lastShift = e.shiftKey;
 
             // V3.11: Wenn Zeichentool aktiv → immer an onClick (Tool braucht Klick, z.B. TTR)
             const toolMgr2 = this.app?.drawingTools || this.app?.toolManager;

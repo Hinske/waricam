@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '9ca6bb8',
-        date: '2026-03-24 09:55:33 +0100',
-        message: 'feat: DXF-Writer R2000 (AC1015) mit SPLINE-Entity-Export (V1.3)'
+        hash: '3c7d023',
+        date: '2026-03-24 10:11:56 +0100',
+        message: 'fix: CAM-Tools V1.2 — 5 Bugs behoben (Renderer-Patch, Hit-Test, Shift, Redo-Stack, Tooltips)'
     },
 
     modules: {
@@ -25,7 +25,7 @@ const CERACUT_BUILD = {
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.8', build: '20260323-splinetool' },
-        'canvas-renderer':    { version: '3.33', build: '20260323-splinetool' },
+        'canvas-renderer':    { version: '3.34', build: '20260324-camfix' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
@@ -49,7 +49,7 @@ const CERACUT_BUILD = {
         'machine-profiles':   { version: '1.0', build: '20260309' },
         'bridge-cutting':     { version: '1.0', build: '20260309' },
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
-        'cam-tools':          { version: '1.1', build: '20260316-hittest' },
+        'cam-tools':          { version: '1.2', build: '20260324-camfix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
     },

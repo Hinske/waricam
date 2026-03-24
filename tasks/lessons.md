@@ -127,3 +127,21 @@
 - **Root Cause:** Das `sync-versions.js` Script aktualisiert nur Header, Modul-Tabelle, Dateibaum und Sync-Pruefung — NICHT die Projekt-Tabelle. Die Checkliste erwähnte nur "Modul-Tabelle + Sync-Pruefung", nicht die Projekt-Version.
 - **Regel:** Nach `node scripts/sync-versions.js` immer auch die Projekt-Tabelle (`| Version | **VX.Y** — Build ...`) manuell prüfen und aktualisieren. Checkliste-Punkt 5 wurde entsprechend erweitert.
 - **Betroffene Module:** `CLAUDE.md`, Workflow
+
+### [2026-03-24] API-Methoden vor Aufruf verifizieren
+- **Fehler:** `layerManager.setActiveLayer(name)` aufgerufen — Methode existiert nicht. Heißt `setActive(name)`.
+- **Root Cause:** Methodenname geraten statt im Quellcode nachgeschaut. Kein Grep/Read vor dem Aufruf.
+- **Regel:** VOR dem Einfügen eines Methodenaufrufs IMMER per Grep verifizieren, dass die Methode mit exakt diesem Namen existiert. Nie Methodennamen raten.
+- **Betroffene Module:** `index.html`, `layer-manager.js`
+
+### [2026-03-24] Renderer-Patch: Property-Namen muessen mit der aktuellen Klasse uebereinstimmen
+- **Fehler:** `cam-tools.js` Analyze-Marker Renderer-Patch nutzte `this.zoom`, `this.panX`, `this.panY`, `this.dpr` — CanvasRenderer hat aber `this.scale`, `this.offsetX`, `this.offsetY`, `this._dpr`. Marker waren unsichtbar.
+- **Root Cause:** Renderer-Patch wurde gegen eine andere/aeltere API geschrieben und nie gegen die aktuelle Klasse verifiziert.
+- **Regel:** Bei Monkey-Patching einer Klasse IMMER die aktuellen Property-Namen per Grep verifizieren. Die gleiche Transformation wie die Originalklasse verwenden (copy-paste aus `render()` statt ausdenken).
+- **Betroffene Module:** `cam-tools.js`, `canvas-renderer.js`
+
+### [2026-03-24] Direktes undoStack.push() ueberspringt redoStack-Clearing
+- **Fehler:** CAM-Tools pushten Commands direkt auf `undoMgr.undoStack` statt `undoMgr.execute()`. Dadurch wurde der `redoStack` nicht geleert → inkonsistenter Undo/Redo-Zustand.
+- **Root Cause:** Bei Commands die bereits ausgefuehrt sind (execute() schon gelaufen) wird `undoStack.push()` statt `undoMgr.execute()` genutzt, um doppelte Ausfuehrung zu vermeiden. Aber dabei wird vergessen, den redoStack zu leeren.
+- **Regel:** Wenn `undoStack.push(cmd)` direkt genutzt wird (weil Aktion bereits ausgefuehrt), IMMER auch `undoMgr.redoStack.length = 0` ausfuehren.
+- **Betroffene Module:** `cam-tools.js`, alle Module mit direktem undoStack-Zugriff

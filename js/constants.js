@@ -1,8 +1,9 @@
 /**
- * CeraCUT V2.8 Constants
+ * CeraCUT V2.9 Constants
  * Blaues Farbschema
+ * V2.9: TOOL_TOOLTIPS — alle 7 CAM-Tools (EF, REP, AN, BT, PJ, VZ, HULL) eingetragen
  * V2.8: INTARSIA_MATERIALS — 5 Materialgruppen mit Farben
- * Build: 20260316-material
+ * Build: 20260324-camfix
  */
 
 const CeraCUT = {
@@ -150,7 +151,13 @@ const TOOL_TOOLTIPS = {
     'OK':    { label: 'Overkill',    tip: 'Duplikate und ueberlappende Linien entfernen', shortcut: 'OK', group: 'edit' },
 
     // ── CAM / Analyse ──
+    'EF':    { label: 'Edgefix',     tip: 'Polylinien-Abschnitt durch Arc/Linie ersetzen', shortcut: 'EF',  group: 'cam' },
+    'REP':   { label: 'Replace',     tip: 'Objekte durch Quell-Objekt ersetzen',     shortcut: 'REP',   group: 'cam' },
     'AN':    { label: 'Analyze',     tip: 'Geometrie auf Fehler pruefen',            shortcut: 'AN',    group: 'cam' },
+    'BT':    { label: 'Boundary Trim', tip: 'Objekte innerhalb/ausserhalb Grenze loeschen (Shift=invertiert)', shortcut: 'BT', group: 'cam' },
+    'PJ':    { label: 'Poly Joint',  tip: 'Geschlossene Polylinien verbinden oder aufteilen', shortcut: 'PJ', group: 'cam' },
+    'VZ':    { label: 'Vectorize',   tip: 'Kurven/Arcs in Liniensegmente umwandeln', shortcut: 'VZ',    group: 'cam' },
+    'HULL':  { label: 'Convex Hull', tip: 'Konvexes Huellpolygon um Objekte',        shortcut: 'HULL',  group: 'cam' },
 };
 
 // Nicht-Tool-Shortcuts (fuer Shortcut-Dialog, nicht fuer data-tip)
