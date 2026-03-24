@@ -14,7 +14,7 @@ const CERACUT_BUILD = {
     time: '16:00 MEZ',
 
     modules: {
-        'dxf-parser':         { version: '3.10', build: '20260316-hatchskip' },
+        'dxf-parser':         { version: '3.11', build: '20260324-splinegrip' },
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.8', build: '20260323-splinetool' },
@@ -48,6 +48,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.13.1: Spline Fit-Points Durchreichung in chainContours — Grip-Editing funktioniert jetzt für gezeichnete Splines (dxf-parser V3.11)',
         'V6.13: SplineTool AutoCAD-Overhaul — Dual-Preview (Kontrollpolygon + Kurve), Close-to-Start, Continuous Mode',
         'V6.13: Spline Fit-Points bleiben erhalten → Grip-Editing mit Re-Tessellation in Echtzeit',
         'V6.13: Kontrollpolygon-Overlay bei selektierten Spline-Konturen',

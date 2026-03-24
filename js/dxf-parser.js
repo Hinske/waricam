@@ -1,7 +1,11 @@
 /**
- * CeraCUT DXF Parser V3.10
- * Last Modified: 2026-03-16 MEZ
- * Build: 20260316-hatchskip
+ * CeraCUT DXF Parser V3.11
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-splinegrip
+ *
+ * V3.11 Änderungen:
+ *   - _fitPoints + _splineClosed Durchreichung in chainContours/_createContour
+ *   - Gezeichnete Splines zeigen nach Selektion Fit-Point-Grips statt tessellierte Vertex-Grips
  *
  * V3.10 Änderungen:
  *   - HATCH-Entities werden beim Import übersprungen (reine Visualisierung)
@@ -97,7 +101,7 @@ const DXFParser = {
     _entityStats: {},
 
     parse(dxfContent, options = {}) {
-        console.log('[DXF Parser V3.8] Starting parse...');
+        console.log('[DXF Parser V3.11] Starting parse...');
         const startTime = performance.now();
         
         try {
@@ -181,7 +185,7 @@ const DXFParser = {
                 warnings: this._generateWarnings(contours, entities)
             };
         } catch (error) {
-            console.error('[DXF Parser V3.8] Error:', error);
+            console.error('[DXF Parser V3.11] Error:', error);
             return { 
                 success: false, 
                 error: error.message, 
@@ -995,10 +999,12 @@ const DXFParser = {
         const segments = entities.map((e, idx) => ({
             points: e.points || [], used: false, layer: e.layer || '', isClosed: e.isClosed || false, type: e.type, originalIndex: idx,
             _splineData: e._splineData || null,
+            _fitPoints: e._fitPoints || null,
+            _splineClosed: e._splineClosed ?? null,
             _center: e.center || null, _radius: e.radius || null
         })).filter(s => s.points.length >= 2);
 
-        if (logProgress) console.log(`[DXF Parser V3.8] Chaining: ${segments.length} Segmente...`);
+        if (logProgress) console.log(`[DXF Parser V3.11] Chaining: ${segments.length} Segmente...`);
 
         const result = [];
         let processedCount = 0;
@@ -1008,7 +1014,7 @@ const DXFParser = {
             if (segments[i].isClosed) {
                 segments[i].used = true;
                 processedCount++;
-                result.push(this._createContour(segments[i].points, segments[i].layer, true, segments[i].type, segments[i]._splineData, segments[i]._center, segments[i]._radius));
+                result.push(this._createContour(segments[i].points, segments[i].layer, true, segments[i].type, segments[i]._splineData, segments[i]._center, segments[i]._radius, segments[i]._fitPoints, segments[i]._splineClosed));
             }
         }
 
@@ -1082,13 +1088,13 @@ const DXFParser = {
 
             const isClosed = this._dist(chain[0], chain[chain.length - 1]) < tolerance;
             if (isClosed && chain.length > 2) chain[chain.length - 1] = { x: chain[0].x, y: chain[0].y };
-            result.push(this._createContour(chain, segments[i].layer, isClosed, segments[i].type, segments[i]._splineData));
+            result.push(this._createContour(chain, segments[i].layer, isClosed, segments[i].type, segments[i]._splineData, null, null, segments[i]._fitPoints, segments[i]._splineClosed));
 
             // Fortschritts-Log
             if (logProgress) {
                 const pct = Math.floor(processedCount / segments.length * 100);
                 if (pct >= lastLogPct + 20) {
-                    console.log(`[DXF Parser V3.8] Chaining: ${pct}%...`);
+                    console.log(`[DXF Parser V3.11] Chaining: ${pct}%...`);
                     lastLogPct = pct;
                 }
             }
@@ -1097,11 +1103,11 @@ const DXFParser = {
         // Diagnostik
         const unusedSegs = segments.filter(s => !s.used);
         if (unusedSegs.length > 0) {
-            console.warn(`[DXF Parser V3.8] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
+            console.warn(`[DXF Parser V3.11] ⚠ ${unusedSegs.length} unverkettete Segmente (Layer: ${[...new Set(unusedSegs.map(s=>s.layer))].join(',')}`);
         }
 
         const dt = (performance.now() - t0).toFixed(1);
-        console.log(`[DXF Parser V3.8] Chaining: ${segments.length} Seg → ${result.length} Konturen in ${dt}ms`);
+        console.log(`[DXF Parser V3.11] Chaining: ${segments.length} Seg → ${result.length} Konturen in ${dt}ms`);
         return result;
     },
 
@@ -1172,10 +1178,10 @@ const DXFParser = {
         return result;
     },
 
-    _createContour(points, layer, isClosed, sourceType, splineData, center, radius) {
+    _createContour(points, layer, isClosed, sourceType, splineData, center, radius, fitPoints, splineClosed) {
         const name = `Contour_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
         if (typeof CamContour !== 'undefined') {
-            const contour = new CamContour(points, { name, layer, isClosed });
+            const contour = new CamContour(points, { name, layer, isClosed, _fitPoints: fitPoints || null, _splineClosed: splineClosed ?? null });
             contour.sourceType = sourceType;
             if (splineData) contour._splineData = splineData;
             if (center) contour._center = center;
@@ -1184,6 +1190,7 @@ const DXFParser = {
         }
         const result = { points, layer, isClosed, name, sourceType };
         if (splineData) result._splineData = splineData;
+        if (fitPoints) { result._fitPoints = fitPoints; result._splineClosed = splineClosed; }
         if (center) result._center = center;
         if (radius) result._radius = radius;
         return result;
@@ -1412,7 +1419,7 @@ const DXFParser = {
                     return contours;
                 }
             } catch (e) {
-                console.warn('[DXF Parser V3.8] TextTool-Fehler, Fallback:', e.message);
+                console.warn('[DXF Parser V3.11] TextTool-Fehler, Fallback:', e.message);
             }
         }
 
@@ -1439,7 +1446,7 @@ const DXFParser = {
         }));
         points.push({ ...points[0] }); // Schließen
 
-        console.log(`[DXF Parser V3.8] TEXT: "${text}" at (${posX.toFixed(1)}, ${posY.toFixed(1)}) h=${height} align=${align} [BBox-Fallback]`);
+        console.log(`[DXF Parser V3.11] TEXT: "${text}" at (${posX.toFixed(1)}, ${posY.toFixed(1)}) h=${height} align=${align} [BBox-Fallback]`);
 
         return {
             type: 'TEXT',
@@ -1466,7 +1473,7 @@ const DXFParser = {
             if (code === '0') { endIndex = i; break; }
             endIndex = i + 2;
         }
-        console.debug('[DXF Parser V3.10] HATCH-Entity übersprungen (reine Visualisierung)');
+        console.debug('[DXF Parser V3.11] HATCH-Entity übersprungen (reine Visualisierung)');
         return null;
     },
 
