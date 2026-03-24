@@ -121,3 +121,9 @@
 - **Root Cause:** Drawing Tools nutzten eine hardcoded Farbe (`'#FFFFFF'` oder Default) statt die Farbe des aktuell gewählten Layers abzufragen.
 - **Regel:** Neue Entities und Rubber-Band-Vorschauen MÜSSEN die Farbe des aktiven Layers verwenden (`layerManager.getActiveLayer().color`). Hardcoded Farben nur für UI-Elemente (Grips, Selection-Highlights), nie für Geometrie.
 - **Betroffene Module:** `drawing-tools.js` (alle Tools die Entities erstellen)
+
+### [2026-03-24] CLAUDE.md Projekt-Version wird nicht aktualisiert
+- **Fehler:** Bei Version-Bumps wurde der CLAUDE.md-Header (Zeile 5-7) per `sync-versions.js` aktualisiert, aber die Projekt-Tabelle (Version/Build-Zeile ~Zeile 183) blieb auf der alten Version stehen.
+- **Root Cause:** Das `sync-versions.js` Script aktualisiert nur Header, Modul-Tabelle, Dateibaum und Sync-Pruefung — NICHT die Projekt-Tabelle. Die Checkliste erwähnte nur "Modul-Tabelle + Sync-Pruefung", nicht die Projekt-Version.
+- **Regel:** Nach `node scripts/sync-versions.js` immer auch die Projekt-Tabelle (`| Version | **VX.Y** — Build ...`) manuell prüfen und aktualisieren. Checkliste-Punkt 5 wurde entsprechend erweitert.
+- **Betroffene Module:** `CLAUDE.md`, Workflow

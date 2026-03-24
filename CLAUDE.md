@@ -18,7 +18,7 @@ Diese Regeln sind NICHT optional. Sie MUESSEN bei jeder Aenderung vollstaendig a
 - [ ] **2. Datei-Header** — Version, Last Modified, Build im geaenderten Modul aktualisieren
 - [ ] **3. `index.html`** — `?v=` Cache-Busting-Parameter hochzaehlen fuer geaenderte Script-Tags
 - [ ] **4. Console-Logs** — Versions-Prefix in Debug-Logs aktualisieren (z.B. `[Pipeline V3.3]`)
-- [ ] **5. `CLAUDE.md`** — Modul-Tabelle + Sync-Pruefung aktualisieren bei Versions-Bumps
+- [ ] **5. `CLAUDE.md`** — `node scripts/sync-versions.js` ausfuehren (aktualisiert Header, Modul-Tabelle, Sync-Pruefung, Dateibaum automatisch). Danach Projekt-Tabelle (Version/Build-Zeile) manuell pruefen.
 - [ ] **6. git commit** — Kurze, deutsche Commit-Message (das "Warum")
 - [ ] **7. git push** — Sofort, ohne Rueckfrage
 
