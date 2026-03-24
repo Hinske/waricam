@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'cf67edf',
-        date: '2026-03-24 08:36:54 +0100',
-        message: 'fix: Neu erstellte Layer — Dropdown zeigt sie korrekt an (V6.14)'
+        hash: '9ca6bb8',
+        date: '2026-03-24 09:55:33 +0100',
+        message: 'feat: DXF-Writer R2000 (AC1015) mit SPLINE-Entity-Export (V1.3)'
     },
 
     modules: {
@@ -37,7 +37,7 @@ const CERACUT_BUILD = {
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.1', build: '20260317-layerreorder' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
-        'dxf-writer':         { version: '1.2', build: '20260315-bugfix35' },
+        'dxf-writer':         { version: '1.3', build: '20260324-splinedxf' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
         'app':                { version: '6.14', build: '20260324-layerfix' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
@@ -57,6 +57,7 @@ const CERACUT_BUILD = {
     changes: [
         'V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt',
         'V6.13.1: Debug Monitor zeigt Git-Commit-Info im Footer — Hash, Datum, Message (debug-monitor V1.1)',
+        'V6.14.1: DXF-Writer R2000 (AC1015) — SPLINE-Entity-Export mit Fit-Points und Control-Points (Roundtrip-fähig)',
         'V6.13.1: Spline Fit-Points Durchreichung in chainContours — Grip-Editing funktioniert jetzt für gezeichnete Splines (dxf-parser V3.11)',
         'V6.13: SplineTool AutoCAD-Overhaul — Dual-Preview (Kontrollpolygon + Kurve), Close-to-Start, Continuous Mode',
         'V6.13: Spline Fit-Points bleiben erhalten → Grip-Editing mit Re-Tessellation in Echtzeit',

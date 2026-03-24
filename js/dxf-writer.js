@@ -1,17 +1,19 @@
 /**
- * CeraCUT DXF Writer V1.2
- * Export von Konturen als AutoCAD DXF R12 (AC1009)
- * 
+ * CeraCUT DXF Writer V1.3
+ * Export von Konturen als AutoCAD DXF R2000 (AC1015)
+ *
  * Unterstützte Entity-Typen:
  * - LINE (Einzelsegmente)
  * - POLYLINE / VERTEX / SEQEND (Polylinien, geschlossen/offen)
  * - CIRCLE (Kreise — wenn sourceType === 'CIRCLE')
  * - ARC (Bögen — wenn sourceType === 'ARC')
- * 
- * Format: AutoCAD R12 (AC1009) — breiteste Kompatibilität
- * 
+ * - SPLINE (Splines — Fit-Points und/oder Control-Points)
+ *
+ * Format: AutoCAD R2000 (AC1015) — SPLINE-Entity-Support
+ *
  * Created: 2026-02-15 MEZ
- * Build: 20260215-2000 MEZ
+ * Last Modified: 2026-03-24 MEZ
+ * Build: 20260324-splinedxf
  */
 
 class DXFWriter {
@@ -33,7 +35,7 @@ class DXFWriter {
     generate(contours, layerManager, options = {}) {
         this.lines = [];
 
-        const stats = { entities: 0, layers: 0, lines: 0, polylines: 0, circles: 0, arcs: 0, images: 0 };
+        const stats = { entities: 0, layers: 0, lines: 0, polylines: 0, circles: 0, arcs: 0, splines: 0, images: 0 };
 
         // ── HEADER Section ──
         this._writeHeader();
@@ -59,6 +61,8 @@ class DXFWriter {
             
             if (sourceType === 'CIRCLE' && contour.isClosed) {
                 this._writeCircle(contour, stats);
+            } else if (sourceType === 'SPLINE' && (contour._fitPoints || contour._splineData)) {
+                this._writeSpline(contour, stats);
             } else if (contour.points.length === 2 && !contour.isClosed) {
                 this._writeLine(contour.points[0], contour.points[1], layerName, stats);
             } else {
@@ -119,9 +123,9 @@ class DXFWriter {
     _writeHeader() {
         this._writeSectionStart('HEADER');
         
-        // AutoCAD Version: R12
+        // AutoCAD Version: R2000
         this._write(9, '$ACADVER');
-        this._write(1, 'AC1009');
+        this._write(1, 'AC1015');
 
         // Codepage: UTF-8 für Umlaute in Layer-Namen
         this._write(9, '$DWGCODEPAGE');
@@ -305,7 +309,7 @@ class DXFWriter {
                 radius = fit.radius;
             } else {
                 // Letzter Fallback: als Polyline exportieren
-                console.warn('[DXF-Writer] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
+                console.warn('[DXF-Writer V1.3] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
                 this._writePolyline(contour, stats);
                 return;
             }
@@ -319,6 +323,80 @@ class DXFWriter {
         this._write(40, this._fmt(radius));
 
         stats.circles++;
+        stats.entities++;
+    }
+
+    _writeSpline(contour, stats) {
+        const layer = contour.layer || '0';
+        const sd = contour._splineData;
+        const fp = contour._fitPoints;
+
+        // Datenquelle bestimmen: Import (splineData) oder gezeichnet (fitPoints)
+        const hasControlPoints = sd && sd.controlPoints && sd.controlPoints.length >= 2;
+        const hasFitPoints = (sd && sd.fitPoints && sd.fitPoints.length >= 2) ||
+                             (fp && fp.length >= 2);
+
+        if (!hasControlPoints && !hasFitPoints) {
+            // Fallback: als Polyline exportieren
+            console.warn('[DXF-Writer V1.3] Spline ohne CP/FP — Fallback auf Polyline');
+            this._writePolyline(contour, stats);
+            return;
+        }
+
+        const degree = (sd && sd.degree) ? sd.degree : 3;
+        const isClosed = contour.isClosed || contour._splineClosed || false;
+
+        // Flags: Bit 1=closed, Bit 2=periodic, Bit 4=rational, Bit 8=planar, Bit 16=linear
+        let flags = 8; // planar (2D)
+        if (isClosed) flags |= 1;
+
+        // Kontrollpunkte + Knoten (Import-Daten)
+        const controlPoints = hasControlPoints ? sd.controlPoints : [];
+        const knots = (sd && sd.knots && sd.knots.length > 0) ? sd.knots : [];
+        const weights = (sd && sd.weights && sd.weights.length > 0) ? sd.weights : [];
+
+        // Fit-Points: Import-Daten oder gezeichnete Punkte
+        const fitPoints = hasFitPoints
+            ? (sd && sd.fitPoints && sd.fitPoints.length >= 2 ? sd.fitPoints : fp)
+            : [];
+
+        this._write(0, 'SPLINE');
+        this._write(8, layer);
+        this._write(100, 'AcDbEntity');
+        this._write(100, 'AcDbSpline');
+        this._write(70, flags.toString());
+        this._write(71, degree.toString());
+        this._write(72, knots.length.toString());
+        this._write(73, controlPoints.length.toString());
+        this._write(74, fitPoints.length.toString());
+
+        // Knot-Vektor
+        for (const k of knots) {
+            this._write(40, this._fmt(k));
+        }
+
+        // Gewichte (nur bei rationalen Splines)
+        if (weights.length > 0) {
+            for (const w of weights) {
+                this._write(41, this._fmt(w));
+            }
+        }
+
+        // Kontrollpunkte (Group 10/20/30)
+        for (const cp of controlPoints) {
+            this._write(10, this._fmt(cp.x));
+            this._write(20, this._fmt(cp.y));
+            this._write(30, '0.0');
+        }
+
+        // Fit-Points (Group 11/21/31)
+        for (const f of fitPoints) {
+            this._write(11, this._fmt(f.x));
+            this._write(21, this._fmt(f.y));
+            this._write(31, '0.0');
+        }
+
+        stats.splines++;
         stats.entities++;
     }
 
