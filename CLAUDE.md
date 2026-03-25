@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Letzte Aktualisierung:** 2026-03-25
 > **Version:** V6.15
-> **Build:** 20260325-splinefix
+> **Build:** 20260325-undoctrlz
 
 ---
 
@@ -510,7 +510,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   text-tool: V1.2 (20260312-textimport)
   dxf-writer: V1.3 (20260324-splinedxf)
   lead-profiles: V1.1 (20260315-intarsia20)
-  app: V6.15 (20260325-layerdropdown)
+  app: V6.15 (20260325-undoctrlz)
   project-manager: V1.0 (20260313-workspace)
   properties-panel: V1.5 (20260316-hatchentity)
   debug-monitor: V1.1 (20260324-gitcommit)

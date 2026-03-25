@@ -2,22 +2,22 @@
  * CeraCUT Build Info V6.15
  * Version: V6.15
  * Last Modified: 2026-03-25 MEZ
- * Build: 20260325-splinefix
+ * Build: 20260325-undoctrlz
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
     version: '6.15',
-    build: '20260325-splinefix',
+    build: '20260325-undoctrlz',
     date: '2026-03-25',
     time: '10:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'b37dee1',
-        date: '2026-03-25 10:26:46 +0100',
-        message: 'fix: Gezeichnete Splines behalten sourceType SPLINE — Fit-Points werden in DXF gespeichert (V2.10)'
+        hash: '772f7c5',
+        date: '2026-03-25 10:55:24 +0100',
+        message: 'fix: Ctrl+Z/Y funktioniert jetzt nach DEL-Löschen — Keyboard-Filter ließ Ctrl-Shortcuts nicht durch (V6.15)'
     },
 
     modules: {
@@ -39,7 +39,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.3', build: '20260324-splinedxf' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.15', build: '20260325-layerdropdown' },
+        'app':                { version: '6.15', build: '20260325-undoctrlz' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.1', build: '20260324-gitcommit' },
@@ -55,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.15: Fix — Ctrl+Z/Y/DEL funktioniert wenn cmd-input Focus hat (Keyboard-Filter erweitert)',
         'V6.15: Fix — Gezeichnete Splines behalten sourceType SPLINE → DXF-Export mit Fit-Points (drawing-tools V2.10)',
         'V6.15: Fix — Layer-Eigenschaften: Selektion funktioniert jetzt korrekt (querySelector-Priorität)',
         'V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)',

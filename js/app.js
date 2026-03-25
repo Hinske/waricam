@@ -1,5 +1,6 @@
 /**
  * CeraCUT V6.15 - Main Application
+ * V6.15: Fix — Ctrl+Z/Y funktioniert jetzt auch wenn cmd-input Focus hat (Keyboard-Filter erweitert)
  * V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)
  * V6.15: Fix — Undo-System: LayerManager.undoManager Verknüpfung für undo-fähige Layer-Ops
  * V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt
@@ -2117,12 +2118,12 @@ class CeraCutApp {
     
     bindKeyboardEvents() {
         document.addEventListener('keydown', (e) => {
-            // V3.5: Command-Line Input hat eigene Handler — nur ESC/F-Tasten durchlassen
+            // V3.5: Command-Line Input hat eigene Handler — nur ESC/F-Tasten + Ctrl-Shortcuts durchlassen
             const isCmdInput = e.target.id === 'cmd-input';
-            if (!isCmdInput && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
-            if (isCmdInput && e.key !== 'Escape' && e.key !== 'F1' && e.key !== 'F2' && e.key !== 'F3' && e.key !== 'F8') return;
-            
             const ctrl = e.ctrlKey || e.metaKey;
+            if (!isCmdInput && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
+            if (isCmdInput && !ctrl && e.key !== 'Escape' && e.key !== 'F1' && e.key !== 'F2' && e.key !== 'F3' && e.key !== 'F8' && e.key !== 'Delete') return;
+
             const shift = e.shiftKey;
             
             // V3.5: Auto-Focus — Tastatureingabe landet automatisch in cmd-input
