@@ -534,9 +534,15 @@ class MeasureManager {
     
     _findCircleOrArc(clickPoint) {
         const tolerance = 15 / (this.app.renderer?.scale || 1);
-        
+        const lm = this.app?.layerManager;
+
         for (const contour of this.app.contours) {
             if (!contour.points || contour.points.length < 2) continue;
+            // Unsichtbare/gesperrte Layer überspringen (wie findContourAtPoint)
+            if (lm) {
+                const ld = lm.getLayer(contour.layer || '0');
+                if (ld && (!ld.visible || ld.locked)) continue;
+            }
             
             // Kreis erkennen
             if (contour.isClosed && contour.points.length >= 4) {
@@ -603,8 +609,6 @@ class MeasureManager {
         const maxDev = Math.max(...radii.map(r => Math.abs(r - avgR)));
         const relDev = maxDev / avgR;
         const threshold = hasBulge ? 0.05 : 0.02;
-        // DEBUG: Welche Kontur wird geprüft?
-        console.log(`[_detectCircle] pts=${pts.length}, bulge=${bulgeCount}/${pts.length}, relDev=${relDev.toFixed(4)}, threshold=${threshold}, avgR=${avgR.toFixed(2)} → ${relDev < threshold ? 'CIRCLE' : 'rejected'}`);
         if (relDev < threshold) {
             return { center: { x: cx, y: cy }, radius: avgR };
         }
