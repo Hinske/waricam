@@ -590,10 +590,8 @@ class MeasureManager {
         const bulgeCount = pts.filter(p => p.bulge && Math.abs(p.bulge) > 0.01).length;
         const hasBulge = bulgeCount > 0;
         if (hasBulge) {
-            // Kreis: ALLE Segmente haben Bulge (2-4 Bögen). Rechteck mit Eckenradien: nur 50%.
             if (bulgeCount / pts.length < 0.9) return null;
         } else {
-            // Ohne Bulge: mindestens 8 Punkte nötig (Rechteck hat 4)
             if (pts.length < 8) return null;
         }
         let cx = 0, cy = 0;
@@ -605,6 +603,8 @@ class MeasureManager {
         const maxDev = Math.max(...radii.map(r => Math.abs(r - avgR)));
         const relDev = maxDev / avgR;
         const threshold = hasBulge ? 0.05 : 0.02;
+        // DEBUG: Welche Kontur wird geprüft?
+        console.log(`[_detectCircle] pts=${pts.length}, bulge=${bulgeCount}/${pts.length}, relDev=${relDev.toFixed(4)}, threshold=${threshold}, avgR=${avgR.toFixed(2)} → ${relDev < threshold ? 'CIRCLE' : 'rejected'}`);
         if (relDev < threshold) {
             return { center: { x: cx, y: cy }, radius: avgR };
         }
