@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Letzte Aktualisierung:** 2026-03-25
 > **Version:** V6.15
-> **Build:** 20260325-layerprops
+> **Build:** 20260325-splinefix
 
 ---
 
@@ -203,7 +203,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **UndoManager** | `undo-manager.js` | **V1.1** | Command Pattern, Undo/Redo, Clipboard, WizardStepUndo |
 | **Arc-Fitting** | `arc-fitting.js` | **V3.1** | Polylinie → G02/G03 Bogen (fur PP-Ausgabe) |
 | **Pipeline** | `ceracut-pipeline.js` | **V3.7** | Topologie (disc/hole/reference/slit/none), Kerf-Offset, interiorPoint-basierte Nesting-Erkennung, Validation Engine (Pre-Export), Hatch-Konturen ausgeschlossen |
-| **Drawing Tools** | `drawing-tools.js` | **V2.9** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities, Locked-Layer-Guard Window-Selection |
+| **Drawing Tools** | `drawing-tools.js` | **V2.10** | Tier 1+2 CAD-Tools, AutoCAD-Aliases, Continuous Mode, BreakTool, Enter/Rechtsklick=Beenden (AutoCAD), Layerfarbe, Auto-Apply pending Entities, Locked-Layer-Guard Window-Selection |
 | **Drawing Tools Ext** | `drawing-tools-ext.js` | **V1.7** | Ellipse, Spline, Donut, XLine, Overlap Break (OB), Hatch (H, eigenständige CamContour, Live-Preview, Farbpalette) |
 | **Advanced Tools** | `advanced-tools.js` | **V1.6** | Fillet, Trim, Extend, Offset (Ghost-Preview), Chamfer, Arabeske, Aufteilen, Overkill, Boundary (DCEL) |
 | **CAM Tools** | `cam-tools.js` | **V1.1** | CAM-spezifische Werkzeuge, Hit-Test Zoom-Scaling |
@@ -275,7 +275,7 @@ ceraCUT/
 │   ├── command-line.js                ← Command-Line UI V1.3 (History, Validation-Feedback)
 │   ├── dynamic-input.js              ← Dynamic Input HUD V1.0
 │   ├── snap-manager.js               ← Snap-System V1.3
-│   ├── drawing-tools.js              ← CAD-Tools V2.9 (Auto-Apply, Locked-Layer-Guard)
+│   ├── drawing-tools.js              ← CAD-Tools V2.10 (Auto-Apply, Locked-Layer-Guard)
 │   ├── drawing-tools-ext.js           ← Ellipse, Spline, Donut, XLine, OB, Hatch V1.7
 │   ├── advanced-tools.js              ← Tier 5 Tools V1.6 (Fillet/Trim/Extend/Offset/Chamfer/Overkill)
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
@@ -502,7 +502,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   command-line: V1.3 (20260317-quickwins)
   snap-manager: V1.3 (20260315-bugfix35)
   geometry-ops: V2.5 (20260323-boundary)
-  drawing-tools: V2.9 (20260323-splinetool)
+  drawing-tools: V2.10 (20260325-splinefix)
   drawing-tools-ext: V1.7 (20260323-splinetool)
   dynamic-input: V1.0 (20260309-dynhud)
   tool-manager: V2.2 (20260216-0015)

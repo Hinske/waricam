@@ -2,22 +2,22 @@
  * CeraCUT Build Info V6.15
  * Version: V6.15
  * Last Modified: 2026-03-25 MEZ
- * Build: 20260325-layerprops
+ * Build: 20260325-splinefix
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
     version: '6.15',
-    build: '20260325-layerprops',
+    build: '20260325-splinefix',
     date: '2026-03-25',
     time: '10:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'a2617cd',
-        date: '2026-03-25 09:16:09 +0100',
-        message: 'fix: Layer-Eigenschaften — Selektion greift jetzt korrekt auf gewählten Layer (V6.15)'
+        hash: 'b37dee1',
+        date: '2026-03-25 10:26:46 +0100',
+        message: 'fix: Gezeichnete Splines behalten sourceType SPLINE — Fit-Points werden in DXF gespeichert (V2.10)'
     },
 
     modules: {
@@ -31,7 +31,7 @@ const CERACUT_BUILD = {
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
         'snap-manager':       { version: '1.3', build: '20260315-bugfix35' },
         'geometry-ops':       { version: '2.5', build: '20260323-boundary' },
-        'drawing-tools':      { version: '2.9', build: '20260323-splinetool' },
+        'drawing-tools':      { version: '2.10', build: '20260325-splinefix' },
         'drawing-tools-ext':  { version: '1.7', build: '20260323-splinetool' },
         'dynamic-input':      { version: '1.0', build: '20260309-dynhud' },
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
@@ -55,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.15: Fix — Gezeichnete Splines behalten sourceType SPLINE → DXF-Export mit Fit-Points (drawing-tools V2.10)',
         'V6.15: Fix — Layer-Eigenschaften: Selektion funktioniert jetzt korrekt (querySelector-Priorität)',
         'V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)',
         'V6.15: Fix — Undo-System: fehlende _notifyStateChange() in cam-tools/canvas-renderer, Layer-Ops undo-fähig',

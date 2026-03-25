@@ -1,5 +1,5 @@
 /**
- * CeraCUT Drawing & Modification Tools V2.9
+ * CeraCUT Drawing & Modification Tools V2.10
  * AutoCAD-style CAD Tools für CeraCUT
  * 
  * Tier 1 – Zeichnen:  Line (L), Circle (C), Rectangle (N), Arc (A), Polyline (P)
@@ -12,6 +12,7 @@
  * - Window-Selection (Drag-Rechteck)
  * - Integration mit CommandLine + SnapManager + UndoManager
  * 
+ * V2.10: Fix — Spline-Typ bleibt erhalten in _entityToDxfFormat (war LWPOLYLINE, Fit-Points gingen verloren)
  * V2.8: Locked-Layer Guard — gesperrte Layer von Window-Selection ausgeschlossen
  * V2.7: Auto-Apply pending Entities bei ESC/Enter/Rechtsklick ohne aktives Tool
  * V2.6: Enter/Rechtsklick beendet Tool (AutoCAD-Stil), Layerfarbe für Entities + Rubber-Band
@@ -21,7 +22,7 @@
  * V1.1: handleRawInput für Linie/Rechteck/Polylinie
  * V1.0: Initiale 5 Zeichentools
  * Created: 2026-02-13 MEZ
- * Last Modified: 2026-03-23 MEZ
+ * Last Modified: 2026-03-25 MEZ
  * Build: 20260323-splinetool
  */
 
@@ -1089,7 +1090,7 @@ class DrawingToolManager {
 
             case 'SPLINE':
                 return {
-                    type: 'LWPOLYLINE',
+                    type: 'SPLINE',
                     points: entity.points.map(p => ({ x: p.x, y: p.y })),
                     isClosed: entity.closed || false,
                     layer: entity.layer || 'DRAW',
