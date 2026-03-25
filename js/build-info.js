@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '772f7c5',
-        date: '2026-03-25 10:55:24 +0100',
-        message: 'fix: Ctrl+Z/Y funktioniert jetzt nach DEL-Löschen — Keyboard-Filter ließ Ctrl-Shortcuts nicht durch (V6.15)'
+        hash: '969e078',
+        date: '2026-03-25 11:13:13 +0100',
+        message: 'fix: Measure-Tool — Eckenradien korrekt messen (V1.1)'
     },
 
     modules: {
@@ -51,10 +51,12 @@ const CERACUT_BUILD = {
         'quality-zones':      { version: '1.1', build: '20260315-bugfix35' },
         'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
-        'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' }
+        'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' },
+        'measure-tool':       { version: '1.1', build: '20260325-measurefix' }
     },
     
     changes: [
+        'V6.15: Fix — Measure-Tool: Bogen-Rendering, Bounds, Radius-Overlay, Arc-HitTest für Eckenradien (measure-tool V1.1)',
         'V6.15: Fix — Ctrl+Z/Y/DEL funktioniert wenn cmd-input Focus hat (Keyboard-Filter erweitert)',
         'V6.15: Fix — Gezeichnete Splines behalten sourceType SPLINE → DXF-Export mit Fit-Points (drawing-tools V2.10)',
         'V6.15: Fix — Layer-Eigenschaften: Selektion funktioniert jetzt korrekt (querySelector-Priorität)',

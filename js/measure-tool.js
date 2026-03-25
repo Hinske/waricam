@@ -1,7 +1,12 @@
 /**
- * CeraCUT V3.12 - Measure Tool (IGEMS-Stil)
+ * CeraCUT V1.1 - Measure Tool (IGEMS-Stil)
  * 5 Mess-Modi: Abstand, Radius, Winkel, Fläche, Volumen
- * Build: 20260216-meas1
+ * Version: V1.1
+ * Last Modified: 2026-03-25
+ * Build: 20260325-measurefix
+ *
+ * V1.1: Bogen-Rendering in Area-Highlight, Bounds mit Arc-Extents,
+ *        Radius-Overlay nur Bogen statt Vollkreis, Arc-HitTest mit Winkelbereich
  */
 
 class MeasureManager {
@@ -19,7 +24,7 @@ class MeasureManager {
         this.materialThickness = 8.0; // mm (Standard)
         this.materialDensity = 2.7;   // g/cm³ (Aluminium Standard)
         
-        console.debug('[MeasureManager] V1.0 initialisiert');
+        console.debug('[MeasureManager V1.1] initialisiert');
     }
     
     // ════════════════════════════════════════════════════════════════
@@ -472,13 +477,58 @@ class MeasureManager {
     
     _computeBounds(points) {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for (const p of points) {
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
             if (p.x < minX) minX = p.x;
             if (p.y < minY) minY = p.y;
             if (p.x > maxX) maxX = p.x;
             if (p.y > maxY) maxY = p.y;
+
+            // Bogen-Extrempunkte: Achsenschnittpunkte (0°/90°/180°/270°) prüfen
+            if (i < points.length - 1 && p.bulge && Math.abs(p.bulge) > 1e-6) {
+                const p2 = points[i + 1];
+                const arc = this._bulgeToArc(p, p2, p.bulge);
+                if (!arc) continue;
+                const cx = arc.center.x, cy = arc.center.y, r = arc.radius;
+                const sa = Math.atan2(p.y - cy, p.x - cx);
+                const ea = Math.atan2(p2.y - cy, p2.x - cx);
+                const ccw = p.bulge > 0;
+                // Prüfe ob Achsenwinkel (0, π/2, π, -π/2) im Bogensweep liegt
+                const axisAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+                const axisPoints = [
+                    { x: cx + r, y: cy }, { x: cx, y: cy + r },
+                    { x: cx - r, y: cy }, { x: cx, y: cy - r }
+                ];
+                for (let j = 0; j < 4; j++) {
+                    if (this._angleInArc(axisAngles[j], sa, ea, ccw)) {
+                        const ap = axisPoints[j];
+                        if (ap.x < minX) minX = ap.x;
+                        if (ap.y < minY) minY = ap.y;
+                        if (ap.x > maxX) maxX = ap.x;
+                        if (ap.y > maxY) maxY = ap.y;
+                    }
+                }
+            }
         }
         return { minX, minY, maxX, maxY };
+    }
+
+    /** Prüft ob ein Winkel im Bogen-Sweep liegt */
+    _angleInArc(angle, startAngle, endAngle, ccw) {
+        // Normalisiere alle Winkel auf [0, 2π)
+        const norm = a => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const a = norm(angle);
+        const s = norm(startAngle);
+        const e = norm(endAngle);
+        if (ccw) {
+            // CCW: von s nach e gegen Uhrzeigersinn
+            if (s <= e) return a >= s && a <= e;
+            return a >= s || a <= e;
+        } else {
+            // CW: von s nach e im Uhrzeigersinn
+            if (s >= e) return a <= s && a >= e;
+            return a <= s || a >= e;
+        }
     }
     
     _findCircleOrArc(clickPoint) {
@@ -511,11 +561,20 @@ class MeasureManager {
                         Math.hypot(clickPoint.x - arc.center.x, clickPoint.y - arc.center.y) - arc.radius
                     );
                     if (distToArc < tolerance) {
+                        // Winkelbereich prüfen: Klick muss im Bogen liegen
+                        const startAngle = Math.atan2(p1.y - arc.center.y, p1.x - arc.center.x);
+                        const endAngle = Math.atan2(p2.y - arc.center.y, p2.x - arc.center.x);
+                        const ccw = p1.bulge > 0;
+                        const clickAngle = Math.atan2(clickPoint.y - arc.center.y, clickPoint.x - arc.center.x);
+                        if (!this._angleInArc(clickAngle, startAngle, endAngle, ccw)) continue;
                         return {
                             center: arc.center,
                             radius: arc.radius,
                             isArc: true,
-                            arcAngle: arc.angle * 180 / Math.PI
+                            arcAngle: arc.angle * 180 / Math.PI,
+                            startAngle,
+                            endAngle,
+                            ccw
                         };
                     }
                 }
@@ -657,8 +716,16 @@ class MeasureManager {
         ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)';
         ctx.lineWidth = 2.5 / scale;
         ctx.beginPath();
-        ctx.arc(result.center.x, result.center.y, result.radius, 0, Math.PI * 2);
+        if (result.isArc && result.startAngle !== undefined) {
+            // Nur den tatsächlichen Bogen zeichnen
+            ctx.arc(result.center.x, result.center.y, result.radius,
+                    result.startAngle, result.endAngle, !result.ccw);
+        } else {
+            // Vollkreis
+            ctx.arc(result.center.x, result.center.y, result.radius, 0, Math.PI * 2);
+        }
         ctx.stroke();
+        // Mittelpunkt-Kreuz
         const s = 5 / scale;
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 1 / scale;
@@ -668,11 +735,23 @@ class MeasureManager {
         ctx.moveTo(result.center.x, result.center.y - s);
         ctx.lineTo(result.center.x, result.center.y + s);
         ctx.stroke();
+        // Radius-Linie zum Bogenmittelpunkt oder nach rechts
         ctx.strokeStyle = 'rgba(255, 200, 0, 0.8)';
         ctx.lineWidth = 1 / scale;
         ctx.beginPath();
         ctx.moveTo(result.center.x, result.center.y);
-        ctx.lineTo(result.center.x + result.radius, result.center.y);
+        if (result.isArc && result.startAngle !== undefined) {
+            // Linie zur Mitte des Bogens
+            const midAngle = result.ccw
+                ? result.startAngle + ((result.arcAngle || 90) * Math.PI / 180) / 2
+                : result.startAngle - ((result.arcAngle || 90) * Math.PI / 180) / 2;
+            ctx.lineTo(
+                result.center.x + result.radius * Math.cos(midAngle),
+                result.center.y + result.radius * Math.sin(midAngle)
+            );
+        } else {
+            ctx.lineTo(result.center.x + result.radius, result.center.y);
+        }
         ctx.stroke();
         ctx.restore();
     }
@@ -719,8 +798,22 @@ class MeasureManager {
         ctx.beginPath();
         const pts = result.contour.points;
         ctx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 1; i < pts.length; i++) {
-            ctx.lineTo(pts[i].x, pts[i].y);
+        for (let i = 0; i < pts.length - 1; i++) {
+            const p1 = pts[i];
+            const p2 = pts[i + 1];
+            if (p1.bulge && Math.abs(p1.bulge) > 1e-6) {
+                const arc = this._bulgeToArc(p1, p2, p1.bulge);
+                if (arc) {
+                    const startAngle = Math.atan2(p1.y - arc.center.y, p1.x - arc.center.x);
+                    const endAngle = Math.atan2(p2.y - arc.center.y, p2.x - arc.center.x);
+                    // Negative Bulge = Uhrzeigersinn (CW)
+                    ctx.arc(arc.center.x, arc.center.y, arc.radius, startAngle, endAngle, p1.bulge < 0);
+                } else {
+                    ctx.lineTo(p2.x, p2.y);
+                }
+            } else {
+                ctx.lineTo(p2.x, p2.y);
+            }
         }
         ctx.closePath();
         ctx.fill();
