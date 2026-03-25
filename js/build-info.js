@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '45a50a1',
-        date: '2026-03-25 11:29:23 +0100',
-        message: 'fix: Rechtsklick im Inneren geschlossener Konturen zeigt Canvas-Menü (V3.36)'
+        hash: 'f0e717e',
+        date: '2026-03-25 11:50:07 +0100',
+        message: 'fix: _detectCircle erkennt Rechteck nicht mehr als Kreis (V1.1)'
     },
 
     modules: {
@@ -52,7 +52,7 @@ const CERACUT_BUILD = {
         'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' },
-        'measure-tool':       { version: '1.1', build: '20260325-measurefix' }
+        'measure-tool':       { version: '1.1', build: '20260325-circledetect' }
     },
     
     changes: [

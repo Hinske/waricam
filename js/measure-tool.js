@@ -3,9 +3,10 @@
  * 5 Mess-Modi: Abstand, Radius, Winkel, Fläche, Volumen
  * Version: V1.1
  * Last Modified: 2026-03-25
- * Build: 20260325-measurefix
+ * Build: 20260325-circledetect
  *
- * V1.1: Bogen-Rendering in Area-Highlight, Bounds mit Arc-Extents,
+ * V1.1: _detectCircle: Rechteck nicht mehr als Kreis erkannt (min 8 Punkte ohne Bulge),
+ *        Bogen-Rendering in Area-Highlight, Bounds mit Arc-Extents,
  *        Radius-Overlay nur Bogen statt Vollkreis, Arc-HitTest mit Winkelbereich
  */
 
@@ -586,6 +587,9 @@ class MeasureManager {
     _detectCircle(points) {
         const pts = points.slice(0, -1);
         if (pts.length < 3) return null;
+        const hasBulge = pts.some(p => p.bulge && Math.abs(p.bulge) > 0.01);
+        // Ohne Bulge: mindestens 8 Punkte nötig (Rechteck hat 4, wird sonst als Kreis erkannt)
+        if (!hasBulge && pts.length < 8) return null;
         let cx = 0, cy = 0;
         for (const p of pts) { cx += p.x; cy += p.y; }
         cx /= pts.length; cy /= pts.length;
@@ -594,7 +598,6 @@ class MeasureManager {
         if (avgR < 0.01) return null;
         const maxDev = Math.max(...radii.map(r => Math.abs(r - avgR)));
         const relDev = maxDev / avgR;
-        const hasBulge = pts.some(p => p.bulge && Math.abs(p.bulge) > 0.01);
         const threshold = hasBulge ? 0.05 : 0.02;
         if (relDev < threshold) {
             return { center: { x: cx, y: cy }, radius: avgR };
