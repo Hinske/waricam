@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'b008504',
-        date: '2026-03-25 13:43:11 +0100',
-        message: 'fix: _findCircleOrArc überspringt unsichtbare/gesperrte Layer'
+        hash: '31f82ed',
+        date: '2026-03-25 13:47:46 +0100',
+        message: 'fix: _findCircleOrArc — nearest-edge-first statt globaler Suche'
     },
 
     modules: {
@@ -52,7 +52,7 @@ const CERACUT_BUILD = {
         'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' },
-        'measure-tool':       { version: '1.1', build: '20260325-layerguard' }
+        'measure-tool':       { version: '1.1', build: '20260325-nearesthit' }
     },
     
     changes: [

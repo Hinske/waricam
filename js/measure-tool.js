@@ -535,58 +535,82 @@ class MeasureManager {
     _findCircleOrArc(clickPoint) {
         const tolerance = 15 / (this.app.renderer?.scale || 1);
         const lm = this.app?.layerManager;
+        const renderer = this.app.renderer;
+
+        // Schritt 1: Nächste Kontur per Kanten-Hit finden (wie bei Selektion)
+        let bestContour = null;
+        let bestDist = tolerance;
+        let bestSegIdx = -1;
 
         for (const contour of this.app.contours) {
             if (!contour.points || contour.points.length < 2) continue;
-            // Unsichtbare/gesperrte Layer überspringen (wie findContourAtPoint)
             if (lm) {
                 const ld = lm.getLayer(contour.layer || '0');
                 if (ld && (!ld.visible || ld.locked)) continue;
             }
-            
-            // Kreis erkennen
-            if (contour.isClosed && contour.points.length >= 4) {
-                const circle = this._detectCircle(contour.points);
-                if (circle) {
-                    const distToCircle = Math.abs(
-                        Math.hypot(clickPoint.x - circle.center.x, clickPoint.y - circle.center.y) - circle.radius
-                    );
-                    if (distToCircle < tolerance) {
-                        return { ...circle, isArc: false, arcAngle: 360 };
-                    }
-                }
-            }
-            
-            // Bogen-Segmente mit Bulge
-            for (let i = 0; i < contour.points.length - 1; i++) {
-                const p1 = contour.points[i];
-                const p2 = contour.points[i + 1];
-                if (p1.bulge && Math.abs(p1.bulge) > 0.01) {
-                    const arc = this._bulgeToArc(p1, p2, p1.bulge);
+            const pts = contour.points;
+            for (let i = 0; i < pts.length - 1; i++) {
+                let dist;
+                if (pts[i].bulge && Math.abs(pts[i].bulge) > 0.01) {
+                    // Bogen: Abstand zum Kreisbogen
+                    const arc = this._bulgeToArc(pts[i], pts[i + 1], pts[i].bulge);
                     if (!arc) continue;
-                    const distToArc = Math.abs(
-                        Math.hypot(clickPoint.x - arc.center.x, clickPoint.y - arc.center.y) - arc.radius
-                    );
-                    if (distToArc < tolerance) {
-                        // Winkelbereich prüfen: Klick muss im Bogen liegen
-                        const startAngle = Math.atan2(p1.y - arc.center.y, p1.x - arc.center.x);
-                        const endAngle = Math.atan2(p2.y - arc.center.y, p2.x - arc.center.x);
-                        const ccw = p1.bulge > 0;
-                        const clickAngle = Math.atan2(clickPoint.y - arc.center.y, clickPoint.x - arc.center.x);
-                        if (!this._angleInArc(clickAngle, startAngle, endAngle, ccw)) continue;
-                        return {
-                            center: arc.center,
-                            radius: arc.radius,
-                            isArc: true,
-                            arcAngle: arc.angle * 180 / Math.PI,
-                            startAngle,
-                            endAngle,
-                            ccw
-                        };
+                    const sa = Math.atan2(pts[i].y - arc.center.y, pts[i].x - arc.center.x);
+                    const ea = Math.atan2(pts[i + 1].y - arc.center.y, pts[i + 1].x - arc.center.x);
+                    const ca = Math.atan2(clickPoint.y - arc.center.y, clickPoint.x - arc.center.x);
+                    if (this._angleInArc(ca, sa, ea, pts[i].bulge > 0)) {
+                        dist = Math.abs(Math.hypot(clickPoint.x - arc.center.x, clickPoint.y - arc.center.y) - arc.radius);
+                    } else {
+                        // Außerhalb des Bogens: Abstand zu den Endpunkten
+                        dist = Math.min(
+                            Math.hypot(clickPoint.x - pts[i].x, clickPoint.y - pts[i].y),
+                            Math.hypot(clickPoint.x - pts[i + 1].x, clickPoint.y - pts[i + 1].y)
+                        );
                     }
+                } else {
+                    // Gerade: Punkt-zu-Segment-Abstand
+                    dist = renderer
+                        ? renderer.pointToSegmentDistance(clickPoint.x, clickPoint.y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y)
+                        : Math.hypot(clickPoint.x - (pts[i].x + pts[i + 1].x) / 2, clickPoint.y - (pts[i].y + pts[i + 1].y) / 2);
+                }
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestContour = contour;
+                    bestSegIdx = i;
                 }
             }
         }
+
+        if (!bestContour) return null;
+
+        // Schritt 2: Prüfe ob die gefundene Kontur ein Kreis ist
+        if (bestContour.isClosed && bestContour.points.length >= 4) {
+            const circle = this._detectCircle(bestContour.points);
+            if (circle) {
+                return { ...circle, isArc: false, arcAngle: 360 };
+            }
+        }
+
+        // Schritt 3: Prüfe ob das angeklickte Segment ein Bogen ist
+        const p1 = bestContour.points[bestSegIdx];
+        const p2 = bestContour.points[bestSegIdx + 1];
+        if (p1.bulge && Math.abs(p1.bulge) > 0.01) {
+            const arc = this._bulgeToArc(p1, p2, p1.bulge);
+            if (arc) {
+                const startAngle = Math.atan2(p1.y - arc.center.y, p1.x - arc.center.x);
+                const endAngle = Math.atan2(p2.y - arc.center.y, p2.x - arc.center.x);
+                return {
+                    center: arc.center,
+                    radius: arc.radius,
+                    isArc: true,
+                    arcAngle: arc.angle * 180 / Math.PI,
+                    startAngle,
+                    endAngle,
+                    ccw: p1.bulge > 0
+                };
+            }
+        }
+
         return null;
     }
     
