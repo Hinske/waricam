@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Letzte Aktualisierung:** 2026-03-25
 > **Version:** V6.15
-> **Build:** 20260325-layerdropdown
+> **Build:** 20260325-layerprops
 
 ---
 

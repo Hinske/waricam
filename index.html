@@ -1439,7 +1439,7 @@
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260324-gitcommit"></script>
-<script src="js/build-info.js?v=20260325-layerdropdown"></script>
+<script src="js/build-info.js?v=20260325-layerprops"></script>
 <script src="js/constants.js?v=20260324-camfix"></script>
 <script src="js/geometry.js?v=20260316-gapdetect"></script>
 <script src="js/arc-fitting.js?v=20260316-quietlogs"></script>
@@ -1703,17 +1703,17 @@
             
             // Layer Manager: Layer löschen
             document.getElementById('lm-delete')?.addEventListener('click', () => {
-                const sel = document.querySelector('#lm-table-body tr.lm-selected, #lm-table-body tr.lm-active');
+                const sel = document.querySelector('#lm-table-body tr.lm-selected') || document.querySelector('#lm-table-body tr.lm-active');
                 const name = sel?.dataset?.layer;
                 if (!name || name === '0') { origApp.showToast('Layer 0 kann nicht gelöscht werden', 'warning'); return; }
                 if (confirm(`Layer "${name}" löschen?`) && origApp.layerManager.removeLayer(name)) {
                     origApp._renderLayerManagerTable();
                 }
             });
-            
+
             // Layer Manager: Umbenennen
             document.getElementById('lm-rename')?.addEventListener('click', () => {
-                const sel = document.querySelector('#lm-table-body tr.lm-selected, #lm-table-body tr.lm-active');
+                const sel = document.querySelector('#lm-table-body tr.lm-selected') || document.querySelector('#lm-table-body tr.lm-active');
                 const oldName = sel?.dataset?.layer;
                 if (!oldName || oldName === '0') { origApp.showToast('Layer 0 kann nicht umbenannt werden', 'warning'); return; }
                 const newName = prompt('Neuer Name:', oldName);
@@ -1721,10 +1721,10 @@
                     origApp._renderLayerManagerTable();
                 }
             });
-            
+
             // Layer Manager: Als aktuell setzen
             document.getElementById('lm-set-current')?.addEventListener('click', () => {
-                const sel = document.querySelector('#lm-table-body tr.lm-selected, #lm-table-body tr.lm-active');
+                const sel = document.querySelector('#lm-table-body tr.lm-selected') || document.querySelector('#lm-table-body tr.lm-active');
                 const name = sel?.dataset?.layer;
                 if (name) origApp.layerManager.setActive(name);
                 origApp._renderLayerManagerTable();

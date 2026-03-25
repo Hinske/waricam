@@ -2,22 +2,22 @@
  * CeraCUT Build Info V6.15
  * Version: V6.15
  * Last Modified: 2026-03-25 MEZ
- * Build: 20260325-layerdropdown
+ * Build: 20260325-layerprops
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
     version: '6.15',
-    build: '20260325-layerdropdown',
+    build: '20260325-layerprops',
     date: '2026-03-25',
     time: '10:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '48e30a8',
-        date: '2026-03-25 08:41:56 +0100',
-        message: 'fix: Layer-Dropdown zeigt alle Layer — auch leere manuell erstellte (V6.15)'
+        hash: 'a2617cd',
+        date: '2026-03-25 09:16:09 +0100',
+        message: 'fix: Layer-Eigenschaften — Selektion greift jetzt korrekt auf gewählten Layer (V6.15)'
     },
 
     modules: {
@@ -55,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.15: Fix — Layer-Eigenschaften: Selektion funktioniert jetzt korrekt (querySelector-Priorität)',
         'V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)',
         'V6.15: Fix — Undo-System: fehlende _notifyStateChange() in cam-tools/canvas-renderer, Layer-Ops undo-fähig',
         'V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt',
