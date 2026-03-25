@@ -52,7 +52,7 @@ const CERACUT_BUILD = {
         'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' },
-        'measure-tool':       { version: '1.1', build: '20260325-nearesthit' }
+        'measure-tool':       { version: '1.1', build: '20260325-straightcheck' }
     },
     
     changes: [

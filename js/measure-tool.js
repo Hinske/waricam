@@ -634,6 +634,20 @@ class MeasureManager {
         const relDev = maxDev / avgR;
         const threshold = hasBulge ? 0.05 : 0.02;
         if (relDev < threshold) {
+            // Gerade Abschnitte erkennen: Kreis hat keine, Rechteck hat 4
+            let straightSegs = 0;
+            for (let i = 0; i < pts.length; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % pts.length];
+                const c = pts[(i + 2) % pts.length];
+                const ab = Math.atan2(b.y - a.y, b.x - a.x);
+                const bc = Math.atan2(c.y - b.y, c.x - b.x);
+                let dAngle = Math.abs(bc - ab);
+                if (dAngle > Math.PI) dAngle = 2 * Math.PI - dAngle;
+                if (dAngle < 0.03) straightSegs++;  // Fast kollinear
+            }
+            // Rechteck mit Eckenradien: >20% gerade Segmente. Kreis: ~0%.
+            if (straightSegs / pts.length > 0.15) return null;
             return { center: { x: cx, y: cy }, radius: avgR };
         }
         return null;
