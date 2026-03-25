@@ -1,7 +1,8 @@
 /**
- * CeraCUT V3.35 - Canvas Renderer
+ * CeraCUT V3.36 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
+ * V3.36: Rechtsklick edgeOnly — Kontur-Menü nur auf Kanten, Canvas-Menü im Inneren
  * V3.35: _notifyStateChange() nach Grip-Edit → Undo-Buttons aktualisieren sich korrekt
  * V3.34: Shift-Status am ToolManager zwischenspeichern (für CAM-Tools wie BoundaryTrim)
  * V3.33: Spline Grip-Editing — Fit-Point-Grips + Re-Tessellation + Kontrollpolygon-Overlay
@@ -590,7 +591,8 @@ class CanvasRenderer {
         this.canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
-            const contour = this.findContourAtPoint(worldPos.x, worldPos.y);
+            // V3.36: Rechtsklick nur Kanten-Hit → Kontur-Menü, Fläche = Canvas-Menü
+            const contour = this.findContourAtPoint(worldPos.x, worldPos.y, { edgeOnly: true });
             if (this.onRightClick) {
                 this.onRightClick(contour, worldPos, e.clientX, e.clientY);
             }
@@ -1866,7 +1868,12 @@ class CanvasRenderer {
         return closest;
     }
 
-    findContourAtPoint(worldX, worldY) {
+    /**
+     * @param {number} worldX
+     * @param {number} worldY
+     * @param {object} [options] - { edgeOnly: true } = nur Kanten-Hit, kein Flächen-Hit
+     */
+    findContourAtPoint(worldX, worldY, options) {
         const tolerance = CanvasRenderer.TOLERANCE.HIT_TEST / this.scale;
         if (!this.contours) return null;
 
@@ -1902,6 +1909,9 @@ class CanvasRenderer {
                 }
             } catch(e) {}
         }
+
+        // V3.36: edgeOnly-Modus — kein Flächen-Hit (für Rechtsklick-Kontextmenü)
+        if (options?.edgeOnly) return null;
 
         // === Pass 2: Flächen-Hit — Klick IN geschlossene Kontur (V3.27) ===
         // Löst das Problem: Klick in die Mitte einer großen Kontur wurde nicht erkannt

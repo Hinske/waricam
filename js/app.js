@@ -904,12 +904,13 @@ class CeraCutApp {
             }
 
             const worldPos = this.renderer.screenToWorld(e.offsetX, e.offsetY);
-            const contour = this.renderer.findContourAtPoint(worldPos.x, worldPos.y);
+            // V3.36: Rechtsklick nur auf Kanten → Kontur-Menü, im Inneren → Canvas-Menü
+            const contour = this.renderer.findContourAtPoint(worldPos.x, worldPos.y, { edgeOnly: true });
 
             if (contour) {
                 this.showContextMenu(contour, worldPos, e.clientX, e.clientY);
             } else {
-                // V5.2: Canvas-Menü auf leerer Fläche
+                // V5.2: Canvas-Menü auf leerer Fläche (auch im Inneren geschlossener Konturen)
                 this.showCanvasContextMenu(worldPos, e.clientX, e.clientY);
             }
         });
