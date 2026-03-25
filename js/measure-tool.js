@@ -619,6 +619,19 @@ class MeasureManager {
      */
     _fitLocalArc(pts, segIdx) {
         const n = pts.length;
+
+        // Prüfe ob das angeklickte Segment SELBST gekrümmt ist
+        // (Winkeländerung zum Vorgänger- und Nachfolger-Segment)
+        if (segIdx > 0 && segIdx < n - 2) {
+            const a0 = Math.atan2(pts[segIdx].y - pts[segIdx - 1].y, pts[segIdx].x - pts[segIdx - 1].x);
+            const a1 = Math.atan2(pts[segIdx + 1].y - pts[segIdx].y, pts[segIdx + 1].x - pts[segIdx].x);
+            const a2 = Math.atan2(pts[segIdx + 2].y - pts[segIdx + 1].y, pts[segIdx + 2].x - pts[segIdx + 1].x);
+            let d01 = Math.abs(a1 - a0); if (d01 > Math.PI) d01 = 2 * Math.PI - d01;
+            let d12 = Math.abs(a2 - a1); if (d12 > Math.PI) d12 = 2 * Math.PI - d12;
+            // Beide Übergänge müssen gekrümmt sein (nicht nur einer)
+            if (d01 < 0.03 && d12 < 0.03) return null; // Gerade Kante
+        }
+
         // Nachbar-Punkte sammeln (±4 Segmente um den Klickpunkt)
         const range = 4;
         const indices = [];
@@ -629,11 +642,11 @@ class MeasureManager {
         if (indices.length < 3) return null;
         const localPts = indices.map(i => pts[i]);
 
-        // Prüfe ob die lokalen Punkte NICHT kollinear sind (gerade Kante → kein Bogen)
+        // Prüfe ob die lokalen Punkte NICHT kollinear sind
         const first = localPts[0], mid = localPts[Math.floor(localPts.length / 2)], last = localPts[localPts.length - 1];
         const cross = (mid.x - first.x) * (last.y - first.y) - (mid.y - first.y) * (last.x - first.x);
         const span = Math.hypot(last.x - first.x, last.y - first.y);
-        if (span < 1e-6 || Math.abs(cross) / (span * span) < 0.005) return null; // Zu gerade
+        if (span < 1e-6 || Math.abs(cross) / (span * span) < 0.01) return null;
 
         // 3-Punkt Kreisfit (Umkreis durch Start, Mitte, Ende)
         const circle = this._circumscribedCircle(first, mid, last);
