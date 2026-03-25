@@ -496,7 +496,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   geometry: V2.11 (20260316-gapdetect)
   pipeline: V3.7 (20260316-gapdetect)
   cam-contour: V5.8 (20260323-splinetool)
-  canvas-renderer: V3.36 (20260325-ctxedge)
+  canvas-renderer: V3.36 (20260325-winsel)
   undo-manager: V1.1 (20260309-wizard)
   sinumerik-pp: V1.6 (20260316-hatchentity)
   command-line: V1.3 (20260317-quickwins)

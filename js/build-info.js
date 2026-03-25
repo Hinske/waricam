@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'f0e717e',
-        date: '2026-03-25 11:50:07 +0100',
-        message: 'fix: _detectCircle erkennt Rechteck nicht mehr als Kreis (V1.1)'
+        hash: 'd5ef6c6',
+        date: '2026-03-25 11:55:01 +0100',
+        message: 'fix: Window-Selection funktioniert jetzt im Inneren geschlossener Konturen (V3.36)'
     },
 
     modules: {
@@ -25,7 +25,7 @@ const CERACUT_BUILD = {
         'geometry':           { version: '2.11', build: '20260316-gapdetect' },
         'pipeline':           { version: '3.7', build: '20260316-gapdetect' },
         'cam-contour':        { version: '5.8', build: '20260323-splinetool' },
-        'canvas-renderer':    { version: '3.36', build: '20260325-ctxedge' },
+        'canvas-renderer':    { version: '3.36', build: '20260325-winsel' },
         'undo-manager':       { version: '1.1', build: '20260309-wizard' },
         'sinumerik-pp':       { version: '1.6', build: '20260316-hatchentity' },
         'command-line':       { version: '1.3', build: '20260317-quickwins' },
@@ -56,7 +56,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
-        'V6.15: Fix — Rechtsklick in geschlossener Kontur zeigt Canvas-Menü statt Kontur-Menü (canvas-renderer V3.36)',
+        'V6.15: Fix — Window-Selection + Rechtsklick funktionieren im Inneren geschlossener Konturen (canvas-renderer V3.36)',
         'V6.15: Fix — Measure-Tool: Bogen-Rendering, Bounds, Radius-Overlay, Arc-HitTest für Eckenradien (measure-tool V1.1)',
         'V6.15: Fix — Ctrl+Z/Y/DEL funktioniert wenn cmd-input Focus hat (Keyboard-Filter erweitert)',
         'V6.15: Fix — Gezeichnete Splines behalten sourceType SPLINE → DXF-Export mit Fit-Points (drawing-tools V2.10)',

@@ -2,7 +2,7 @@
  * CeraCUT V3.36 - Canvas Renderer
  * Features: Selection, Lead-In/Out, Overcut, Micro-Joints, Travel Paths, Order Numbers,
  *           Startpunkt-Drag im Anschuss-Modus, SLIT Support
- * V3.36: Rechtsklick edgeOnly — Kontur-Menü nur auf Kanten, Canvas-Menü im Inneren
+ * V3.36: edgeOnly — Window-Selection + Rechtsklick funktionieren im Inneren geschlossener Konturen
  * V3.35: _notifyStateChange() nach Grip-Edit → Undo-Buttons aktualisieren sich korrekt
  * V3.34: Shift-Status am ToolManager zwischenspeichern (für CAM-Tools wie BoundaryTrim)
  * V3.33: Spline Grip-Editing — Fit-Point-Grips + Re-Tessellation + Kontrollpolygon-Overlay
@@ -351,8 +351,9 @@ class CanvasRenderer {
                 const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
                 const toolMgr = this.app?.drawingTools || this.app?.toolManager;
                 const isToolActive = toolMgr?.isToolActive?.();
-                const contourAtPoint = this.findContourAtPoint(worldPos.x, worldPos.y);
-                // Nur Window-Selection wenn KEIN Tool aktiv und KEINE Kontur getroffen
+                // V3.36: edgeOnly — Klick im Inneren einer Kontur erlaubt Window-Selection
+                const contourAtPoint = this.findContourAtPoint(worldPos.x, worldPos.y, { edgeOnly: true });
+                // Nur Window-Selection wenn KEIN Tool aktiv und KEINE Kante getroffen
                 if (!isToolActive && !contourAtPoint && !this.app?.measureMode) {
                     windowSelectStartScreen = { x: e.offsetX, y: e.offsetY };
                     // Noch nicht sofort starten — erst bei Drag-Threshold
