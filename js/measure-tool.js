@@ -1,7 +1,7 @@
 /**
  * CeraCUT V1.1 - Measure Tool (IGEMS-Stil)
  * 5 Mess-Modi: Abstand, Radius, Winkel, Fläche, Volumen
- * Version: V1.1
+ * Version: V1.2
  * Last Modified: 2026-03-25
  * Build: 20260325-circledetect
  *
@@ -25,7 +25,7 @@ class MeasureManager {
         this.materialThickness = 8.0; // mm (Standard)
         this.materialDensity = 2.7;   // g/cm³ (Aluminium Standard)
         
-        console.debug('[MeasureManager V1.1] initialisiert');
+        console.debug('[MeasureManager V1.2] initialisiert');
     }
     
     // ════════════════════════════════════════════════════════════════
@@ -582,38 +582,100 @@ class MeasureManager {
         }
 
         if (!bestContour) return null;
+        const pts = bestContour.points;
 
-        // Schritt 2: Prüfe ob die gefundene Kontur ein Kreis ist
-        if (bestContour.isClosed && bestContour.points.length >= 4) {
-            const circle = this._detectCircle(bestContour.points);
-            if (circle) {
-                return { ...circle, isArc: false, arcAngle: 360 };
+        // Schritt 2: Bulge-Bogen am angeklickten Segment?
+        const sp = pts[bestSegIdx];
+        const ep = pts[bestSegIdx + 1];
+        if (sp.bulge && Math.abs(sp.bulge) > 0.01) {
+            const arc = this._bulgeToArc(sp, ep, sp.bulge);
+            if (arc) {
+                const startAngle = Math.atan2(sp.y - arc.center.y, sp.x - arc.center.x);
+                const endAngle = Math.atan2(ep.y - arc.center.y, ep.x - arc.center.x);
+                return {
+                    center: arc.center, radius: arc.radius, isArc: true,
+                    arcAngle: arc.angle * 180 / Math.PI, startAngle, endAngle, ccw: sp.bulge > 0
+                };
             }
         }
 
-        // Schritt 3: Prüfe ob das angeklickte Segment ein Bogen ist
-        const p1 = bestContour.points[bestSegIdx];
-        const p2 = bestContour.points[bestSegIdx + 1];
-        if (p1.bulge && Math.abs(p1.bulge) > 0.01) {
-            const arc = this._bulgeToArc(p1, p2, p1.bulge);
-            if (arc) {
-                const startAngle = Math.atan2(p1.y - arc.center.y, p1.x - arc.center.x);
-                const endAngle = Math.atan2(p2.y - arc.center.y, p2.x - arc.center.x);
-                return {
-                    center: arc.center,
-                    radius: arc.radius,
-                    isArc: true,
-                    arcAngle: arc.angle * 180 / Math.PI,
-                    startAngle,
-                    endAngle,
-                    ccw: p1.bulge > 0
-                };
-            }
+        // Schritt 3: Lokale Krümmung — Kreisfit durch Punkte um den Klickpunkt
+        // (AutoCAD-Stil: Radius auch bei tessellierten Bögen ohne Bulge messen)
+        const localRadius = this._fitLocalArc(pts, bestSegIdx);
+        if (localRadius) return localRadius;
+
+        // Schritt 4: Ganze Kontur ist ein Kreis? (z.B. tessellierter Vollkreis)
+        if (bestContour.isClosed && pts.length >= 4) {
+            const circle = this._detectCircle(pts);
+            if (circle) return { ...circle, isArc: false, arcAngle: 360 };
         }
 
         return null;
     }
     
+    /**
+     * Lokaler Kreisfit: Sammelt Punkte um den Klick-Bereich und fittet einen Bogen.
+     * Erkennt Eckenradien auch bei tessellierten Bögen (ohne Bulge).
+     */
+    _fitLocalArc(pts, segIdx) {
+        const n = pts.length;
+        // Nachbar-Punkte sammeln (±4 Segmente um den Klickpunkt)
+        const range = 4;
+        const indices = [];
+        for (let d = -range; d <= range + 1; d++) {
+            const idx = segIdx + d;
+            if (idx >= 0 && idx < n) indices.push(idx);
+        }
+        if (indices.length < 3) return null;
+        const localPts = indices.map(i => pts[i]);
+
+        // Prüfe ob die lokalen Punkte NICHT kollinear sind (gerade Kante → kein Bogen)
+        const first = localPts[0], mid = localPts[Math.floor(localPts.length / 2)], last = localPts[localPts.length - 1];
+        const cross = (mid.x - first.x) * (last.y - first.y) - (mid.y - first.y) * (last.x - first.x);
+        const span = Math.hypot(last.x - first.x, last.y - first.y);
+        if (span < 1e-6 || Math.abs(cross) / (span * span) < 0.005) return null; // Zu gerade
+
+        // 3-Punkt Kreisfit (Umkreis durch Start, Mitte, Ende)
+        const circle = this._circumscribedCircle(first, mid, last);
+        if (!circle || circle.radius > 10000 || circle.radius < 0.1) return null;
+
+        // Validierung: Alle lokalen Punkte sollten nahe am Kreis liegen
+        let maxErr = 0;
+        for (const p of localPts) {
+            const err = Math.abs(Math.hypot(p.x - circle.cx, p.y - circle.cy) - circle.radius);
+            if (err > maxErr) maxErr = err;
+        }
+        if (maxErr / circle.radius > 0.05) return null; // Schlechter Fit (>5% Abweichung)
+
+        // Start- und Endwinkel des lokalen Bogens berechnen
+        const startAngle = Math.atan2(localPts[0].y - circle.cy, localPts[0].x - circle.cx);
+        const endAngle = Math.atan2(localPts[localPts.length - 1].y - circle.cy, localPts[localPts.length - 1].x - circle.cx);
+
+        // Bogenwinkel bestimmen
+        let arcAngle = Math.abs(endAngle - startAngle);
+        if (arcAngle > Math.PI) arcAngle = 2 * Math.PI - arcAngle;
+
+        return {
+            center: { x: circle.cx, y: circle.cy },
+            radius: circle.radius,
+            isArc: true,
+            arcAngle: arcAngle * 180 / Math.PI,
+            startAngle,
+            endAngle,
+            ccw: cross > 0
+        };
+    }
+
+    /** Umkreis durch 3 Punkte */
+    _circumscribedCircle(p1, p2, p3) {
+        const ax = p1.x, ay = p1.y, bx = p2.x, by = p2.y, cx = p3.x, cy = p3.y;
+        const D = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+        if (Math.abs(D) < 1e-10) return null;
+        const ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / D;
+        const uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / D;
+        return { cx: ux, cy: uy, radius: Math.hypot(ax - ux, ay - uy) };
+    }
+
     _detectCircle(points) {
         const pts = points.slice(0, -1);
         if (pts.length < 3) return null;
