@@ -1,5 +1,6 @@
 /**
  * CeraCUT V6.15 - Main Application
+ * V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)
  * V6.15: Fix — Undo-System: LayerManager.undoManager Verknüpfung für undo-fähige Layer-Ops
  * V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt
  * V6.11: Cycle-Selection — wiederholter Klick auf gleiche Stelle cycled durch überlappende Konturen
@@ -4857,10 +4858,8 @@ class CeraCutApp {
             }
         }
 
-        // Leere Layer ausblenden (außer Layer "0" und aktiver Layer)
-        const visibleLayers = layers.filter(l =>
-            l.name === '0' || l.name === active || usedLayers.has(l.name)
-        );
+        // Alle Layer anzeigen (auch leere, manuell erstellte)
+        const visibleLayers = layers;
 
         // Row-HTML generieren (für beide Dropdowns)
         const rowsHtml = visibleLayers.map(l => {

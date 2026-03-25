@@ -1,23 +1,23 @@
 /**
- * CeraCUT Build Info V6.14
- * Version: V6.14
- * Last Modified: 2026-03-24 MEZ
- * Build: 20260324-layerfix
+ * CeraCUT Build Info V6.15
+ * Version: V6.15
+ * Last Modified: 2026-03-25 MEZ
+ * Build: 20260325-layerdropdown
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
     version: '6.15',
-    build: '20260324-undofix',
-    date: '2026-03-24',
-    time: '16:00 MEZ',
+    build: '20260325-layerdropdown',
+    date: '2026-03-25',
+    time: '10:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'a30e839',
-        date: '2026-03-24 16:29:02 +0100',
-        message: 'fix: Undo-System V6.15 — fehlende _notifyStateChange() + Layer-Ops undo-fähig'
+        hash: '48e30a8',
+        date: '2026-03-25 08:41:56 +0100',
+        message: 'fix: Layer-Dropdown zeigt alle Layer — auch leere manuell erstellte (V6.15)'
     },
 
     modules: {
@@ -39,7 +39,7 @@ const CERACUT_BUILD = {
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
         'dxf-writer':         { version: '1.3', build: '20260324-splinedxf' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
-        'app':                { version: '6.15', build: '20260324-undofix' },
+        'app':                { version: '6.15', build: '20260325-layerdropdown' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
         'properties-panel':   { version: '1.5', build: '20260316-hatchentity' },
         'debug-monitor':      { version: '1.1', build: '20260324-gitcommit' },
@@ -55,6 +55,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.15: Fix — Layer-Dropdown zeigt alle Layer (auch leere manuell erstellte)',
         'V6.15: Fix — Undo-System: fehlende _notifyStateChange() in cam-tools/canvas-renderer, Layer-Ops undo-fähig',
         'V6.14: Fix — Neu erstellte Layer werden als aktiver Layer gesetzt und im Dropdown angezeigt',
         'V6.13.1: Debug Monitor zeigt Git-Commit-Info im Footer — Hash, Datum, Message (debug-monitor V1.1)',
