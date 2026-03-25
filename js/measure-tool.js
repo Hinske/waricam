@@ -587,9 +587,15 @@ class MeasureManager {
     _detectCircle(points) {
         const pts = points.slice(0, -1);
         if (pts.length < 3) return null;
-        const hasBulge = pts.some(p => p.bulge && Math.abs(p.bulge) > 0.01);
-        // Ohne Bulge: mindestens 8 Punkte nötig (Rechteck hat 4, wird sonst als Kreis erkannt)
-        if (!hasBulge && pts.length < 8) return null;
+        const bulgeCount = pts.filter(p => p.bulge && Math.abs(p.bulge) > 0.01).length;
+        const hasBulge = bulgeCount > 0;
+        if (hasBulge) {
+            // Kreis: ALLE Segmente haben Bulge (2-4 Bögen). Rechteck mit Eckenradien: nur 50%.
+            if (bulgeCount / pts.length < 0.9) return null;
+        } else {
+            // Ohne Bulge: mindestens 8 Punkte nötig (Rechteck hat 4)
+            if (pts.length < 8) return null;
+        }
         let cx = 0, cy = 0;
         for (const p of pts) { cx += p.x; cy += p.y; }
         cx /= pts.length; cy /= pts.length;
