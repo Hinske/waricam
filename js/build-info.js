@@ -37,7 +37,7 @@ const CERACUT_BUILD = {
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.2', build: '20260324-undofix' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
-        'dxf-writer':         { version: '1.5', build: '20260326-ac1009' },
+        'dxf-writer':         { version: '1.6', build: '20260326-ac1015fix' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
         'app':                { version: '6.15', build: '20260325-undoctrlz' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
@@ -57,7 +57,7 @@ const CERACUT_BUILD = {
     },
 
     changes: [
-        'V6.15: Fix — DXF-Writer R12 (AC1009) Downgrade — universelle AutoCAD-Kompatibilität, ANSI_1252-Encoding (dxf-writer V1.5)',
+        'V6.15: Fix — DXF-Writer AC1015 korrekt: Handles, Pflicht-Tables, MODEL_SPACE, Root-Dict, ANSI_1252 (dxf-writer V1.6)',
         'V6.15: Feat — Dimension Editing: Selektion, Grip-Drag, Text-Override (Doppelklick), DEL-Löschen, Undo/Redo (dimension-tool V2.4)',
         'V6.15: Fix — Window-Selection + Rechtsklick funktionieren im Inneren geschlossener Konturen (canvas-renderer V3.36)',
         'V6.15: Fix — Measure-Tool: Bogen-Rendering, Bounds, Radius-Overlay, Arc-HitTest für Eckenradien (measure-tool V1.1)',
