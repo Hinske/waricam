@@ -1022,7 +1022,7 @@ class DimensionManager {
     /** Findet Grip an Klickposition */
     _findGripAtPoint(pt) {
         if (!this.selectedDim) return null;
-        const tol = 6 / (this.app.renderer?.scale || 1);
+        const tol = 10 / (this.app.renderer?.scale || 1);
         const grips = this._getDimGrips(this.selectedDim);
         for (const grip of grips) {
             if (Math.hypot(pt.x - grip.x, pt.y - grip.y) < tol) {

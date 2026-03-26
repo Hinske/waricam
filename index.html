@@ -2530,7 +2530,9 @@
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
 
-                // V2.4: MouseDown für Grip-Drag Start (screenToWorld nutzen!)
+                // V2.4: MouseDown für Grip-Drag Start
+                // CAPTURE-Phase damit wir VOR dem Renderer-mousedown feuern
+                // (Renderer startet sonst Window-Selection bevor wir den Grip testen)
                 const canvas = origApp.renderer.canvas;
                 const r = origApp.renderer;
                 canvas.addEventListener('mousedown', (e) => {
@@ -2539,14 +2541,16 @@
                     if (!dimMgr.selectedDim) return;
                     const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
                     if (dimMgr.handleMouseDown(worldPos)) {
-                        e.stopPropagation();
+                        e.stopImmediatePropagation();  // Renderer-mousedown blocken
+                        e.preventDefault();
                     }
-                });
+                }, true);  // capture: true
                 canvas.addEventListener('mouseup', (e) => {
                     if (!dimMgr.isDragging()) return;
                     const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
                     dimMgr.handleMouseUp(worldPos);
-                });
+                    e.stopImmediatePropagation();
+                }, true);  // capture: true
 
                 // V2.4: Doppelklick → Text-Override
                 canvas.addEventListener('dblclick', (e) => {
