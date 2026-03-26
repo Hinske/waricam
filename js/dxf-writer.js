@@ -1,20 +1,25 @@
 /**
- * CeraCUT DXF Writer V1.4
- * Export von Konturen als AutoCAD DXF R2000 (AC1015)
+ * CeraCUT DXF Writer V1.5
+ * Export von Konturen als AutoCAD DXF R12 (AC1009)
  *
  * Unterstützte Entity-Typen:
  * - LINE (Einzelsegmente)
- * - POLYLINE / VERTEX / SEQEND (Polylinien, geschlossen/offen)
+ * - POLYLINE / VERTEX / SEQEND (Polylinien mit Bulge, geschlossen/offen)
  * - CIRCLE (Kreise — wenn sourceType === 'CIRCLE')
  * - ARC (Bögen — wenn sourceType === 'ARC')
- * - SPLINE (Splines — Fit-Points und/oder Control-Points)
  *
- * Format: AutoCAD R2000 (AC1015) — vollständige Sektionsstruktur
- *   HEADER → CLASSES → TABLES → BLOCKS → ENTITIES → OBJECTS → EOF
+ * Format: AutoCAD R12 (AC1009) — universell kompatibel
+ *   HEADER → TABLES → ENTITIES → EOF
+ *   Keine Handles, keine CLASSES/BLOCKS/OBJECTS nötig.
+ *
+ * Encoding: ANSI_1252 (Windows Western) — korrekte Umlaute in Layer-Namen
+ *
+ * V1.5: Downgrade AC1015→AC1009, ANSI_1252-Encoding, SPLINE→POLYLINE
+ * V1.4: AC1015 mit CLASSES/BLOCKS/OBJECTS (crashte AutoCAD wegen fehlender Handles)
  *
  * Created: 2026-02-15 MEZ
  * Last Modified: 2026-03-26 MEZ
- * Build: 20260326-dxffix
+ * Build: 20260326-ac1009
  */
 
 class DXFWriter {
@@ -36,22 +41,16 @@ class DXFWriter {
     generate(contours, layerManager, options = {}) {
         this.lines = [];
 
-        const stats = { entities: 0, layers: 0, lines: 0, polylines: 0, circles: 0, arcs: 0, splines: 0, images: 0 };
+        const stats = { entities: 0, layers: 0, lines: 0, polylines: 0, circles: 0, arcs: 0, images: 0 };
 
         // ── HEADER Section ──
         this._writeHeader();
 
-        // ── CLASSES Section (Pflicht für AC1015) ──
-        this._writeClasses();
-
-        // ── TABLES Section ──
+        // ── TABLES Section (R12: nur LAYER + LTYPE) ──
         this._writeTablesStart();
         this._writeLayerTable(layerManager, stats);
         this._writeLineTypeTable();
         this._writeTablesEnd();
-
-        // ── BLOCKS Section (Pflicht für AC1015) ──
-        this._writeBlocks();
 
         // ── ENTITIES Section ──
         this._writeSectionStart('ENTITIES');
@@ -68,8 +67,6 @@ class DXFWriter {
             
             if (sourceType === 'CIRCLE' && contour.isClosed) {
                 this._writeCircle(contour, stats);
-            } else if (sourceType === 'SPLINE' && (contour._fitPoints || contour._splineData)) {
-                this._writeSpline(contour, stats);
             } else if (contour.points.length === 2 && !contour.isClosed) {
                 this._writeLine(contour.points[0], contour.points[1], layerName, stats);
             } else {
@@ -88,9 +85,6 @@ class DXFWriter {
         }
 
         this._writeSectionEnd();
-
-        // ── OBJECTS Section (Pflicht für AC1015) ──
-        this._writeObjects();
 
         // ── EOF ──
         this._write(0, 'EOF');
@@ -111,11 +105,14 @@ class DXFWriter {
 
     /**
      * DXF als Datei-Download auslösen
+     * Encoding: ANSI_1252 (Windows Western) für korrekte Umlaute
      */
     generateDownload(contours, layerManager, options = {}) {
         const result = this.generate(contours, layerManager, options);
-        
-        const blob = new Blob([result.content], { type: 'application/dxf; charset=utf-8' });
+
+        // ANSI_1252 Encoding: UTF-8 String → Byte-Array
+        const bytes = this._encodeAnsi1252(result.content);
+        const blob = new Blob([bytes], { type: 'application/dxf' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -128,18 +125,32 @@ class DXFWriter {
         return result;
     }
 
+    /**
+     * UTF-8 JavaScript String → ANSI_1252 Uint8Array
+     * Konvertiert deutsche Umlaute und Sonderzeichen korrekt.
+     */
+    _encodeAnsi1252(str) {
+        const bytes = new Uint8Array(str.length);
+        for (let i = 0; i < str.length; i++) {
+            const code = str.charCodeAt(i);
+            if (code < 128) {
+                bytes[i] = code;
+            } else {
+                // ANSI_1252 Mapping für häufige Zeichen
+                bytes[i] = DXFWriter._ANSI1252_MAP[code] || 0x3F; // '?' als Fallback
+            }
+        }
+        return bytes;
+    }
+
     // ═══ HEADER SECTION ═══
 
     _writeHeader() {
         this._writeSectionStart('HEADER');
-        
-        // AutoCAD Version: R2000
-        this._write(9, '$ACADVER');
-        this._write(1, 'AC1015');
 
-        // Codepage: ANSI_1252 (Windows Western — DXF-Standard für AC1015)
-        this._write(9, '$DWGCODEPAGE');
-        this._write(3, 'ANSI_1252');
+        // AutoCAD Version: R12 (universell kompatibel, keine Handles nötig)
+        this._write(9, '$ACADVER');
+        this._write(1, 'AC1009');
 
         // Einfügepunkt
         this._write(9, '$INSBASE');
@@ -165,13 +176,6 @@ class DXFWriter {
         this._write(9, '$PDMODE');
         this._write(70, '0');
 
-        this._writeSectionEnd();
-    }
-
-    // ═══ CLASSES SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
-
-    _writeClasses() {
-        this._writeSectionStart('CLASSES');
         this._writeSectionEnd();
     }
 
@@ -257,20 +261,6 @@ class DXFWriter {
         this._write(0, 'ENDTAB');
     }
 
-    // ═══ BLOCKS SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
-
-    _writeBlocks() {
-        this._writeSectionStart('BLOCKS');
-        this._writeSectionEnd();
-    }
-
-    // ═══ OBJECTS SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
-
-    _writeObjects() {
-        this._writeSectionStart('OBJECTS');
-        this._writeSectionEnd();
-    }
-
     // ═══ ENTITIES ═══
 
     _writeLine(p1, p2, layer, stats) {
@@ -340,7 +330,7 @@ class DXFWriter {
                 radius = fit.radius;
             } else {
                 // Letzter Fallback: als Polyline exportieren
-                console.warn('[DXF-Writer V1.4] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
+                console.warn('[DXF-Writer V1.5] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
                 this._writePolyline(contour, stats);
                 return;
             }
@@ -354,80 +344,6 @@ class DXFWriter {
         this._write(40, this._fmt(radius));
 
         stats.circles++;
-        stats.entities++;
-    }
-
-    _writeSpline(contour, stats) {
-        const layer = contour.layer || '0';
-        const sd = contour._splineData;
-        const fp = contour._fitPoints;
-
-        // Datenquelle bestimmen: Import (splineData) oder gezeichnet (fitPoints)
-        const hasControlPoints = sd && sd.controlPoints && sd.controlPoints.length >= 2;
-        const hasFitPoints = (sd && sd.fitPoints && sd.fitPoints.length >= 2) ||
-                             (fp && fp.length >= 2);
-
-        if (!hasControlPoints && !hasFitPoints) {
-            // Fallback: als Polyline exportieren
-            console.warn('[DXF-Writer V1.4] Spline ohne CP/FP — Fallback auf Polyline');
-            this._writePolyline(contour, stats);
-            return;
-        }
-
-        const degree = (sd && sd.degree) ? sd.degree : 3;
-        const isClosed = contour.isClosed || contour._splineClosed || false;
-
-        // Flags: Bit 1=closed, Bit 2=periodic, Bit 4=rational, Bit 8=planar, Bit 16=linear
-        let flags = 8; // planar (2D)
-        if (isClosed) flags |= 1;
-
-        // Kontrollpunkte + Knoten (Import-Daten)
-        const controlPoints = hasControlPoints ? sd.controlPoints : [];
-        const knots = (sd && sd.knots && sd.knots.length > 0) ? sd.knots : [];
-        const weights = (sd && sd.weights && sd.weights.length > 0) ? sd.weights : [];
-
-        // Fit-Points: Import-Daten oder gezeichnete Punkte
-        const fitPoints = hasFitPoints
-            ? (sd && sd.fitPoints && sd.fitPoints.length >= 2 ? sd.fitPoints : fp)
-            : [];
-
-        this._write(0, 'SPLINE');
-        this._write(8, layer);
-        this._write(100, 'AcDbEntity');
-        this._write(100, 'AcDbSpline');
-        this._write(70, flags.toString());
-        this._write(71, degree.toString());
-        this._write(72, knots.length.toString());
-        this._write(73, controlPoints.length.toString());
-        this._write(74, fitPoints.length.toString());
-
-        // Knot-Vektor
-        for (const k of knots) {
-            this._write(40, this._fmt(k));
-        }
-
-        // Gewichte (nur bei rationalen Splines)
-        if (weights.length > 0) {
-            for (const w of weights) {
-                this._write(41, this._fmt(w));
-            }
-        }
-
-        // Kontrollpunkte (Group 10/20/30)
-        for (const cp of controlPoints) {
-            this._write(10, this._fmt(cp.x));
-            this._write(20, this._fmt(cp.y));
-            this._write(30, '0.0');
-        }
-
-        // Fit-Points (Group 11/21/31)
-        for (const f of fitPoints) {
-            this._write(11, this._fmt(f.x));
-            this._write(21, this._fmt(f.y));
-            this._write(31, '0.0');
-        }
-
-        stats.splines++;
         stats.entities++;
     }
 
@@ -499,3 +415,31 @@ class DXFWriter {
         }
     }
 }
+
+// Unicode → ANSI_1252 Mapping (deutsche Umlaute + häufige Sonderzeichen)
+DXFWriter._ANSI1252_MAP = {
+    0xC4: 0xC4,  // Ä
+    0xD6: 0xD6,  // Ö
+    0xDC: 0xDC,  // Ü
+    0xE4: 0xE4,  // ä
+    0xF6: 0xF6,  // ö
+    0xFC: 0xFC,  // ü
+    0xDF: 0xDF,  // ß
+    0xB0: 0xB0,  // °
+    0xB5: 0xB5,  // µ
+    0xD8: 0xD8,  // Ø
+    0xF8: 0xF8,  // ø
+    0xC9: 0xC9,  // É
+    0xE9: 0xE9,  // é
+    0xE8: 0xE8,  // è
+    0xEA: 0xEA,  // ê
+    0xE0: 0xE0,  // à
+    0xE2: 0xE2,  // â
+    0x2013: 0x96, // – (EN DASH)
+    0x2014: 0x97, // — (EM DASH)
+    0x2018: 0x91, // ' (LEFT SINGLE QUOTE)
+    0x2019: 0x92, // ' (RIGHT SINGLE QUOTE)
+    0x201C: 0x93, // " (LEFT DOUBLE QUOTE)
+    0x201D: 0x94, // " (RIGHT DOUBLE QUOTE)
+    0x20AC: 0x80, // € (EURO SIGN)
+};
