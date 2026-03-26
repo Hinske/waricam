@@ -1,14 +1,18 @@
 /**
- * CeraCUT Dimension Tool V2.3
+ * CeraCUT Dimension Tool V2.4
  * AutoCAD-style dimensioning: Linear, Aligned, Angular, Radius, Diameter
- * 
+ *
+ * V2.4: Dimension Editing — Selektion, Grip-Editing, Text-Override (Doppelklick),
+ *       Einzeln-Löschen (DEL), Undo/Redo für alle Änderungen,
+ *       Hit-Test für alle Dim-Typen (inkl. Radius/Angular)
  * V2.3: Fix Diameter-Linie, Angular komplett neu (arc ohne scale-Hack),
  *       _findLineAtPoint robuste Toleranz, Angular Live-Preview
  * V2.2: DIMSCALE global scaling
  * V2.1: Fix 0.00-Bug (auto-flip axis), AutoCAD visual style, grip editing
  * V2.0: Select Object mode, debug logging
- * 
- * Build: 20260217-dim23
+ *
+ * Last Modified: 2026-03-26
+ * Build: 20260326-dimedit
  */
 
 class DimensionManager {
@@ -41,9 +45,11 @@ class DimensionManager {
         this.previewPos = null;
         this.targetContour = null;
         this.selectObjectMode = false;
-        // Grip editing
+        // Grip editing (V2.4)
         this.selectedDim = null;
-        this.dragGrip = null;
+        this.dragGrip = null;       // { dim, gripType, startPos, origValue }
+        this._isDragging = false;
+        this._dragSnapshot = null;  // Deep-copy vor dem Drag
         this._nextId = 1;
 
         // DIMSCALE: Globaler Skalierungsfaktor (wie AutoCAD)
@@ -51,7 +57,7 @@ class DimensionManager {
         this.dimScale = 1.0;
 
         this._ensureLayer();
-        console.debug('[DimensionManager V2.3] ✅ Initialisiert (DIMSCALE=' + this.dimScale + ')');
+        console.debug('[DimensionManager V2.4] ✅ Initialisiert (DIMSCALE=' + this.dimScale + ')');
     }
 
     /** Skalierte DIMSTYLE-Werte (alle mm-Werte × dimScale) */
@@ -546,15 +552,24 @@ class DimensionManager {
         const S = this._S();  // V2.2: skalierte Werte
 
         for (const dim of this.dimensions) {
+            // V2.4: Selektierte Bemaßung in Rot
+            const isSelected = (dim === this.selectedDim);
+            const renderS = isSelected
+                ? { ...S, lineColor: '#ff6666', textColor: '#ff6666' }
+                : S;
+
             switch (dim.type) {
                 case 'linear': case 'aligned':
-                    this._renderLinear(ctx, dim, scale, S); break;
+                    this._renderLinear(ctx, dim, scale, renderS); break;
                 case 'radius': case 'diameter':
-                    this._renderRadius(ctx, dim, scale, S); break;
+                    this._renderRadius(ctx, dim, scale, renderS); break;
                 case 'angular':
-                    this._renderAngular(ctx, dim, scale, S); break;
+                    this._renderAngular(ctx, dim, scale, renderS); break;
             }
         }
+
+        // V2.4: Grips für selektierte Bemaßung
+        this._drawSelectionGrips(ctx, scale);
 
         // Live-Preview (halbtransparent)
         if (this.activeTool && this.previewPos) {
@@ -932,7 +947,7 @@ class DimensionManager {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // GRIP EDITING — Bemaßung verschieben
+    // SELECTION & GRIP EDITING (V2.4)
     // ═══════════════════════════════════════════════════════════════
 
     /** Findet Bemaßung an Klickposition (für Selektion/Grip-Edit) */
@@ -946,18 +961,291 @@ class DimensionManager {
                 if (this._ptSegDist(pt, dim.p1, dl1) < tol) return dim;
                 if (this._ptSegDist(pt, dim.p2, dl2) < tol) return dim;
             }
+            if (dim.type === 'radius' || dim.type === 'diameter') {
+                const { center, radius, dimLinePos } = dim;
+                const dx = dimLinePos.x - center.x, dy = dimLinePos.y - center.y;
+                const dist = Math.hypot(dx, dy);
+                const nx = dist > 0.001 ? dx / dist : 1, ny = dist > 0.001 ? dy / dist : 0;
+                const edgePt = { x: center.x + nx * radius, y: center.y + ny * radius };
+                if (this._ptSegDist(pt, center, edgePt) < tol) return dim;
+                if (dist > radius + 0.1 && this._ptSegDist(pt, edgePt, dimLinePos) < tol) return dim;
+                if (dim.type === 'diameter') {
+                    const startPt = { x: center.x - nx * radius, y: center.y - ny * radius };
+                    if (this._ptSegDist(pt, startPt, edgePt) < tol) return dim;
+                }
+            }
+            if (dim.type === 'angular') {
+                const { center, startAngle, endAngle, dimLinePos } = dim;
+                const arcR = Math.hypot(dimLinePos.x - center.x, dimLinePos.y - center.y);
+                // Prüfe ob pt nahe am Kreisbogen liegt
+                const ptDist = Math.hypot(pt.x - center.x, pt.y - center.y);
+                if (Math.abs(ptDist - arcR) < tol) {
+                    // Prüfe ob pt im Winkelbereich liegt
+                    const TWO_PI = Math.PI * 2;
+                    const ptAngle = ((Math.atan2(pt.y - center.y, pt.x - center.x) % TWO_PI) + TWO_PI) % TWO_PI;
+                    const sa = ((startAngle % TWO_PI) + TWO_PI) % TWO_PI;
+                    const ea = ((endAngle % TWO_PI) + TWO_PI) % TWO_PI;
+                    const sweep = ((ea - sa) % TWO_PI + TWO_PI) % TWO_PI;
+                    const ptSweep = ((ptAngle - sa) % TWO_PI + TWO_PI) % TWO_PI;
+                    if (ptSweep <= sweep) return dim;
+                }
+                // Hilfslinien testen
+                const ap1 = { x: center.x + Math.cos(startAngle) * arcR, y: center.y + Math.sin(startAngle) * arcR };
+                const ap2 = { x: center.x + Math.cos(endAngle) * arcR, y: center.y + Math.sin(endAngle) * arcR };
+                if (this._ptSegDist(pt, center, ap1) < tol) return dim;
+                if (this._ptSegDist(pt, center, ap2) < tol) return dim;
+            }
         }
         return null;
+    }
+
+    /** Grip-Positionen für eine Bemaßung */
+    _getDimGrips(dim) {
+        const grips = [];
+        if (dim.type === 'linear' || dim.type === 'aligned') {
+            const { dl1, dl2 } = this._calcLinearGeometry(dim);
+            grips.push({ type: 'p1', x: dim.p1.x, y: dim.p1.y });
+            grips.push({ type: 'p2', x: dim.p2.x, y: dim.p2.y });
+            grips.push({ type: 'dimLinePos', x: dim.dimLinePos.x, y: dim.dimLinePos.y });
+            grips.push({ type: 'textPos', x: (dl1.x + dl2.x) / 2, y: (dl1.y + dl2.y) / 2 });
+        }
+        if (dim.type === 'radius' || dim.type === 'diameter') {
+            grips.push({ type: 'dimLinePos', x: dim.dimLinePos.x, y: dim.dimLinePos.y });
+        }
+        if (dim.type === 'angular') {
+            grips.push({ type: 'dimLinePos', x: dim.dimLinePos.x, y: dim.dimLinePos.y });
+        }
+        return grips;
+    }
+
+    /** Findet Grip an Klickposition */
+    _findGripAtPoint(pt) {
+        if (!this.selectedDim) return null;
+        const tol = 6 / (this.app.renderer?.scale || 1);
+        const grips = this._getDimGrips(this.selectedDim);
+        for (const grip of grips) {
+            if (Math.hypot(pt.x - grip.x, pt.y - grip.y) < tol) {
+                return grip;
+            }
+        }
+        return null;
+    }
+
+    /** Bemaßung selektieren */
+    selectDim(dim) {
+        if (this.selectedDim === dim) return;
+        this.selectedDim = dim;
+        if (dim) {
+            this.app.commandLine?.log(`📐 Bemaßung selektiert: ${dim.type} (${dim.id})`, 'info');
+            console.log(`[DIM V2.4] Selektiert: ${dim.id} (${dim.type})`);
+        }
+        this.app.renderer?.render();
+    }
+
+    /** Bemaßung deselektieren */
+    deselectDim() {
+        if (!this.selectedDim) return;
+        this.selectedDim = null;
+        this._isDragging = false;
+        this._dragSnapshot = null;
+        this.dragGrip = null;
+        this.app.renderer?.render();
+    }
+
+    /** Ist gerade ein Grip-Drag aktiv? */
+    isDragging() { return this._isDragging; }
+
+    /** MouseDown: Grip-Drag starten */
+    handleMouseDown(worldPos) {
+        if (!this.selectedDim) return false;
+        const grip = this._findGripAtPoint(worldPos);
+        if (!grip) return false;
+
+        // textPos-Grip = nur Anzeige, nicht draggbar (Doppelklick für Text-Edit)
+        if (grip.type === 'textPos') return false;
+
+        this._isDragging = true;
+        this.dragGrip = grip;
+        // Snapshot für Undo
+        this._dragSnapshot = this._snapshotDim(this.selectedDim);
+        console.log(`[DIM V2.4] Drag gestartet: grip=${grip.type}`);
+        return true;
+    }
+
+    /** MouseDrag: Grip-Punkt verschieben */
+    handleMouseDrag(worldPos) {
+        if (!this._isDragging || !this.dragGrip || !this.selectedDim) return false;
+        const dim = this.selectedDim;
+        const pt = this.app.currentSnapPoint || worldPos;
+
+        switch (this.dragGrip.type) {
+            case 'p1':
+                dim.p1.x = pt.x; dim.p1.y = pt.y;
+                this._recalcDimValue(dim);
+                break;
+            case 'p2':
+                dim.p2.x = pt.x; dim.p2.y = pt.y;
+                this._recalcDimValue(dim);
+                break;
+            case 'dimLinePos':
+                dim.dimLinePos.x = pt.x; dim.dimLinePos.y = pt.y;
+                break;
+        }
+        this.app.renderer?.render();
+        return true;
+    }
+
+    /** MouseUp: Drag beenden, Undo-Command erstellen */
+    handleMouseUp(worldPos) {
+        if (!this._isDragging || !this.selectedDim) return false;
+        const dim = this.selectedDim;
+        const oldSnap = this._dragSnapshot;
+        const newSnap = this._snapshotDim(dim);
+
+        // Nur Command erstellen wenn sich etwas geändert hat
+        if (JSON.stringify(oldSnap) !== JSON.stringify(newSnap)) {
+            const mgr = this;
+            const cmd = new FunctionCommand(
+                `Bemaßung verschoben (${dim.type})`,
+                () => { mgr._restoreDim(dim, newSnap); mgr.app.renderer?.render(); },
+                () => { mgr._restoreDim(dim, oldSnap); mgr.app.renderer?.render(); }
+            );
+            this.app.undoManager?.undoStack.push(cmd);
+            this.app.undoManager?.redoStack?.splice(0);
+            console.log(`[DIM V2.4] Drag-Undo erstellt: ${dim.id}`);
+        }
+
+        this._isDragging = false;
+        this._dragSnapshot = null;
+        this.dragGrip = null;
+        return true;
+    }
+
+    /** Deep-Copy der editierbaren Dim-Felder */
+    _snapshotDim(dim) {
+        const snap = { dimLinePos: { x: dim.dimLinePos.x, y: dim.dimLinePos.y }, value: dim.value };
+        if (dim.p1) snap.p1 = { x: dim.p1.x, y: dim.p1.y };
+        if (dim.p2) snap.p2 = { x: dim.p2.x, y: dim.p2.y };
+        if (dim.dimAngle !== undefined) snap.dimAngle = dim.dimAngle;
+        if (dim.textOverride !== undefined) snap.textOverride = dim.textOverride;
+        return snap;
+    }
+
+    /** Dim-Felder aus Snapshot wiederherstellen */
+    _restoreDim(dim, snap) {
+        dim.dimLinePos.x = snap.dimLinePos.x;
+        dim.dimLinePos.y = snap.dimLinePos.y;
+        dim.value = snap.value;
+        if (snap.p1) { dim.p1.x = snap.p1.x; dim.p1.y = snap.p1.y; }
+        if (snap.p2) { dim.p2.x = snap.p2.x; dim.p2.y = snap.p2.y; }
+        if (snap.dimAngle !== undefined) dim.dimAngle = snap.dimAngle;
+        if (snap.textOverride !== undefined) dim.textOverride = snap.textOverride;
+    }
+
+    /** Wert aus aktuellen Punkt-Daten neu berechnen */
+    _recalcDimValue(dim) {
+        if (dim.type === 'linear') {
+            if (Math.abs(dim.dimAngle) < 1) {
+                dim.value = Math.abs(dim.p2.x - dim.p1.x);
+            } else {
+                dim.value = Math.abs(dim.p2.y - dim.p1.y);
+            }
+        } else if (dim.type === 'aligned') {
+            dim.value = Math.hypot(dim.p2.x - dim.p1.x, dim.p2.y - dim.p1.y);
+        }
+    }
+
+    /** Text-Override per Doppelklick (V2.4) */
+    editTextOverride(dim) {
+        if (!dim) return;
+        const S = this._S();
+        let currentText;
+        if (dim.type === 'angular') {
+            currentText = dim.textOverride != null ? dim.textOverride : `${dim.value.toFixed(1)}°`;
+        } else {
+            const prefix = dim.prefix || '';
+            currentText = dim.textOverride != null ? dim.textOverride : `${prefix}${dim.value.toFixed(S.precision)}`;
+        }
+        const input = prompt('Bemaßungstext (leer = Auto-Wert):', currentText);
+        if (input === null) return; // Abbruch
+
+        const oldOverride = dim.textOverride;
+        const newOverride = input.trim() === '' ? null : input.trim();
+        if (oldOverride === newOverride) return;
+
+        dim.textOverride = newOverride;
+        const mgr = this;
+        const cmd = new FunctionCommand(
+            `Bemaßungstext geändert (${dim.id})`,
+            () => { dim.textOverride = newOverride; mgr.app.renderer?.render(); },
+            () => { dim.textOverride = oldOverride; mgr.app.renderer?.render(); }
+        );
+        this.app.undoManager?.undoStack.push(cmd);
+        this.app.undoManager?.redoStack?.splice(0);
+        this.app.renderer?.render();
+        console.log(`[DIM V2.4] Text-Override: "${newOverride}" (${dim.id})`);
+    }
+
+    /** Selektierte Bemaßung löschen (mit Undo) */
+    deleteSelectedDim() {
+        if (!this.selectedDim) return false;
+        const dim = this.selectedDim;
+        const idx = this.dimensions.indexOf(dim);
+        if (idx < 0) return false;
+
+        this.dimensions.splice(idx, 1);
+        this.selectedDim = null;
+        this._isDragging = false;
+
+        const mgr = this;
+        const cmd = new FunctionCommand(
+            `Bemaßung gelöscht (${dim.type})`,
+            () => { const i = mgr.dimensions.indexOf(dim); if (i >= 0) mgr.dimensions.splice(i, 1); mgr.app.renderer?.render(); },
+            () => { mgr.dimensions.splice(idx, 0, dim); mgr.app.renderer?.render(); }
+        );
+        this.app.undoManager?.undoStack.push(cmd);
+        this.app.undoManager?.redoStack?.splice(0);
+        this.app.renderer?.render();
+        this.app.commandLine?.log('Bemaßung gelöscht', 'info');
+        console.log(`[DIM V2.4] Gelöscht: ${dim.id}`);
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SELECTION RENDERING (V2.4)
+    // ═══════════════════════════════════════════════════════════════
+
+    /** Zeichnet Grips für selektierte Bemaßung */
+    _drawSelectionGrips(ctx, scale) {
+        if (!this.selectedDim) return;
+        const grips = this._getDimGrips(this.selectedDim);
+        const size = 4 / scale;
+
+        for (const grip of grips) {
+            // Blau für normale Grips, Rot für aktiven Drag-Grip
+            const isActive = this._isDragging && this.dragGrip?.type === grip.type;
+            ctx.fillStyle = isActive ? '#ff4444' : '#4488ff';
+            ctx.fillRect(grip.x - size, grip.y - size, size * 2, size * 2);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
     // MANAGEMENT
     // ═══════════════════════════════════════════════════════════════
 
-    clearAll() { this.dimensions = []; this.app.renderer?.render(); }
+    clearAll() {
+        this.selectedDim = null;
+        this._isDragging = false;
+        this.dimensions = [];
+        this.app.renderer?.render();
+    }
 
     deleteDimension(id) {
         const idx = this.dimensions.findIndex(d => d.id === id);
-        if (idx >= 0) { this.dimensions.splice(idx, 1); this.app.renderer?.render(); }
+        if (idx >= 0) {
+            if (this.selectedDim?.id === id) this.selectedDim = null;
+            this.dimensions.splice(idx, 1);
+            this.app.renderer?.render();
+        }
     }
 }

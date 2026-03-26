@@ -1466,7 +1466,7 @@
 <script src="js/default-font.js?v=20260315-bugfix35"></script>
 <script src="js/text-tool.js?v=20260316-quietlogs"></script>
 <script src="js/image-underlay.js?v=20260316-quietlogs"></script>
-<script src="js/dimension-tool.js?v=20260316-quietlogs"></script>
+<script src="js/dimension-tool.js?v=20260326-dimedit"></script>
 <script src="js/measure-tool.js?v=20260325-curvcheck"></script>
 <script src="js/cnc-reader.js?v=20260316-quietlogs"></script>
 <script src="js/svg-parser.js?v=20260316-quietlogs"></script>
@@ -2481,6 +2481,21 @@
                     if (dimMgr.isActive()) {
                         if (dimMgr.handleClick(worldPos)) return;
                     }
+                    // V2.4: Grip-Drag beendet → nicht weiterleiten
+                    if (dimMgr.isDragging()) return;
+
+                    // V2.4: Dimension-Selektion (wenn kein Tool aktiv)
+                    if (!dimMgr.isActive()) {
+                        const hitDim = dimMgr.findDimAtPoint(worldPos);
+                        if (hitDim) {
+                            dimMgr.selectDim(hitDim);
+                            return; // Nicht an andere Handler weiterleiten
+                        }
+                        // Klick auf leere Fläche → Dim deselektieren
+                        if (dimMgr.selectedDim) {
+                            dimMgr.deselectDim();
+                        }
+                    }
                     if (prevOnClickDim) prevOnClickDim(worldPos);
                 };
                 // V3.12-fix: Klick auf Kontur muss auch an DimMgr gehen!
@@ -2489,6 +2504,17 @@
                     if (dimMgr.isActive()) {
                         if (dimMgr.handleClick(worldPoint)) return;
                     }
+                    // V2.4: Dim-Selektion hat Vorrang
+                    if (!dimMgr.isActive()) {
+                        const hitDim = dimMgr.findDimAtPoint(worldPoint);
+                        if (hitDim) {
+                            dimMgr.selectDim(hitDim);
+                            return;
+                        }
+                        if (dimMgr.selectedDim) {
+                            dimMgr.deselectDim();
+                        }
+                    }
                     if (prevContourClickDim) prevContourClickDim(contour, worldPoint, isShift);
                 };
                 const prevOnMMDim = origApp.renderer.onMouseMove;
@@ -2496,15 +2522,70 @@
                     if (dimMgr.isActive()) {
                         dimMgr.handleMouseMove(snap?.point || { x, y });
                     }
+                    // V2.4: Grip-Drag
+                    if (dimMgr.isDragging()) {
+                        dimMgr.handleMouseDrag(snap?.point || { x, y });
+                        return; // Nicht an andere Handler weiterleiten
+                    }
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
+
+                // V2.4: MouseDown für Grip-Drag Start
+                const canvas = origApp.renderer.canvas;
+                canvas.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return; // Nur Linksklick
+                    if (dimMgr.isActive()) return; // Nicht während Tool
+                    if (!dimMgr.selectedDim) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const r = origApp.renderer;
+                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
+                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
+                    const worldPos = { x: worldX, y: worldY };
+                    if (dimMgr.handleMouseDown(worldPos)) {
+                        e.stopPropagation();
+                    }
+                });
+                canvas.addEventListener('mouseup', (e) => {
+                    if (!dimMgr.isDragging()) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const r = origApp.renderer;
+                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
+                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
+                    dimMgr.handleMouseUp({ x: worldX, y: worldY });
+                });
+
+                // V2.4: Doppelklick → Text-Override
+                canvas.addEventListener('dblclick', (e) => {
+                    if (dimMgr.isActive()) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const r = origApp.renderer;
+                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
+                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
+                    const hitDim = dimMgr.findDimAtPoint({ x: worldX, y: worldY });
+                    if (hitDim) {
+                        dimMgr.selectDim(hitDim);
+                        dimMgr.editTextOverride(hitDim);
+                        e.stopPropagation();
+                    }
+                });
             }
 
-            // ESC/Enter für Bemaßung
+            // ESC/Enter/DEL für Bemaßung
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && dimMgr.isActive()) {
                     dimMgr.cancelTool();
                     e.stopPropagation();
+                }
+                // V2.4: ESC deselektiert auch Bemaßung
+                if (e.key === 'Escape' && !dimMgr.isActive() && dimMgr.selectedDim) {
+                    dimMgr.deselectDim();
+                    e.stopPropagation();
+                }
+                // V2.4: DEL löscht selektierte Bemaßung
+                if (e.key === 'Delete' && !dimMgr.isActive() && dimMgr.selectedDim) {
+                    dimMgr.deleteSelectedDim();
+                    e.stopPropagation();
+                    e.preventDefault();
                 }
                 // V2.0: Enter bei Phase 0 → "Objekt wählen" Modus
                 if (e.key === 'Enter' && dimMgr.isActive() && dimMgr.phase === 0) {
@@ -2561,7 +2642,7 @@
                 }
             }
 
-            console.debug('%c[CeraCUT] Dimension Tool V2.2 verdrahtet (DIMSCALE)', 'color: #00ffff; font-weight: bold');
+            console.debug('%c[CeraCUT] Dimension Tool V2.4 verdrahtet (DIMSCALE, Grip-Edit, Text-Override)', 'color: #00ffff; font-weight: bold');
 
             // ═══ V3.12: Gesamtlänge-Werkzeug (TOTLEN) ═══
             /**

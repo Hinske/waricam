@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'bdb094b',
-        date: '2026-03-26 08:11:39 +0100',
-        message: 'fix: DXF-Writer AC1015-konform — fehlende Pflicht-Sektionen crashten AutoCAD'
+        hash: 'e8f642a',
+        date: '2026-03-26 09:38:49 +0100',
+        message: 'feat: Dimension Editing — Selektion, Grip-Drag, Text-Override, DEL-Löschen (V2.4)'
     },
 
     modules: {
@@ -52,10 +52,12 @@ const CERACUT_BUILD = {
         'cam-tools':          { version: '1.3', build: '20260324-undofix' },
         'advanced-tools':     { version: '1.6', build: '20260323-boundary' },
         'arc-fitting':        { version: '3.1', build: '20260315-bugfix35' },
-        'measure-tool':       { version: '1.2', build: '20260325-curvcheck' }
+        'measure-tool':       { version: '1.2', build: '20260325-curvcheck' },
+        'dimension-tool':     { version: '2.4', build: '20260326-dimedit' }
     },
-    
+
     changes: [
+        'V6.15: Feat — Dimension Editing: Selektion, Grip-Drag, Text-Override (Doppelklick), DEL-Löschen, Undo/Redo (dimension-tool V2.4)',
         'V6.15: Fix — DXF-Writer AC1015-konform: CLASSES/BLOCKS/OBJECTS-Sektionen + ANSI_1252 Codepage (dxf-writer V1.4)',
         'V6.15: Fix — Window-Selection + Rechtsklick funktionieren im Inneren geschlossener Konturen (canvas-renderer V3.36)',
         'V6.15: Fix — Measure-Tool: Bogen-Rendering, Bounds, Radius-Overlay, Arc-HitTest für Eckenradien (measure-tool V1.1)',

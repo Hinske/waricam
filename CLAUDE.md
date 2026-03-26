@@ -218,7 +218,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Properties Panel** | `properties-panel.js` | **V1.5** | Kontur-Eigenschaften im Kontextmenu, Piercing, Lead-In, Area-Class, Batch-Editing, Hatch-Schraffur (Panel-Refresh-Fix), Live Preview, Material-Dropdown |
 | **Text Tool** | `text-tool.js` | **V1.2** | Text-Entities, Glyph-Import via opentype.js |
 | **Image Underlay** | `image-underlay.js` | — | Hintergrund-Bilder |
-| **Dimension Tool** | `dimension-tool.js` | — | Bemassung |
+| **Dimension Tool** | `dimension-tool.js` | **V2.4** | Bemaßung, Selektion, Grip-Editing, Text-Override, Einzeln-Löschen, Undo/Redo |
 | **Measure Tool** | `measure-tool.js` | — | Messmodus |
 | **Debug Monitor** | `debug-monitor.js` | **V1.1** | Error-Catcher, Fallen-Erkennung, Strg+Shift+D Overlay |
 | **Nesting** | `nesting.js` | **V1.1** | BLF-Algorithmus, Multi-Rotation, Multi-Sheet |
