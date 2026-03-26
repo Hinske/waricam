@@ -179,6 +179,11 @@ class CanvasRenderer {
         this.onClick = null;
         this.onContourClick = null;
         this.onRightClick = null;
+        // V2.4: Callback VOR internem mousedown (für Dimension-Grip-Drag)
+        // Rückgabe true = Event konsumiert, internes Handling überspringen
+        this.onBeforeMouseDown = null;
+        this.onBeforeMouseMove = null;
+        this.onBeforeMouseUp = null;
 
         this.initCanvasSize();
         this.initEventListeners();
@@ -296,6 +301,11 @@ class CanvasRenderer {
         let windowSelectJustEnded = false;  // V3.11: Guard gegen Click nach Window-Selection
 
         this.canvas.addEventListener('mousedown', (e) => {
+            // V2.4: External pre-handler (Dimension-Grip-Drag etc.)
+            if (this.onBeforeMouseDown) {
+                const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
+                if (this.onBeforeMouseDown(worldPos, e)) return;
+            }
             // V3.10: Grip-Drag prüfen (VOR allem anderen, NUR wenn Grips existieren)
             if (e.button === 0 && !e.shiftKey && !isDraggingGrip && this._grips.length > 0) {
                 const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
@@ -363,6 +373,11 @@ class CanvasRenderer {
 
         this.canvas.addEventListener('mousemove', (e) => {
             const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
+
+            // V2.4: External pre-handler (Dimension-Grip-Drag etc.)
+            if (this.onBeforeMouseMove) {
+                if (this.onBeforeMouseMove(worldPos, e)) return;
+            }
 
             // V3.10: Grip-Drag aktiv
             if (isDraggingGrip && dragGrip && dragContourRef) {
@@ -454,6 +469,11 @@ class CanvasRenderer {
         });
 
         this.canvas.addEventListener('mouseup', (e) => {
+            // V2.4: External pre-handler (Dimension-Grip-Drag etc.)
+            if (this.onBeforeMouseUp) {
+                const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
+                if (this.onBeforeMouseUp(worldPos, e)) return;
+            }
             // V3.5: Window-Selection beenden
             if (isWindowSelecting) {
                 const worldPos = this.screenToWorld(e.offsetX, e.offsetY);

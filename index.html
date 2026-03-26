@@ -2525,37 +2525,27 @@
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
 
-                // V2.4: Canvas + Renderer Referenzen (VOR den Capture-Listenern!)
-                const canvas = origApp.renderer.canvas;
+                // V2.4: Grip-Drag über Renderer-Callbacks (zuverlässiger als Capture-Phase)
                 const r = origApp.renderer;
-
-                // V2.4: Grip-Drag — alle drei Events in CAPTURE-Phase
-                // Muss VOR dem Renderer laufen (Window-Selection, Contour-Grips)
-                canvas.addEventListener('mousemove', (e) => {
-                    if (!dimMgr.isDragging()) return;
-                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
+                r.onBeforeMouseDown = (worldPos, e) => {
+                    if (e.button !== 0) return false;
+                    if (dimMgr.isActive()) return false;
+                    if (!dimMgr.selectedDim) return false;
+                    return dimMgr.handleMouseDown(worldPos);
+                };
+                r.onBeforeMouseMove = (worldPos, e) => {
+                    if (!dimMgr.isDragging()) return false;
                     dimMgr.handleMouseDrag(worldPos);
-                    e.stopImmediatePropagation();
-                }, true);
-                canvas.addEventListener('mousedown', (e) => {
-                    if (e.button !== 0) return;
-                    if (dimMgr.isActive()) return;
-                    if (!dimMgr.selectedDim) return;
-                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
-                    if (dimMgr.handleMouseDown(worldPos)) {
-                        e.stopImmediatePropagation();  // Renderer-mousedown blocken
-                        e.preventDefault();
-                    }
-                }, true);  // capture: true
-                canvas.addEventListener('mouseup', (e) => {
-                    if (!dimMgr.isDragging()) return;
-                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
+                    return true;
+                };
+                r.onBeforeMouseUp = (worldPos, e) => {
+                    if (!dimMgr.isDragging()) return false;
                     dimMgr.handleMouseUp(worldPos);
-                    e.stopImmediatePropagation();
-                }, true);  // capture: true
+                    return true;
+                };
 
                 // V2.4: Doppelklick → Text-Override
-                canvas.addEventListener('dblclick', (e) => {
+                r.canvas.addEventListener('dblclick', (e) => {
                     if (dimMgr.isActive()) return;
                     const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
                     const hitDim = dimMgr.findDimAtPoint(worldPos);
