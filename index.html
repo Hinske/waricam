@@ -2524,21 +2524,19 @@
                     }
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
-                // V2.4: Grip-Drag mousemove in CAPTURE-Phase
-                // Muss VOR dem Renderer-mousemove laufen, damit kein
-                // Window-Selection-Drag oder Contour-Grip-Drag stört
+
+                // V2.4: Canvas + Renderer Referenzen (VOR den Capture-Listenern!)
+                const canvas = origApp.renderer.canvas;
+                const r = origApp.renderer;
+
+                // V2.4: Grip-Drag — alle drei Events in CAPTURE-Phase
+                // Muss VOR dem Renderer laufen (Window-Selection, Contour-Grips)
                 canvas.addEventListener('mousemove', (e) => {
                     if (!dimMgr.isDragging()) return;
                     const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
                     dimMgr.handleMouseDrag(worldPos);
                     e.stopImmediatePropagation();
-                }, true);  // capture: true
-
-                // V2.4: MouseDown für Grip-Drag Start
-                // CAPTURE-Phase damit wir VOR dem Renderer-mousedown feuern
-                // (Renderer startet sonst Window-Selection bevor wir den Grip testen)
-                const canvas = origApp.renderer.canvas;
-                const r = origApp.renderer;
+                }, true);
                 canvas.addEventListener('mousedown', (e) => {
                     if (e.button !== 0) return;
                     if (dimMgr.isActive()) return;
