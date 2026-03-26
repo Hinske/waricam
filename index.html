@@ -2481,8 +2481,8 @@
                     if (dimMgr.isActive()) {
                         if (dimMgr.handleClick(worldPos)) return;
                     }
-                    // V2.4: Grip-Drag beendet → nicht weiterleiten
-                    if (dimMgr.isDragging()) return;
+                    // V2.4: Grip-Drag beendet → Click ignorieren
+                    if (dimMgr.isDragging() || dimMgr.justFinishedDrag()) return;
 
                     // V2.4: Dimension-Selektion (wenn kein Tool aktiv)
                     if (!dimMgr.isActive()) {
@@ -2530,38 +2530,29 @@
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
 
-                // V2.4: MouseDown für Grip-Drag Start
+                // V2.4: MouseDown für Grip-Drag Start (screenToWorld nutzen!)
                 const canvas = origApp.renderer.canvas;
+                const r = origApp.renderer;
                 canvas.addEventListener('mousedown', (e) => {
-                    if (e.button !== 0) return; // Nur Linksklick
-                    if (dimMgr.isActive()) return; // Nicht während Tool
+                    if (e.button !== 0) return;
+                    if (dimMgr.isActive()) return;
                     if (!dimMgr.selectedDim) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const r = origApp.renderer;
-                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
-                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
-                    const worldPos = { x: worldX, y: worldY };
+                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
                     if (dimMgr.handleMouseDown(worldPos)) {
                         e.stopPropagation();
                     }
                 });
                 canvas.addEventListener('mouseup', (e) => {
                     if (!dimMgr.isDragging()) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const r = origApp.renderer;
-                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
-                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
-                    dimMgr.handleMouseUp({ x: worldX, y: worldY });
+                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
+                    dimMgr.handleMouseUp(worldPos);
                 });
 
                 // V2.4: Doppelklick → Text-Override
                 canvas.addEventListener('dblclick', (e) => {
                     if (dimMgr.isActive()) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const r = origApp.renderer;
-                    const worldX = (e.clientX - rect.left - r.offsetX) / r.scale;
-                    const worldY = -(e.clientY - rect.top - r.offsetY) / r.scale;
-                    const hitDim = dimMgr.findDimAtPoint({ x: worldX, y: worldY });
+                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
+                    const hitDim = dimMgr.findDimAtPoint(worldPos);
                     if (hitDim) {
                         dimMgr.selectDim(hitDim);
                         dimMgr.editTextOverride(hitDim);

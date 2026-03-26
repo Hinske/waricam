@@ -47,9 +47,10 @@ class DimensionManager {
         this.selectObjectMode = false;
         // Grip editing (V2.4)
         this.selectedDim = null;
-        this.dragGrip = null;       // { dim, gripType, startPos, origValue }
+        this.dragGrip = null;       // { type, x, y }
         this._isDragging = false;
         this._dragSnapshot = null;  // Deep-copy vor dem Drag
+        this._justFinishedDrag = false; // Guard: Click nach Drag ignorieren
         this._nextId = 1;
 
         // DIMSCALE: Globaler Skalierungsfaktor (wie AutoCAD)
@@ -1006,8 +1007,8 @@ class DimensionManager {
             const { dl1, dl2 } = this._calcLinearGeometry(dim);
             grips.push({ type: 'p1', x: dim.p1.x, y: dim.p1.y });
             grips.push({ type: 'p2', x: dim.p2.x, y: dim.p2.y });
-            grips.push({ type: 'dimLinePos', x: dim.dimLinePos.x, y: dim.dimLinePos.y });
-            grips.push({ type: 'textPos', x: (dl1.x + dl2.x) / 2, y: (dl1.y + dl2.y) / 2 });
+            // Mittelpunkt der Maßlinie = Verschiebe-Grip (steuert dimLinePos)
+            grips.push({ type: 'midpoint', x: (dl1.x + dl2.x) / 2, y: (dl1.y + dl2.y) / 2 });
         }
         if (dim.type === 'radius' || dim.type === 'diameter') {
             grips.push({ type: 'dimLinePos', x: dim.dimLinePos.x, y: dim.dimLinePos.y });
@@ -1061,8 +1062,7 @@ class DimensionManager {
         const grip = this._findGripAtPoint(worldPos);
         if (!grip) return false;
 
-        // textPos-Grip = nur Anzeige, nicht draggbar (Doppelklick für Text-Edit)
-        if (grip.type === 'textPos') return false;
+        // Kein nicht-draggbarer Grip mehr — alle Grips sind interaktiv
 
         this._isDragging = true;
         this.dragGrip = grip;
@@ -1088,6 +1088,10 @@ class DimensionManager {
                 this._recalcDimValue(dim);
                 break;
             case 'dimLinePos':
+                dim.dimLinePos.x = pt.x; dim.dimLinePos.y = pt.y;
+                break;
+            case 'midpoint':
+                // Mittelpunkt-Drag: dimLinePos verschieben (Maßlinie parallel bewegen)
                 dim.dimLinePos.x = pt.x; dim.dimLinePos.y = pt.y;
                 break;
         }
@@ -1118,8 +1122,14 @@ class DimensionManager {
         this._isDragging = false;
         this._dragSnapshot = null;
         this.dragGrip = null;
+        // Guard: nächsten Click-Event ignorieren (kommt direkt nach mouseup)
+        this._justFinishedDrag = true;
+        requestAnimationFrame(() => { this._justFinishedDrag = false; });
         return true;
     }
+
+    /** War gerade ein Drag aktiv? (für Click-Guard) */
+    justFinishedDrag() { return this._justFinishedDrag; }
 
     /** Deep-Copy der editierbaren Dim-Felder */
     _snapshotDim(dim) {
