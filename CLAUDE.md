@@ -212,7 +212,7 @@ node scripts/sync-versions.js --check  # Nur prüfen (CI-tauglich)
 | **Dynamic Input** | `dynamic-input.js` | **V1.0** | Koordinaten/Distanz/Winkel HUD am Cursor |
 | **Snap Manager** | `snap-manager.js` | **V1.3** | 9 Snap-Typen + Ortho (F8), Snap-Indikatoren |
 | **Layer Manager** | `layer-manager.js` | **V1.2** | AutoCAD-Style Layers, ACI-Farben, Sichtbarkeit, Lock, Drag-to-Reorder |
-| **DXF Writer** | `dxf-writer.js` | **V1.3** | DXF R12 (AC1009) Export, ANSI_1252 Encoding, Kreis-Validierung |
+| **DXF Writer** | `dxf-writer.js` | **V1.4** | DXF R12 (AC1009) Export, ANSI_1252 Encoding, Kreis-Validierung |
 | **SVG Parser** | `svg-parser.js` | — | SVG-Import |
 | **CNC Reader** | `cnc-reader.js` | — | CNC-Datei Import |
 | **Properties Panel** | `properties-panel.js` | **V1.5** | Kontur-Eigenschaften im Kontextmenu, Piercing, Lead-In, Area-Class, Batch-Editing, Hatch-Schraffur (Panel-Refresh-Fix), Live Preview, Material-Dropdown |
@@ -281,7 +281,7 @@ ceraCUT/
 │   ├── cam-tools.js                   ← CAM-Werkzeuge
 │   ├── tool-manager.js               ← Tool-Routing V2.2
 │   ├── layer-manager.js              ← Layer-System V1.2 (Drag-to-Reorder)
-│   ├── dxf-writer.js                 ← DXF R12 Export V1.3 (UTF-8, Kreis-Validierung)
+│   ├── dxf-writer.js                 ← DXF R12 Export V1.4 (UTF-8, Kreis-Validierung)
 │   ├── svg-parser.js                  ← SVG-Import
 │   ├── cnc-reader.js                  ← CNC-Import
 │   ├── properties-panel.js            ← Eigenschaften-Panel V1.5 (Kontextmenu-Modus)
@@ -508,7 +508,7 @@ Module-Details (in collapsed Gruppe, per Klick sichtbar):
   tool-manager: V2.2 (20260216-0015)
   layer-manager: V1.2 (20260324-undofix)
   text-tool: V1.2 (20260312-textimport)
-  dxf-writer: V1.3 (20260324-splinedxf)
+  dxf-writer: V1.4 (20260326-dxffix)
   lead-profiles: V1.1 (20260315-intarsia20)
   app: V6.15 (20260325-undoctrlz)
   project-manager: V1.0 (20260313-workspace)

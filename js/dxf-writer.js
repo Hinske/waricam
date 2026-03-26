@@ -1,5 +1,5 @@
 /**
- * CeraCUT DXF Writer V1.3
+ * CeraCUT DXF Writer V1.4
  * Export von Konturen als AutoCAD DXF R2000 (AC1015)
  *
  * Unterstützte Entity-Typen:
@@ -9,11 +9,12 @@
  * - ARC (Bögen — wenn sourceType === 'ARC')
  * - SPLINE (Splines — Fit-Points und/oder Control-Points)
  *
- * Format: AutoCAD R2000 (AC1015) — SPLINE-Entity-Support
+ * Format: AutoCAD R2000 (AC1015) — vollständige Sektionsstruktur
+ *   HEADER → CLASSES → TABLES → BLOCKS → ENTITIES → OBJECTS → EOF
  *
  * Created: 2026-02-15 MEZ
- * Last Modified: 2026-03-24 MEZ
- * Build: 20260324-splinedxf
+ * Last Modified: 2026-03-26 MEZ
+ * Build: 20260326-dxffix
  */
 
 class DXFWriter {
@@ -40,11 +41,17 @@ class DXFWriter {
         // ── HEADER Section ──
         this._writeHeader();
 
+        // ── CLASSES Section (Pflicht für AC1015) ──
+        this._writeClasses();
+
         // ── TABLES Section ──
         this._writeTablesStart();
         this._writeLayerTable(layerManager, stats);
         this._writeLineTypeTable();
         this._writeTablesEnd();
+
+        // ── BLOCKS Section (Pflicht für AC1015) ──
+        this._writeBlocks();
 
         // ── ENTITIES Section ──
         this._writeSectionStart('ENTITIES');
@@ -81,6 +88,9 @@ class DXFWriter {
         }
 
         this._writeSectionEnd();
+
+        // ── OBJECTS Section (Pflicht für AC1015) ──
+        this._writeObjects();
 
         // ── EOF ──
         this._write(0, 'EOF');
@@ -127,9 +137,9 @@ class DXFWriter {
         this._write(9, '$ACADVER');
         this._write(1, 'AC1015');
 
-        // Codepage: UTF-8 für Umlaute in Layer-Namen
+        // Codepage: ANSI_1252 (Windows Western — DXF-Standard für AC1015)
         this._write(9, '$DWGCODEPAGE');
-        this._write(3, 'UTF-8');
+        this._write(3, 'ANSI_1252');
 
         // Einfügepunkt
         this._write(9, '$INSBASE');
@@ -155,6 +165,13 @@ class DXFWriter {
         this._write(9, '$PDMODE');
         this._write(70, '0');
 
+        this._writeSectionEnd();
+    }
+
+    // ═══ CLASSES SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
+
+    _writeClasses() {
+        this._writeSectionStart('CLASSES');
         this._writeSectionEnd();
     }
 
@@ -240,6 +257,20 @@ class DXFWriter {
         this._write(0, 'ENDTAB');
     }
 
+    // ═══ BLOCKS SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
+
+    _writeBlocks() {
+        this._writeSectionStart('BLOCKS');
+        this._writeSectionEnd();
+    }
+
+    // ═══ OBJECTS SECTION (Pflicht für AC1015, leer aber vorhanden) ═══
+
+    _writeObjects() {
+        this._writeSectionStart('OBJECTS');
+        this._writeSectionEnd();
+    }
+
     // ═══ ENTITIES ═══
 
     _writeLine(p1, p2, layer, stats) {
@@ -309,7 +340,7 @@ class DXFWriter {
                 radius = fit.radius;
             } else {
                 // Letzter Fallback: als Polyline exportieren
-                console.warn('[DXF-Writer V1.3] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
+                console.warn('[DXF-Writer V1.4] Kreis-Validierung fehlgeschlagen, exportiere als Polyline');
                 this._writePolyline(contour, stats);
                 return;
             }
@@ -338,7 +369,7 @@ class DXFWriter {
 
         if (!hasControlPoints && !hasFitPoints) {
             // Fallback: als Polyline exportieren
-            console.warn('[DXF-Writer V1.3] Spline ohne CP/FP — Fallback auf Polyline');
+            console.warn('[DXF-Writer V1.4] Spline ohne CP/FP — Fallback auf Polyline');
             this._writePolyline(contour, stats);
             return;
         }

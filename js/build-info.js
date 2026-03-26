@@ -15,9 +15,9 @@ const CERACUT_BUILD = {
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '31f82ed',
-        date: '2026-03-25 13:47:46 +0100',
-        message: 'fix: _findCircleOrArc — nearest-edge-first statt globaler Suche'
+        hash: 'bdb094b',
+        date: '2026-03-26 08:11:39 +0100',
+        message: 'fix: DXF-Writer AC1015-konform — fehlende Pflicht-Sektionen crashten AutoCAD'
     },
 
     modules: {
@@ -37,7 +37,7 @@ const CERACUT_BUILD = {
         'tool-manager':       { version: '2.2', build: '20260216-0015' },
         'layer-manager':      { version: '1.2', build: '20260324-undofix' },
         'text-tool':          { version: '1.2', build: '20260312-textimport' },
-        'dxf-writer':         { version: '1.3', build: '20260324-splinedxf' },
+        'dxf-writer':         { version: '1.4', build: '20260326-dxffix' },
         'lead-profiles':      { version: '1.1', build: '20260315-intarsia20' },
         'app':                { version: '6.15', build: '20260325-undoctrlz' },
         'project-manager':    { version: '1.0', build: '20260313-workspace' },
@@ -56,6 +56,7 @@ const CERACUT_BUILD = {
     },
     
     changes: [
+        'V6.15: Fix — DXF-Writer AC1015-konform: CLASSES/BLOCKS/OBJECTS-Sektionen + ANSI_1252 Codepage (dxf-writer V1.4)',
         'V6.15: Fix — Window-Selection + Rechtsklick funktionieren im Inneren geschlossener Konturen (canvas-renderer V3.36)',
         'V6.15: Fix — Measure-Tool: Bogen-Rendering, Bounds, Radius-Overlay, Arc-HitTest für Eckenradien (measure-tool V1.1)',
         'V6.15: Fix — Ctrl+Z/Y/DEL funktioniert wenn cmd-input Focus hat (Keyboard-Filter erweitert)',

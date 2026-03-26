@@ -157,3 +157,45 @@
 - **Root Cause:** `LayerManager` hatte keine Referenz auf den `UndoManager`. Alle Mutationen (`toggleVisibility`, `toggleLock`, `setColor`) änderten den State direkt ohne FunctionCommand auf den Undo-Stack zu legen.
 - **Regel:** Jede benutzersichtbare Datenänderung MUSS über den UndoManager laufen. Neue Module die State mutieren brauchen eine `undoManager`-Referenz. Bei bestehenden Modulen prüfen: Welche Mutationen sind NICHT undo-fähig?
 - **Betroffene Module:** `layer-manager.js`, `app.js` (Verknüpfung)
+
+### [2026-03-25] Layer-Dropdown: Leere manuell erstellte Layer verschwinden
+- **Fehler:** Manuell erstellte Layer ohne Konturen verschwanden aus dem Layer-Dropdown sobald ein anderer Layer aktiviert wurde.
+- **Root Cause:** `_updateLayerUI()` filterte Layer die weder "0" noch aktiv noch kontur-belegt waren. Manuell erstellte leere Layer fielen durch den Filter.
+- **Regel:** Alle Layer im Dropdown anzeigen — keine Filterung nach Belegung. Leere Layer können vom User beabsichtigt sein (Vorbereitung, Organisation). Wie AutoCAD: Jeder definierte Layer ist immer sichtbar.
+- **Betroffene Module:** `app.js` (`_updateLayerUI`)
+
+### [2026-03-25] querySelector mit Komma-Selektor: DOM-Reihenfolge statt Selektor-Priorität
+- **Fehler:** Layer-Eigenschaften-Dialog: Toolbar-Buttons (Löschen, Umbenennen, Aktuell setzen) operierten immer auf Layer 0 statt auf dem vom User angeklickten Layer.
+- **Root Cause:** `querySelector('#lm-table-body tr.lm-selected, #lm-table-body tr.lm-active')` gibt das **erste** matchende Element in DOM-Reihenfolge zurück — nicht den ersten Selektor mit Match. Layer 0 ist immer erste Zeile + hat `lm-active` → wird immer gefunden.
+- **Regel:** Für Fallback-Logik (erst X prüfen, dann Y) NIEMALS Komma-Selektoren in `querySelector` verwenden. Stattdessen `querySelector(A) || querySelector(B)`. Komma-Selektoren sind OR in DOM-Reihenfolge, nicht in Selektor-Reihenfolge.
+- **Betroffene Module:** `index.html` (Layer-Manager Event-Handler)
+
+### [2026-03-25] _entityToDxfFormat: Typ-Konvertierung löscht Export-Metadaten
+- **Fehler:** Gezeichnete Splines wurden als LWPOLYLINE in DXF gespeichert — Fit-Points und Kontrollpunkte gingen verloren. Beim Wiederöffnen war die Spline nicht mehr editierbar.
+- **Root Cause:** `_entityToDxfFormat()` konvertierte `type: 'SPLINE'` zu `type: 'LWPOLYLINE'`. Dieser Typ wurde durch `chainContours()` als `sourceType` auf die CamContour übertragen. DXF-Writer prüft `sourceType === 'SPLINE'` → bei `'LWPOLYLINE'` wurde als einfache Polyline exportiert.
+- **Regel:** Bei der Entity-Normalisierung den Original-Typ beibehalten wenn Export-relevante Metadaten daran hängen (Fit-Points, Control-Points, Knots). Der `type`-Wert fließt als `sourceType` in den DXF-Writer — eine Typ-Änderung bedeutet Datenverlust beim Export.
+- **Betroffene Module:** `drawing-tools.js` (`_entityToDxfFormat`)
+
+### [2026-03-25] Window-Selection im Inneren geschlossener Konturen blockiert
+- **Fehler:** Innerhalb eines Rechtecks konnte keine Window-Selection (Aufzieh-Auswahl) gestartet werden. Außerhalb funktionierte es.
+- **Root Cause:** `mousedown`-Handler nutzte `findContourAtPoint()` mit Flächen-Hit. Der Point-in-Polygon-Test erkannte den Klick als "auf Kontur" → Window-Selection-Start wurde blockiert. Gleiches Problem bei Rechtsklick: Kontur-Menü statt Canvas-Menü.
+- **Regel:** Bei mousedown (Window-Selection-Start) und contextmenu (Rechtsklick) immer `{ edgeOnly: true }` verwenden. Flächen-Hit nur beim click-Event (Selektion per Klick). Und: bei "Auswahl-Werkzeuge" nachfragen was genau gemeint ist — Window-Selection, Grips, Kontextmenü.
+- **Betroffene Module:** `canvas-renderer.js` (mousedown, contextmenu), `app.js` (contextmenu)
+
+### [2026-03-25] _detectCircle erkennt Rechteck fälschlich als Kreis
+- **Fehler:** Im Radius-Messmodus wird ein Rechteck als Kreis erkannt. Gelber Umkreis wird angezeigt mit falschen Radius-Werten.
+- **Root Cause:** `_detectCircle()` berechnet Mittelpunkt als Durchschnitt aller Punkte und prüft ob alle Punkte gleich weit entfernt sind (`relDev`). Bei einem Rechteck sind alle 4 Ecken gleich weit vom Zentrum entfernt (halbe Diagonale) → `relDev = 0` → als Kreis erkannt.
+- **Regel:** Geometrische Erkennung muss BEIDE Fälle abfangen: (1) Rechteck ohne Bulge → min 8 Punkte, (2) Rechteck MIT Eckenradien (Bulge) → Bulge-Ratio prüfen. Ein echter Kreis hat 100% Bulge-Segmente, ein Rechteck mit Eckenradien nur 50%. Schwelle: `bulgeRatio >= 0.9`.
+- **Betroffene Module:** `measure-tool.js` (`_detectCircle`)
+
+### [2026-03-25] Keyboard-Filter blockiert Ctrl-Shortcuts wenn cmd-input Focus hat
+- **Fehler:** Ctrl+Z (Undo) funktionierte nicht nach dem Löschen per DEL-Taste. Auch Ctrl+Y (Redo) und andere Ctrl-Shortcuts waren betroffen.
+- **Root Cause:** `bindKeyboardEvents()` filterte bei `isCmdInput` ALLE Tasten außer Escape/F1/F2/F3/F8. Nach `EraseTool` bekam `cmd-input` automatisch Focus (via `commandLine.activate()` in `startTool()`). Danach wurde Ctrl+Z geblockt weil `e.key === 'z'` nicht in der Whitelist war.
+- **Regel:** Ctrl-Kombinationen (Ctrl+Z/Y/C/X/V/A/S) und die DEL-Taste MÜSSEN den cmd-input-Filter passieren — sie sind App-Level-Shortcuts, keine Text-Editing-Operationen. Filter-Bedingung: `isCmdInput && !ctrl && e.key !== 'Delete' && ...`.
+- **Betroffene Module:** `app.js` (`bindKeyboardEvents`)
+
+### [2026-03-26] DXF-Writer: Fehlende Pflicht-Sektionen crashen AutoCAD
+- **Fehler:** Von CeraCUT exportierte DXF-Dateien bringen AutoCAD beim Laden zum Absturz.
+- **Root Cause:** DXF-Writer erzeugte nur HEADER → TABLES → ENTITIES → EOF. Die DXF R2000 (AC1015) Spezifikation verlangt aber: HEADER → CLASSES → TABLES → BLOCKS → ENTITIES → OBJECTS → EOF. Ohne BLOCKS/CLASSES/OBJECTS gerät AutoCADs Parser in einen undefinierten Zustand. Zusätzlich war `$DWGCODEPAGE` = `UTF-8` statt dem korrekten `ANSI_1252`.
+- **Regel:** DXF-Dateien MÜSSEN alle Pflicht-Sektionen der jeweiligen Version enthalten — auch wenn sie leer sind. Bei AC1015: CLASSES, BLOCKS und OBJECTS sind Pflicht. Codepage muss ein gültiger Autodesk-Wert sein (ANSI_1252, nicht UTF-8).
+- **Betroffene Module:** `dxf-writer.js`
