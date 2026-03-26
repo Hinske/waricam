@@ -2522,13 +2522,17 @@
                     if (dimMgr.isActive()) {
                         dimMgr.handleMouseMove(snap?.point || { x, y });
                     }
-                    // V2.4: Grip-Drag
-                    if (dimMgr.isDragging()) {
-                        dimMgr.handleMouseDrag(snap?.point || { x, y });
-                        return; // Nicht an andere Handler weiterleiten
-                    }
                     if (prevOnMMDim) prevOnMMDim(x, y, snap);
                 };
+                // V2.4: Grip-Drag mousemove in CAPTURE-Phase
+                // Muss VOR dem Renderer-mousemove laufen, damit kein
+                // Window-Selection-Drag oder Contour-Grip-Drag stört
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!dimMgr.isDragging()) return;
+                    const worldPos = r.screenToWorld(e.offsetX, e.offsetY);
+                    dimMgr.handleMouseDrag(worldPos);
+                    e.stopImmediatePropagation();
+                }, true);  // capture: true
 
                 // V2.4: MouseDown für Grip-Drag Start
                 // CAPTURE-Phase damit wir VOR dem Renderer-mousedown feuern
