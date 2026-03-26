@@ -2504,6 +2504,9 @@
                     if (dimMgr.isActive()) {
                         if (dimMgr.handleClick(worldPoint)) return;
                     }
+                    // V2.4: Grip-Drag beendet → Click ignorieren
+                    // (p1/p2 liegen auf Kontur-Kanten → onContourClick statt onClick)
+                    if (dimMgr.isDragging() || dimMgr.justFinishedDrag()) return;
                     // V2.4: Dim-Selektion hat Vorrang
                     if (!dimMgr.isActive()) {
                         const hitDim = dimMgr.findDimAtPoint(worldPoint);
@@ -2541,6 +2544,7 @@
                 r.onBeforeMouseUp = (worldPos, e) => {
                     if (!dimMgr.isDragging()) return false;
                     dimMgr.handleMouseUp(worldPos);
+                    r._dimDragJustEnded = true;  // Click-Event unterdrücken
                     return true;
                 };
 

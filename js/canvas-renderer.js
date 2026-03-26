@@ -589,6 +589,8 @@ class CanvasRenderer {
             if (gripDragJustEnded) { gripDragJustEnded = false; return; }
             // V3.11: Click nach Window-Selection unterdrücken
             if (windowSelectJustEnded) { windowSelectJustEnded = false; return; }
+            // V2.4: Click nach Dimension-Grip-Drag unterdrücken
+            if (this._dimDragJustEnded) { this._dimDragJustEnded = false; return; }
 
             const worldPos = this.screenToWorld(e.offsetX, e.offsetY);
             const clickedContour = this.findContourAtPoint(worldPos.x, worldPos.y);
