@@ -1,23 +1,23 @@
 /**
- * CeraCUT Build Info V6.15
- * Version: V6.15
- * Last Modified: 2026-03-25 MEZ
- * Build: 20260325-undoctrlz
+ * CeraCUT Build Info V6.16
+ * Version: V6.16
+ * Last Modified: 2026-03-28 MEZ
+ * Build: 20260328-camsubtabs
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.15',
-    build: '20260325-undoctrlz',
-    date: '2026-03-25',
-    time: '10:00 MEZ',
+    version: '6.16',
+    build: '20260328-camsubtabs',
+    date: '2026-03-28',
+    time: '22:00 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: 'e8f642a',
-        date: '2026-03-26 09:38:49 +0100',
-        message: 'feat: Dimension Editing — Selektion, Grip-Drag, Text-Override, DEL-Löschen (V2.4)'
+        hash: '5a4e0b7',
+        date: '2026-03-28 22:09:57 +0100',
+        message: 'feat: CAM Sub-Tabs (Setup/Schneiden/Extras)'
     },
 
     modules: {
