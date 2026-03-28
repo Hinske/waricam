@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CeraCUT V6.16 — Wasserstrahl CAM</title>
+    <title>CeraCUT V6.17 — Wasserstrahl CAM</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260328-camsubtabs">
+    <link rel="stylesheet" href="styles.css?v=20260328-toplevel">
     <link rel="stylesheet" href="properties-panel-styles.css?v=20260315-ctxmenu">
 </head>
 <body>
@@ -39,7 +39,7 @@
             </button>
         </div>
         <span class="title-text">
-            <span id="current-filename">Keine Datei geladen</span> — CeraCUT V6.16 <span id="build-datetime" style="font-size:0.85em;opacity:0.6"></span>
+            <span id="current-filename">Keine Datei geladen</span> — CeraCUT V6.17 <span id="build-datetime" style="font-size:0.85em;opacity:0.6"></span>
         </span>
         <div class="title-right">
             <span class="version-badge">SINUMERIK 840D</span>
@@ -52,8 +52,10 @@
     <div class="ribbon-tabs">
         <div class="ribbon-tab file-tab" data-ribbon="file">Datei</div>
         <div class="ribbon-tab active" data-ribbon="cad">CAD</div>
-        <div class="ribbon-tab" data-ribbon="cam">CAM</div>
+        <div class="ribbon-tab" data-ribbon="setup">Setup</div>
+        <div class="ribbon-tab" data-ribbon="bearbeitung">Bearbeitung</div>
         <div class="ribbon-tab" data-ribbon="order">Reihenfolge</div>
+        <div class="ribbon-tab" data-ribbon="extras">Extras</div>
         <div class="ribbon-tab" data-ribbon="export">Export</div>
         <div class="ribbon-tab" data-ribbon="view">Ansicht</div>
         <div class="wizard-indicator" id="wizard-indicator">
@@ -458,16 +460,10 @@
             <div class="ribbon-group-label">CAM-Tools</div>
         </div>
     </div>
-    <!-- ── CAM Panel (V3.15 — Sub-Tabs: Setup/Schneiden/Extras) ── -->
-    <div class="ribbon-panel" data-ribbon="cam" style="display:none">
-        <!-- ── CAM Sub-Tab-Leiste ── -->
-        <div class="cam-subtab-bar">
-            <button class="cam-subtab active" data-cam-tab="setup" title="Setup (1)">Setup</button>
-            <button class="cam-subtab" data-cam-tab="schneiden" title="Schneiden (2)">Schneiden</button>
-            <button class="cam-subtab" data-cam-tab="extras" title="Extras (3)">Extras</button>
-        </div>
+    <!-- ── Setup Panel (Referenz, Nullpunkt, Technologie) ── -->
+    <div class="ribbon-panel" data-ribbon="setup" style="display:none">
         <!-- ═══ Referenz ═══ -->
-        <div class="ribbon-group" data-cam-subtab="setup">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-btn-lg" id="btn-auto-reference" title="Referenz erkennen">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" stroke="#888" stroke-width="2" fill="none" stroke-dasharray="4 2"/><path d="M10 14l4 4 8-8" stroke="#0a0" stroke-width="2.5" fill="none"/></svg></div>
@@ -491,7 +487,7 @@
         </div>
 
         <!-- ═══ Nullpunkt ═══ -->
-        <div class="ribbon-group" data-cam-subtab="setup">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-btn-lg" id="btn-set-origin-from-snap" title="Snap-Punkt als Nullpunkt">
                     <div class="icon"><svg viewBox="0 0 32 32" fill="none"><line x1="16" y1="2" x2="16" y2="30" stroke="#0078d4" stroke-width="1.5"/><line x1="2" y1="16" x2="30" y2="16" stroke="#0078d4" stroke-width="1.5"/><circle cx="16" cy="16" r="6" stroke="#0078d4" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="2" fill="#0078d4"/></svg></div>
@@ -513,7 +509,7 @@
         </div>
 
         <!-- ═══ Technologie (V5.0 — CeraJet-Integration) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="setup">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -548,9 +544,12 @@
             </div>
             <div class="ribbon-group-label">Technologie</div>
         </div>
+    </div>
 
+    <!-- ── Bearbeitung Panel (Profil, Leads, Typ & Qualität) ── -->
+    <div class="ribbon-panel" data-ribbon="bearbeitung" style="display:none">
         <!-- ═══ Lead-Profil (V6.0) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="schneiden">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -573,7 +572,7 @@
         </div>
 
         <!-- ═══ Außen-Lead (V3.14 — ersetzt alte "Anfahrt/Ausfahrt") ═══ -->
-        <div class="ribbon-group" data-cam-subtab="schneiden">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -648,7 +647,7 @@
         </div>
 
         <!-- ═══ Innen-Lead (NEU V3.14 — CeraCUT Kap. 6.2.2) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="schneiden">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -708,10 +707,8 @@
             </div>
         </div>
 
-        <!-- Alternativ-Lead: automatisch intern (CeraJet V5.0) -->
-
         <!-- ═══ Typ & Qualität (V3.14 — Kerf → Material verschoben) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="schneiden">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -737,9 +734,12 @@
             </div>
             <div class="ribbon-group-label">Typ & Qualität</div>
         </div>
+    </div>
 
+    <!-- ── Extras Panel (Intarsien, Micro-Joints, Brücken, Q-Zonen, Kollision) ── -->
+    <div class="ribbon-panel" data-ribbon="extras" style="display:none">
         <!-- ═══ Intarsien (V5.2 — Dual-Export NEG/POS) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="extras">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -770,7 +770,7 @@
         </div>
 
         <!-- ═══ Micro-Joints ═══ -->
-        <div class="ribbon-group" data-cam-subtab="extras">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -791,7 +791,7 @@
         </div>
 
         <!-- ═══ Brücken (V5.5 — Bridge Cutting) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="extras">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -813,7 +813,7 @@
         </div>
 
         <!-- ═══ Qualitäts-Zonen (V5.5 — Auto Speed Zones) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="extras">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -836,7 +836,7 @@
         </div>
 
         <!-- ═══ Multi-Collision (V5.5) ═══ -->
-        <div class="ribbon-group" data-cam-subtab="extras">
+        <div class="ribbon-group">
             <div class="ribbon-group-content">
                 <div class="ribbon-sm-stack">
                     <div class="ribbon-inline-row">
@@ -1445,7 +1445,7 @@
 <!-- Scripts -->
 <!-- DebugMonitor: MUSS als ERSTES geladen werden — fängt alle Fehler ab -->
 <script src="js/debug-monitor.js?v=20260324-gitcommit"></script>
-<script src="js/build-info.js?v=20260328-camsubtabs"></script>
+<script src="js/build-info.js?v=20260328-toplevel"></script>
 <script src="js/constants.js?v=20260324-camfix"></script>
 <script src="js/geometry.js?v=20260316-gapdetect"></script>
 <script src="js/arc-fitting.js?v=20260316-quietlogs"></script>
@@ -1500,8 +1500,8 @@
     const ribbonPanels = document.querySelectorAll('.ribbon-panel[data-ribbon]');
     
     // Ribbon-Tab → Wizard-Step Mapping
-    const ribbonToStep = { file: 1, cad: 1, cam: 4, order: 5, export: 6, view: null };
-    const ribbonToName = { file: 'Datei laden', cad: 'Zeichnen', cam: 'Schneiden', order: 'Reihenfolge', export: 'Export', view: 'Ansicht' };
+    const ribbonToStep = { file: 1, cad: 1, setup: 2, bearbeitung: 4, order: 5, extras: 4, export: 6, view: null };
+    const ribbonToName = { file: 'Datei laden', cad: 'Zeichnen', setup: 'Setup', bearbeitung: 'Bearbeitung', order: 'Reihenfolge', extras: 'Extras', export: 'Export', view: 'Ansicht' };
 
     ribbonTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1528,36 +1528,6 @@
         });
     });
     
-    // ── CAM Sub-Tab Switching ──
-    function switchCamSubtab(tabName) {
-        document.querySelectorAll('.cam-subtab').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.camTab === tabName);
-        });
-        document.querySelectorAll('.ribbon-panel[data-ribbon="cam"] .ribbon-group[data-cam-subtab]').forEach(g => {
-            g.classList.toggle('cam-subtab-visible', g.dataset.camSubtab === tabName);
-        });
-    }
-
-    document.querySelectorAll('.cam-subtab').forEach(btn => {
-        btn.addEventListener('click', () => switchCamSubtab(btn.dataset.camTab));
-    });
-
-    // Default: "Setup" aktiv
-    switchCamSubtab('setup');
-
-    // Keyboard-Shortcuts 1/2/3 (nur wenn CAM-Tab aktiv + kein Input fokussiert)
-    document.addEventListener('keydown', (e) => {
-        const activeTag = document.activeElement?.tagName;
-        if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA') return;
-        const camTab = document.querySelector('.ribbon-tab[data-ribbon="cam"]');
-        if (!camTab || !camTab.classList.contains('active')) return;
-        const map = { '1': 'setup', '2': 'schneiden', '3': 'extras' };
-        if (map[e.key]) {
-            e.preventDefault();
-            switchCamSubtab(map[e.key]);
-        }
-    });
-
     // ── Panel collapse toggles ──
     document.querySelectorAll('.panel-header-toggle').forEach(header => {
         header.addEventListener('click', () => {
@@ -1638,10 +1608,18 @@
                     }
                     
                     switch (ribbon) {
-                        case 'cam':
+                        case 'setup':
+                            window.app.renderer.currentMode = 'anschuss';
+                            window.app.currentStep = 2;
+                            break;
+                        case 'bearbeitung':
                             window.app.renderer.currentMode = 'anschuss';
                             window.app.currentStep = 4;
                             window.app._applyLeadValues?.();
+                            break;
+                        case 'extras':
+                            window.app.renderer.currentMode = 'anschuss';
+                            window.app.currentStep = 4;
                             break;
                         case 'order':
                             window.app.renderer.currentMode = 'reihenfolge';

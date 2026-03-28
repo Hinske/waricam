@@ -2529,7 +2529,7 @@ class CeraCutApp {
         document.getElementById('btn-next').textContent = this.currentStep === this.totalSteps ? '✓ Fertig' : 'Weiter →';
         
         // Wizard-Indikator aktualisieren
-        const stepToRibbon = { 1: 'file', 2: 'cam', 3: 'cam', 4: 'cam', 5: 'order', 6: 'export' };
+        const stepToRibbon = { 1: 'file', 2: 'setup', 3: 'setup', 4: 'bearbeitung', 5: 'order', 6: 'export' };
         const stepNames = ['', 'Datei laden', 'Referenz', 'Nullpunkt', 'Schneiden', 'Reihenfolge', 'Export'];
         const stepNameEl = document.getElementById('wizard-step-name');
         if (stepNameEl) stepNameEl.textContent = stepNames[this.currentStep] || '';

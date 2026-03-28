@@ -1,23 +1,23 @@
 /**
- * CeraCUT Build Info V6.16
- * Version: V6.16
+ * CeraCUT Build Info V6.17
+ * Version: V6.17
  * Last Modified: 2026-03-28 MEZ
- * Build: 20260328-camsubtabs
+ * Build: 20260328-toplevel
  *
  * Zeigt Versionsinformationen in der Console
  */
 
 const CERACUT_BUILD = {
-    version: '6.16',
-    build: '20260328-camsubtabs',
+    version: '6.17',
+    build: '20260328-toplevel',
     date: '2026-03-28',
-    time: '22:00 MEZ',
+    time: '22:30 MEZ',
 
     // Git-Commit — wird bei jedem Commit aktualisiert (Pflicht-Checkliste)
     git: {
-        hash: '5a4e0b7',
-        date: '2026-03-28 22:09:57 +0100',
-        message: 'feat: CAM Sub-Tabs (Setup/Schneiden/Extras)'
+        hash: '4f3cbcc',
+        date: '2026-03-28 22:28:38 +0100',
+        message: 'refactor: CAM-Tab aufgelöst in Setup/Bearbeitung/Extras Top-Level Tabs'
     },
 
     modules: {
