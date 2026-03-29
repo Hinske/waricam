@@ -116,7 +116,21 @@ Dieser Abschnitt dient als Orientierung für zukünftige Entwicklungen und Refac
 - Skip this for simple, obvious fixes — don't over-engineer
 - Challenge your own work before presenting it
 
-### 6. Autonomous Bug Fixing
+### 6. Post-Feature Quality Gates (inspiriert von Boris Cherny)
+
+**Grill (nach nicht-trivialen Features):**
+- Adversarial Self-Review: "Was kann hier schiefgehen?"
+- Edge Cases durchspielen: Leere Eingaben, NaN, riesige Daten
+- UI/UX hinterfragen: Ist das intuitiv oder nur für den Entwickler?
+- Performance: Wird bei 500+ Konturen alles langsam?
+
+**Techdebt-Sweep (am Ende einer Session / nach Feature-Sprint):**
+- Duplizierten Code aufspueren und konsolidieren
+- Toten Code entfernen (ungenutzte Funktionen, auskommentierte Bloecke)
+- Console.logs aufraeumen (Debug → console.debug, nicht console.log)
+- Variablen-/Funktionsnamen pruefen (konsistent, sprechend)
+
+### 7. Autonomous Bug Fixing
 - When given a bug report: just fix it. Don't ask for hand-holding
 - Point at logs, errors, failing tests — then resolve them
 - Zero context switching required from the user
